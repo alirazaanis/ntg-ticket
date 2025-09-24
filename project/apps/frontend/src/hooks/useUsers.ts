@@ -1,52 +1,80 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../lib/apiClient';
-import { User, CreateUserInput, UpdateUserInput, UserFilters } from '../types/unified';
+import { userApi, User, CreateUserInput, UpdateUserInput, UserFilters } from '../lib/apiClient';
 
-export const useUsers = (filters?: UserFilters) => {
+export function useUsers(filters?: UserFilters) {
   return useQuery({
     queryKey: ['users', filters],
-    queryFn: () => apiClient.users.getAll(filters),
+    queryFn: async () => {
+      const response = await userApi.getUsers(filters);
+      return response.data.data;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
-};
+}
 
-export const useUser = (id: string) => {
+export function useUser(id: string) {
   return useQuery({
     queryKey: ['user', id],
-    queryFn: () => apiClient.users.getById(id),
+    queryFn: async () => {
+      const response = await userApi.getUser(id);
+      return response.data.data as User;
+    },
     enabled: !!id,
   });
-};
+}
 
-export const useCreateUser = () => {
+export function useCreateUser() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (data: CreateUserInput) => apiClient.users.create(data),
+    mutationFn: async (data: CreateUserInput) => {
+      const response = await userApi.createUser(data);
+      return response.data.data as User;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
-};
+}
 
-export const useUpdateUser = () => {
+export function useUpdateUser() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateUserInput }) => 
-      apiClient.users.update(id, data),
-    onSuccess: () => {
+    mutationFn: async ({ id, data }: { id: string; data: UpdateUserInput }) => {
+      const response = await userApi.updateUser(id, data);
+      return response.data.data as User;
+    },
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user', id] });
     },
   });
-};
+}
 
-export const useDeleteUser = () => {
+export function useDeleteUser() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (id: string) => apiClient.users.delete(id),
-    onSuccess: () => {
+    mutationFn: async (id: string) => {
+      await userApi.deleteUser(id);
+    },
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user', id] });
     },
   });
-};
+}
+
+export function useSupportStaff() {
+  return useQuery({
+    queryKey: ['support-staff'],
+    queryFn: async () => {
+      const response = await userApi.getSupportStaff();
+      return response.data.data as User[];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+

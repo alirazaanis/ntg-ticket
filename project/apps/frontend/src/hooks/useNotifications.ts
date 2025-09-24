@@ -1,32 +1,61 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../lib/apiClient';
-import { Notification } from '../types/unified';
+import { notificationsApi } from '../lib/apiClient';
 
-export const useNotifications = () => {
+export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
-    queryFn: () => apiClient.notifications.getAll(),
+    queryFn: async () => {
+      const response = await notificationsApi.getNotifications();
+      return response.data.data as Array<{
+        id: string;
+        message: string;
+        type: string;
+        read: boolean;
+        createdAt: string;
+      }>;
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
   });
-};
+}
 
-export const useMarkNotificationAsRead = () => {
+export function useMarkNotificationAsRead() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (id: string) => apiClient.notifications.markAsRead(id),
+    mutationFn: async (id: string) => {
+      await notificationsApi.markAsRead(id);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notification', id] });
+    },
+  });
+}
+
+export function useMarkAllNotificationsAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await notificationsApi.markAllAsRead();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
-};
+}
 
-export const useDeleteNotification = () => {
+export function useDeleteNotification() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (id: string) => apiClient.notifications.delete(id),
-    onSuccess: () => {
+    mutationFn: async (id: string) => {
+      await notificationsApi.deleteNotification(id);
+    },
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notification', id] });
     },
   });
-};
+}

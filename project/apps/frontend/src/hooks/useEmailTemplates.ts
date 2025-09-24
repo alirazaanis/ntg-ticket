@@ -1,52 +1,90 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../lib/apiClient';
-import { EmailTemplate, CreateEmailTemplateInput, UpdateEmailTemplateInput } from '../types/unified';
+import { emailTemplatesApi, EmailTemplate, CreateEmailTemplateInput, UpdateEmailTemplateInput } from '../lib/apiClient';
 
-export const useEmailTemplates = () => {
+export function useEmailTemplates() {
   return useQuery({
-    queryKey: ['emailTemplates'],
-    queryFn: () => apiClient.emailTemplates.getAll(),
+    queryKey: ['email-templates'],
+    queryFn: async () => {
+      const response = await emailTemplatesApi.getEmailTemplates();
+      return response.data.data as EmailTemplate[];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
-};
+}
 
-export const useEmailTemplate = (id: string) => {
+export function useEmailTemplate(id: string) {
   return useQuery({
-    queryKey: ['emailTemplate', id],
-    queryFn: () => apiClient.emailTemplates.getById(id),
+    queryKey: ['email-template', id],
+    queryFn: async () => {
+      const response = await emailTemplatesApi.getEmailTemplate(id);
+      return response.data.data as EmailTemplate;
+    },
     enabled: !!id,
   });
-};
+}
 
-export const useCreateEmailTemplate = () => {
+export function useCreateEmailTemplate() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (data: CreateEmailTemplateInput) => apiClient.emailTemplates.create(data),
+    mutationFn: async (data: CreateEmailTemplateInput) => {
+      const response = await emailTemplatesApi.createEmailTemplate(data);
+      return response.data.data as EmailTemplate;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['emailTemplates'] });
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
     },
   });
-};
+}
 
-export const useUpdateEmailTemplate = () => {
+export function useUpdateEmailTemplate() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateEmailTemplateInput }) => 
-      apiClient.emailTemplates.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['emailTemplates'] });
+    mutationFn: async ({ id, data }: { id: string; data: UpdateEmailTemplateInput }) => {
+      const response = await emailTemplatesApi.updateEmailTemplate(id, data);
+      return response.data.data as EmailTemplate;
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['email-template', id] });
     },
   });
-};
+}
 
-export const useDeleteEmailTemplate = () => {
+export function useDeleteEmailTemplate() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (id: string) => apiClient.emailTemplates.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['emailTemplates'] });
+    mutationFn: async (id: string) => {
+      await emailTemplatesApi.deleteEmailTemplate(id);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['email-template', id] });
     },
   });
-};
+}
+
+export function useCreateDefaultTemplates() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await emailTemplatesApi.createDefaultTemplates();
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
+    },
+  });
+}
+
+export function usePreviewEmailTemplate() {
+  return useMutation({
+    mutationFn: async ({ id, variables }: { id: string; variables: Record<string, unknown> }) => {
+      const response = await emailTemplatesApi.previewEmailTemplate(id, variables);
+      return response.data.data as { subject: string; html: string };
+    },
+  });
+}
