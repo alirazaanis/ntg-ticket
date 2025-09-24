@@ -1,0 +1,84 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import {
+  Container,
+  Title,
+  Text,
+  Group,
+  Button,
+  Card,
+  Alert,
+} from '@mantine/core';
+import {
+  IconArrowLeft,
+  IconAlertCircle,
+} from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import { UserForm } from '../../../../components/forms/UserForm';
+import { useCreateUser } from '../../../../hooks/useUsers';
+import { UserFormData } from '../../../../types/unified';
+
+export default function CreateUserPage() {
+  const router = useRouter();
+  const createUserMutation = useCreateUser();
+
+  const handleSubmit = async (data: UserFormData) => {
+    try {
+      await createUserMutation.mutateAsync(data);
+      notifications.show({
+        title: 'Success',
+        message: 'User created successfully',
+        color: 'green',
+      });
+      router.push('/admin/users');
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to create user',
+        color: 'red',
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    router.push('/admin/users');
+  };
+
+  return (
+    <Container size='md' py='md'>
+      <Group mb='xl'>
+        <Button
+          variant='subtle'
+          leftSection={<IconArrowLeft size={16} />}
+          onClick={handleCancel}
+        >
+          Back to Users
+        </Button>
+        <div>
+          <Title order={1}>Create New User</Title>
+          <Text c='dimmed'>Add a new user to the system</Text>
+        </div>
+      </Group>
+
+      <Card shadow='sm' padding='lg' radius='md' withBorder>
+        <UserForm
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          isEditing={false}
+        />
+      </Card>
+
+      {createUserMutation.isError && (
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title='Error'
+          color='red'
+          mt='md'
+        >
+          Failed to create user. Please check the form and try again.
+        </Alert>
+      )}
+    </Container>
+  );
+}
