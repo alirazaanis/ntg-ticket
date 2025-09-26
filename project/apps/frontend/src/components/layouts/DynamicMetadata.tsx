@@ -9,7 +9,7 @@ export function DynamicMetadata() {
   useEffect(() => {
     if (settings) {
       // Update document title
-      document.title = settings.siteName || 'NTG Ticket System';
+      document.title = settings.siteName || 'NTG Ticket';
 
       // Update meta description
       const metaDescription = document.querySelector(
@@ -18,7 +18,7 @@ export function DynamicMetadata() {
       if (metaDescription) {
         metaDescription.setAttribute(
           'content',
-          settings.siteDescription || 'IT Support Ticket Management System'
+          settings.siteDescription || 'IT Support - Ticket Management System'
         );
       }
     }

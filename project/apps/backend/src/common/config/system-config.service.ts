@@ -74,7 +74,8 @@ export class SystemConfigService implements OnModuleInit {
         // General Settings
         siteName: settingsObj.site_name || 'NTG Ticket',
         siteDescription:
-          settingsObj.site_description || 'IT Support Ticket Management System',
+          settingsObj.site_description ||
+          'IT Support - Ticket Management System',
         timezone: settingsObj.timezone || 'UTC',
         language: settingsObj.language || 'en',
         dateFormat: 'MM/DD/YYYY',
@@ -249,7 +250,7 @@ export class SystemConfigService implements OnModuleInit {
   private getDefaultConfig(): SystemConfig {
     return {
       siteName: 'NTG Ticket',
-      siteDescription: 'IT Support Ticket Management System',
+      siteDescription: 'IT Support - Ticket Management System',
       timezone: 'UTC',
       language: 'en',
       dateFormat: 'MM/DD/YYYY',

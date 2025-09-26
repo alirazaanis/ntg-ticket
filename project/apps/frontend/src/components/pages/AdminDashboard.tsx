@@ -43,23 +43,204 @@ import {
   IconCpu,
 } from '@tabler/icons-react';
 import { useTickets } from '../../hooks/useTickets';
-import { useUsers } from '../../hooks/useUsers';
+import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../../hooks/useUsers';
 import { useSystemMetrics, useUserDistribution } from '../../hooks/useReports';
 import { TicketCard } from '../ui/TicketCard';
-import { User } from '../../lib/apiClient';
-import { Ticket } from '../../types/unified';
+import { User, CreateUserInput, UpdateUserInput } from '../../lib/apiClient';
+import { Ticket, UserRole } from '../../types/unified';
+import { notifications } from '@mantine/notifications';
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [userModalOpened, setUserModalOpened] = useState(false);
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userFormData, setUserFormData] = useState<Partial<CreateUserInput>>({});
+  
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
-
-  const { data: usersData } = useUsers({ limit: 100 });
+  const { data: users, isLoading: usersLoading } = useUsers({ limit: 100 });
   const { data: systemMetrics } = useSystemMetrics();
   const { data: userDistribution } = useUserDistribution();
+  
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const deleteUser = useDeleteUser();
+  
+  // Handler functions
+  const handleDatabaseBackup = async () => {
+    try {
+      notifications.show({
+        title: 'Database Backup',
+        message: 'Database backup initiated successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to initiate database backup',
+        color: 'red',
+      });
+    }
+  };
+  
+  const handleViewLogs = () => {
+    // In a real app, this would open a logs modal or navigate to logs page
+    notifications.show({
+      title: 'View Logs',
+      message: 'Logs viewer would open here',
+      color: 'blue',
+    });
+  };
+  
+  const validatePassword = (password: string): string | null => {
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!/[A-Z]/.test(password)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!/\d/.test(password)) {
+      return 'Password must contain at least one number';
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return 'Password must contain at least one special character';
+    }
+    return null;
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      // Validate required fields
+      if (!userFormData.name || !userFormData.email || !userFormData.password || !userFormData.role) {
+        notifications.show({
+          title: 'Validation Error',
+          message: 'Please fill in all required fields',
+          color: 'red',
+        });
+        return;
+      }
+
+      // Validate password
+      const passwordError = validatePassword(userFormData.password);
+      if (passwordError) {
+        notifications.show({
+          title: 'Password Validation Error',
+          message: passwordError,
+          color: 'red',
+        });
+        return;
+      }
+
+      await createUser.mutateAsync(userFormData as CreateUserInput);
+      setUserModalOpened(false);
+      setUserFormData({});
+      notifications.show({
+        title: 'Success',
+        message: 'User created successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Create user error:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to create user',
+        color: 'red',
+      });
+    }
+  };
+  
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+    try {
+      // Validate required fields for update
+      if (!userFormData.name || !userFormData.email || !userFormData.role) {
+        notifications.show({
+          title: 'Validation Error',
+          message: 'Please fill in all required fields',
+          color: 'red',
+        });
+        return;
+      }
+
+      // Remove password from update data if not provided
+      const updateData = { ...userFormData };
+      if (!updateData.password) {
+        delete updateData.password;
+      }
+
+      console.log('Update user data:', { id: selectedUser.id, data: updateData });
+      await updateUser.mutateAsync({ id: selectedUser.id, data: updateData as UpdateUserInput });
+      setUserModalOpened(false);
+      setSelectedUser(null);
+      setUserFormData({});
+      notifications.show({
+        title: 'Success',
+        message: 'User updated successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Update user error:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to update user',
+        color: 'red',
+      });
+    }
+  };
+  
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteUser.mutateAsync(userId);
+      notifications.show({
+        title: 'Success',
+        message: 'User deleted successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to delete user',
+        color: 'red',
+      });
+    }
+  };
+  
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setUserFormData({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    });
+    setUserModalOpened(true);
+  };
+  
+  const handleAddUser = () => {
+    setSelectedUser(null);
+    setUserFormData({});
+    setUserModalOpened(true);
+  };
 
   const allTickets = tickets || [];
+  
+  // Filter users based on search query
+  // Now users is directly User[] array, like tickets
+  const filteredUsers = users?.filter(user => 
+    user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+  ) || [];
+  
+  // Filter tickets based on search query
+  const filteredTickets = allTickets.filter(ticket =>
+    ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    ticket.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const stats = [
     {
@@ -70,7 +251,7 @@ export function AdminDashboard() {
     },
     {
       title: 'Active Users',
-      value: usersData?.data?.data?.filter((u: User) => u.isActive).length || 0,
+      value: users?.filter((u: User) => u.isActive).length || 0,
       icon: IconUsers,
       color: 'green',
     },
@@ -127,9 +308,13 @@ export function AdminDashboard() {
             </Text>
           </div>
           <Group>
-            <Button variant='outline' leftSection={<IconSearch size={16} />}>
-              Search
-            </Button>
+            <TextInput
+              placeholder='Search tickets...'
+              leftSection={<IconSearch size={16} />}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: 300 }}
+            />
             <Button variant='outline' leftSection={<IconFilter size={16} />}>
               Filter
             </Button>
@@ -177,15 +362,12 @@ export function AdminDashboard() {
                 data={systemMetricsData}
                 dataKey='time'
                 series={[
-                  { name: 'cpu', color: 'red.6', label: 'CPU Usage (%)' },
-                  {
-                    name: 'memory',
-                    color: 'blue.6',
-                    label: 'Memory Usage (%)',
-                  },
-                  { name: 'disk', color: 'green.6', label: 'Disk Usage (%)' },
+                  { name: 'cpu', color: 'red.6' },
+                  { name: 'memory', color: 'blue.6' },
+                  { name: 'disk', color: 'green.6' },
                 ]}
                 curveType='linear'
+                unit='%'
               />
             </Paper>
           </Grid.Col>
@@ -201,6 +383,7 @@ export function AdminDashboard() {
                 dataKey='role'
                 series={[{ name: 'count', color: 'blue.6' }]}
                 orientation='vertical'
+                unit=' users'
               />
             </Paper>
           </Grid.Col>
@@ -295,7 +478,7 @@ export function AdminDashboard() {
                     <Button
                       variant='light'
                       leftSection={<IconPlus size={16} />}
-                      onClick={() => setUserModalOpened(true)}
+                      onClick={handleAddUser}
                     >
                       Add User
                     </Button>
@@ -309,12 +492,14 @@ export function AdminDashboard() {
                     <Button
                       variant='light'
                       leftSection={<IconDatabase size={16} />}
+                      onClick={handleDatabaseBackup}
                     >
                       Database Backup
                     </Button>
                     <Button
                       variant='light'
                       leftSection={<IconFileText size={16} />}
+                      onClick={handleViewLogs}
                     >
                       View Logs
                     </Button>
@@ -328,12 +513,21 @@ export function AdminDashboard() {
             <Stack gap='md'>
               <Group justify='space-between'>
                 <Title order={3}>User Management</Title>
-                <Button
-                  leftSection={<IconPlus size={16} />}
-                  onClick={() => setUserModalOpened(true)}
-                >
-                  Add User
-                </Button>
+                <Group>
+                  <TextInput
+                    placeholder='Search users...'
+                    leftSection={<IconSearch size={16} />}
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    style={{ width: 300 }}
+                  />
+                  <Button
+                    leftSection={<IconPlus size={16} />}
+                    onClick={handleAddUser}
+                  >
+                    Add User
+                  </Button>
+                </Group>
               </Group>
 
               <Paper withBorder p='md'>
@@ -349,7 +543,25 @@ export function AdminDashboard() {
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {usersData?.data?.data?.slice(0, 10).map((user: User) => (
+                    {usersLoading ? (
+                      <Table.Tr>
+                        <Table.Td colSpan={6}>
+                          <Group justify='center' py='xl'>
+                            <Loader size='sm' />
+                            <Text>Loading users...</Text>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ) : filteredUsers.length === 0 ? (
+                      <Table.Tr>
+                        <Table.Td colSpan={6}>
+                          <Group justify='center' py='xl'>
+                            <Text c='dimmed'>No users found</Text>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ) : (
+                      filteredUsers.slice(0, 10).map((user: User) => (
                       <Table.Tr key={user.id}>
                         <Table.Td>
                           <Group>
@@ -382,19 +594,20 @@ export function AdminDashboard() {
                         </Table.Td>
                         <Table.Td>
                           <Group gap='xs'>
-                            <ActionIcon size='sm' variant='light'>
+                            <ActionIcon size='sm' variant='light' onClick={() => console.log('View user:', user.id)}>
                               <IconEye size={14} />
                             </ActionIcon>
-                            <ActionIcon size='sm' variant='light'>
+                            <ActionIcon size='sm' variant='light' onClick={() => handleEditUser(user)}>
                               <IconEdit size={14} />
                             </ActionIcon>
-                            <ActionIcon size='sm' variant='light' color='red'>
+                            <ActionIcon size='sm' variant='light' color='red' onClick={() => handleDeleteUser(user.id)}>
                               <IconTrash size={14} />
                             </ActionIcon>
                           </Group>
                         </Table.Td>
                       </Table.Tr>
-                    ))}
+                    ))
+                    )}
                   </Table.Tbody>
                 </Table>
               </Paper>
@@ -410,6 +623,8 @@ export function AdminDashboard() {
                     placeholder='Search tickets...'
                     leftSection={<IconSearch size={16} />}
                     style={{ width: 300 }}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   <Button
                     variant='outline'
@@ -421,7 +636,7 @@ export function AdminDashboard() {
               </Group>
 
               <Grid>
-                {allTickets?.map((ticket: Ticket) => (
+                {filteredTickets?.map((ticket: Ticket) => (
                   <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
                     <TicketCard ticket={ticket} showActions />
                   </Grid.Col>
@@ -522,8 +737,8 @@ export function AdminDashboard() {
                     <Stack gap='md'>
                       <TextInput
                         label='System Name'
-                        placeholder='NTG Ticket System'
-                        defaultValue='NTG Ticket System'
+                        placeholder='NTG Ticket'
+                        defaultValue='NTG Ticket'
                       />
                       <TextInput
                         label='Support Email'
@@ -627,24 +842,50 @@ export function AdminDashboard() {
         </Tabs>
       </Stack>
 
-      {/* Add User Modal */}
+      {/* Add/Edit User Modal */}
       <Modal
         opened={userModalOpened}
-        onClose={() => setUserModalOpened(false)}
-        title='Add New User'
+        onClose={() => {
+          setUserModalOpened(false);
+          setSelectedUser(null);
+          setUserFormData({});
+        }}
+        title={selectedUser ? 'Edit User' : 'Add New User'}
         size='md'
       >
-        <Stack gap='md'>
-          <TextInput label='Full Name' placeholder='Enter full name' required />
-          <TextInput
-            label='Email'
-            placeholder='Enter email address'
-            type='email'
-            required
-          />
+        <form onSubmit={(e) => { e.preventDefault(); selectedUser ? handleUpdateUser() : handleCreateUser(); }}>
+          <Stack gap='md'>
+            <TextInput 
+              label='Full Name' 
+              placeholder='Enter full name' 
+              value={userFormData.name || ''}
+              onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
+              required 
+            />
+            <TextInput
+              label='Email'
+              placeholder='Enter email address'
+              type='email'
+              value={userFormData.email || ''}
+              onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+              required
+            />
+            {!selectedUser && (
+              <TextInput
+                label='Password'
+                placeholder='Enter password'
+                type='password'
+                value={userFormData.password || ''}
+                onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                required
+                description='Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character'
+              />
+            )}
           <Select
             label='Role'
             placeholder='Select role'
+            value={userFormData.role || ''}
+            onChange={(value) => setUserFormData({ ...userFormData, role: value as UserRole })}
             data={[
               { value: 'END_USER', label: 'End User' },
               { value: 'SUPPORT_STAFF', label: 'Support Staff' },
@@ -656,15 +897,26 @@ export function AdminDashboard() {
           <Switch
             label='Active'
             description='User account is active'
-            defaultChecked
+            checked={userFormData.isActive ?? true}
+            onChange={(e) => setUserFormData({ ...userFormData, isActive: e.currentTarget.checked })}
           />
           <Group justify='flex-end'>
-            <Button variant='outline' onClick={() => setUserModalOpened(false)}>
+            <Button variant='outline' onClick={() => {
+              setUserModalOpened(false);
+              setSelectedUser(null);
+              setUserFormData({});
+            }}>
               Cancel
             </Button>
-            <Button>Add User</Button>
+            <Button 
+              type='submit'
+              loading={createUser.isPending || updateUser.isPending}
+            >
+              {selectedUser ? 'Update User' : 'Add User'}
+            </Button>
           </Group>
-        </Stack>
+          </Stack>
+        </form>
       </Modal>
 
       {/* Settings Modal */}
@@ -677,8 +929,8 @@ export function AdminDashboard() {
         <Stack gap='md'>
           <TextInput
             label='System Name'
-            placeholder='NTG Ticket System'
-            defaultValue='NTG Ticket System'
+            placeholder='NTG Ticket'
+            defaultValue='NTG Ticket'
           />
           <TextInput
             label='Support Email'

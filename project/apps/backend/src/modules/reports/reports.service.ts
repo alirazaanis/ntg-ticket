@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { TicketStatus, Prisma } from '@prisma/client';
+import {
+  TicketStatus,
+  TicketPriority,
+  TicketCategory,
+  Prisma,
+} from '@prisma/client';
+import { SystemMonitoringService } from '../../common/system-monitoring/system-monitoring.service';
 
 // Define proper types for report parameters
 interface ReportParameters {
@@ -22,12 +28,18 @@ interface TicketFilters {
   startDate?: string;
   endDate?: string;
   userId?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
 }
 
 interface ExportTicketReportParams {
   startDate?: string;
   endDate?: string;
   userId?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
 }
 
 interface TeamPerformanceUser {
@@ -150,13 +162,17 @@ interface ExportResult {
   }>;
   total: number;
   exportedAt: string;
+  format?: string;
 }
 
 @Injectable()
 export class ReportsService {
   private readonly logger = new Logger(ReportsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private systemMonitoring: SystemMonitoringService
+  ) {}
 
   async generateReport(params: GenerateReportParams) {
     // Placeholder implementation
@@ -190,7 +206,7 @@ export class ReportsService {
 
   async getTicketReport(params: TicketFilters): Promise<TicketReportResult> {
     try {
-      const { startDate, endDate, userId } = params;
+      const { startDate, endDate, userId, status, priority, category } = params;
 
       const where: Prisma.TicketWhereInput = {};
 
@@ -202,6 +218,48 @@ export class ReportsService {
 
       if (userId) {
         where.OR = [{ requesterId: userId }, { assignedToId: userId }];
+      }
+
+      if (status) {
+        // Handle comma-separated status values
+        const statusArray = status
+          .split(',')
+          .map(s => s.trim()) as TicketStatus[];
+        if (statusArray.length === 1) {
+          where.status = statusArray[0];
+        } else {
+          where.status = { in: statusArray };
+        }
+      }
+
+      if (priority) {
+        // Handle comma-separated priority values
+        const priorityArray = priority
+          .split(',')
+          .map(p => p.trim()) as TicketPriority[];
+        if (priorityArray.length === 1) {
+          where.priority = priorityArray[0];
+        } else {
+          where.priority = { in: priorityArray };
+        }
+      }
+
+      if (category) {
+        // Handle comma-separated category values
+        const categoryArray = category
+          .split(',')
+          .map(c => c.trim()) as TicketCategory[];
+        const categoryRecords = await this.prisma.category.findMany({
+          where: { name: { in: categoryArray } },
+        });
+        if (categoryRecords.length > 0) {
+          const categoryIds = categoryRecords.map(c => c.id);
+          if (categoryIds.length === 1) {
+            where.categoryId = categoryIds[0];
+          } else {
+            where.categoryId = { in: categoryIds };
+          }
+        }
       }
 
       const [
@@ -474,24 +532,8 @@ export class ReportsService {
 
   async getSystemMetrics(): Promise<SystemMetrics> {
     try {
-      // Mock system metrics - in a real application, these would come from system monitoring
-      return {
-        uptime: '99.9%',
-        storageUsed: '2.4 GB',
-        cpuUsage: 65,
-        memoryUsage: 78,
-        diskUsage: 42,
-        lastBackup: '2 hours ago',
-        databaseSize: '1.2 GB',
-        metrics: [
-          { time: '00:00', cpu: 25, memory: 45, disk: 30 },
-          { time: '04:00', cpu: 30, memory: 50, disk: 32 },
-          { time: '08:00', cpu: 65, memory: 70, disk: 35 },
-          { time: '12:00', cpu: 80, memory: 85, disk: 38 },
-          { time: '16:00', cpu: 75, memory: 80, disk: 40 },
-          { time: '20:00', cpu: 45, memory: 60, disk: 42 },
-        ],
-      };
+      // Get real system metrics from the monitoring service
+      return await this.systemMonitoring.getSystemMetrics();
     } catch (error) {
       this.logger.error('Error getting system metrics:', error);
       throw error;
@@ -778,11 +820,103 @@ export class ReportsService {
     }
   }
 
+  async getSlaReport(params: {
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+    priority?: string;
+    category?: string;
+  }) {
+    try {
+      const { startDate, endDate, status, priority, category } = params;
+
+      const where: Prisma.TicketWhereInput = {};
+
+      if (startDate || endDate) {
+        where.createdAt = {};
+        if (startDate) where.createdAt.gte = new Date(startDate);
+        if (endDate) where.createdAt.lte = new Date(endDate);
+      }
+
+      if (status) {
+        // Handle comma-separated status values
+        const statusArray = status
+          .split(',')
+          .map(s => s.trim()) as TicketStatus[];
+        if (statusArray.length === 1) {
+          where.status = statusArray[0];
+        } else {
+          where.status = { in: statusArray };
+        }
+      }
+
+      if (priority) {
+        // Handle comma-separated priority values
+        const priorityArray = priority
+          .split(',')
+          .map(p => p.trim()) as TicketPriority[];
+        if (priorityArray.length === 1) {
+          where.priority = priorityArray[0];
+        } else {
+          where.priority = { in: priorityArray };
+        }
+      }
+
+      if (category) {
+        // Handle comma-separated category values
+        const categoryArray = category
+          .split(',')
+          .map(c => c.trim()) as TicketCategory[];
+        const categoryRecords = await this.prisma.category.findMany({
+          where: { name: { in: categoryArray } },
+        });
+        if (categoryRecords.length > 0) {
+          const categoryIds = categoryRecords.map(c => c.id);
+          if (categoryIds.length === 1) {
+            where.categoryId = categoryIds[0];
+          } else {
+            where.categoryId = { in: categoryIds };
+          }
+        }
+      }
+
+      // Get SLA metrics
+      const slaMetrics = await this.calculateSLAMetrics(where);
+
+      // Get compliance data
+      const totalTickets = await this.prisma.ticket.count({ where });
+      const overdueTickets = await this.getOverdueTicketsCount(where);
+      const compliance =
+        totalTickets > 0
+          ? Math.round(((totalTickets - overdueTickets) / totalTickets) * 100)
+          : 100;
+
+      // Get violations count
+      const violations = await this.prisma.ticket.count({
+        where: {
+          ...where,
+          dueDate: { lt: new Date() },
+          status: { notIn: [TicketStatus.RESOLVED, TicketStatus.CLOSED] },
+        },
+      });
+
+      return {
+        slaMetrics,
+        compliance,
+        violations,
+      };
+    } catch (error) {
+      this.logger.error('Error generating SLA report:', error);
+      throw error;
+    }
+  }
+
   async exportTicketReport(
     params: ExportTicketReportParams
   ): Promise<ExportResult> {
     try {
-      const { startDate, endDate, userId } = params;
+      this.logger.log('ExportTicketReport called with params:', params);
+      const { startDate, endDate, userId, status, priority, category } = params;
 
       const where: Prisma.TicketWhereInput = {};
 
@@ -795,6 +929,53 @@ export class ReportsService {
       if (userId) {
         where.OR = [{ requesterId: userId }, { assignedToId: userId }];
       }
+
+      if (status) {
+        // Handle comma-separated status values
+        const statusArray = status
+          .split(',')
+          .map(s => s.trim()) as TicketStatus[];
+        if (statusArray.length === 1) {
+          where.status = statusArray[0];
+        } else {
+          where.status = { in: statusArray };
+        }
+      }
+
+      if (priority) {
+        // Handle comma-separated priority values
+        const priorityArray = priority
+          .split(',')
+          .map(p => p.trim()) as TicketPriority[];
+        if (priorityArray.length === 1) {
+          where.priority = priorityArray[0];
+        } else {
+          where.priority = { in: priorityArray };
+        }
+      }
+
+      if (category) {
+        // Handle comma-separated category values
+        const categoryArray = category
+          .split(',')
+          .map(c => c.trim()) as TicketCategory[];
+        const categoryRecords = await this.prisma.category.findMany({
+          where: { name: { in: categoryArray } },
+        });
+        if (categoryRecords.length > 0) {
+          const categoryIds = categoryRecords.map(c => c.id);
+          if (categoryIds.length === 1) {
+            where.categoryId = categoryIds[0];
+          } else {
+            where.categoryId = { in: categoryIds };
+          }
+        }
+      }
+
+      this.logger.log(
+        'Querying tickets with where clause:',
+        JSON.stringify(where, null, 2)
+      );
 
       const tickets = await this.prisma.ticket.findMany({
         where,
@@ -821,8 +1002,10 @@ export class ReportsService {
         },
       });
 
-      // Convert to CSV format (simplified)
-      const csvData = tickets.map(ticket => ({
+      this.logger.log('Found tickets:', tickets.length);
+
+      // Convert to export format based on type
+      const exportData = tickets.map(ticket => ({
         ticketNumber: ticket.ticketNumber,
         title: ticket.title,
         status: ticket.status,
@@ -836,9 +1019,10 @@ export class ReportsService {
       }));
 
       return {
-        data: csvData,
+        data: exportData,
         total: tickets.length,
         exportedAt: new Date().toISOString(),
+        format: 'csv', // For now, we'll always return CSV data
       };
     } catch (error) {
       this.logger.error('Error exporting ticket report:', error);

@@ -603,6 +603,8 @@ export interface TicketStats {
   resolved: number;
   closed: number;
   overdue: number;
+  pending: number;
+  new: number;
 }
 
 export interface SlaMetrics {
@@ -651,6 +653,11 @@ export interface ReportData {
     month: string;
     tickets: number;
     resolved: number;
+  }>;
+  resolutionTimeData?: Array<{
+    month: string;
+    avg: number;
+    target: number;
   }>;
 }
 

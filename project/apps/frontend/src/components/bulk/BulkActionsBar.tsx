@@ -362,7 +362,7 @@ export function BulkActionsBar({
             label='Assign To'
             placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
             data={
-              users?.data?.data?.map((user: User) => ({
+              users?.map((user: User) => ({
                 value: user.id,
                 label: `${user.name} (${user.role})`,
               })) || []

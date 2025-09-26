@@ -76,8 +76,8 @@ export function SystemSettingsForm({
   const form = useForm<SystemSettings>({
     initialValues: {
       // General Settings
-      siteName: 'NTG Ticket System',
-      siteDescription: 'IT Support Ticket Management System',
+      siteName: 'NTG Ticket',
+      siteDescription: 'IT Support - Ticket Management System',
       timezone: 'UTC',
       language: 'en',
 
@@ -102,7 +102,7 @@ export function SystemSettingsForm({
       smtpPort: 587,
       smtpSecure: false,
       fromEmail: 'noreply@ntg-ticket.com',
-      fromName: 'NTG Ticket System',
+      fromName: 'NTG Ticket',
 
       // Security Settings
       passwordMinLength: 8,

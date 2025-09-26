@@ -116,7 +116,7 @@ export default function SignUpPage() {
         Create account
       </Title>
       <Text c='dimmed' size='sm' ta='center' mt={5} mb={30}>
-        Sign up for NTG Ticket System
+        Sign up for NTG Ticket
       </Text>
 
       <Paper withBorder shadow='md' p={30} mt={30} radius='md'>

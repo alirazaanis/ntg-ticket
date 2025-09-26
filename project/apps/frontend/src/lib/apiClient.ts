@@ -153,7 +153,7 @@ export const userApi = {
     apiClient.post<ApiResponse<User>>('/users', data),
 
   updateUser: (id: string, data: UpdateUserInput) =>
-    apiClient.put<ApiResponse<User>>(`/users/${id}`, data),
+    apiClient.patch<ApiResponse<User>>(`/users/${id}`, data),
 
   deleteUser: (id: string) => apiClient.delete(`/users/${id}`),
 
@@ -424,9 +424,9 @@ export const reportsApi = {
       }>
     >('/reports/sla', { params: filters }),
 
-  exportReport: (type: string, filters?: ReportFilters) =>
+  exportReport: (type: string, format: string, filters?: ReportFilters) =>
     apiClient.get(`/reports/export/${type}`, {
-      params: filters,
+      params: { ...filters, format },
       responseType: 'blob',
     }),
 

@@ -3,9 +3,9 @@ import { useSystemSettings } from './useSystemSettings';
 export function useSiteBranding() {
   const { data: settings } = useSystemSettings();
 
-  const siteName = settings?.siteName || 'NTG Ticket System';
+  const siteName = settings?.siteName || 'NTG Ticket';
   const siteDescription =
-    settings?.siteDescription || 'IT Support Ticket Management System';
+    settings?.siteDescription || 'IT Support - Ticket Management System';
   const timezone = settings?.timezone || 'UTC';
   const language = settings?.language || 'en';
   const dateFormat = settings?.dateFormat || 'MM/DD/YYYY';

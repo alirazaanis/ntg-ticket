@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Modal,
   Stack,
@@ -12,8 +12,6 @@ import {
   Badge,
 } from '@mantine/core';
 import { IconFilter } from '@tabler/icons-react';
-import { SearchCriteria } from '../../types/unified';
-
 interface SimpleFiltersModalProps {
   opened: boolean;
   onClose: () => void;
@@ -22,7 +20,11 @@ interface SimpleFiltersModalProps {
     priority?: string[];
     category?: string[];
   }) => void;
-  initialFilters?: SearchCriteria;
+  initialFilters?: {
+    status?: string[];
+    priority?: string[];
+    category?: string[];
+  };
 }
 
 const statusOptions = [
@@ -43,10 +45,11 @@ const priorityOptions = [
 ];
 
 const categoryOptions = [
-  { value: 'TECHNICAL', label: 'Technical' },
-  { value: 'ACCOUNT', label: 'Account' },
-  { value: 'BILLING', label: 'Billing' },
-  { value: 'GENERAL', label: 'General' },
+  { value: 'HARDWARE', label: 'Hardware' },
+  { value: 'SOFTWARE', label: 'Software' },
+  { value: 'NETWORK', label: 'Network' },
+  { value: 'ACCESS', label: 'Access' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 export function SimpleFiltersModal({
@@ -55,15 +58,16 @@ export function SimpleFiltersModal({
   onApply,
   initialFilters,
 }: SimpleFiltersModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState<string[]>(
-    initialFilters?.status || []
-  );
-  const [selectedPriority, setSelectedPriority] = useState<string[]>(
-    initialFilters?.priority || []
-  );
-  const [selectedCategory, setSelectedCategory] = useState<string[]>(
-    initialFilters?.category || []
-  );
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [selectedPriority, setSelectedPriority] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
+
+  // Update state when initialFilters change
+  useEffect(() => {
+    setSelectedStatus(initialFilters?.status || []);
+    setSelectedPriority(initialFilters?.priority || []);
+    setSelectedCategory(initialFilters?.category || []);
+  }, [initialFilters]);
 
   const handleApply = () => {
     onApply({

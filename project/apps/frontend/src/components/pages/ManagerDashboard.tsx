@@ -249,6 +249,7 @@ export function ManagerDashboard() {
                   { name: 'resolved', color: 'green.6' },
                 ]}
                 curveType='linear'
+                unit=' tickets'
               />
             </Paper>
           </Grid.Col>
@@ -264,6 +265,7 @@ export function ManagerDashboard() {
                 dataKey='category'
                 series={[{ name: 'count', color: 'blue.6' }]}
                 orientation='vertical'
+                unit=' tickets'
               />
             </Paper>
           </Grid.Col>

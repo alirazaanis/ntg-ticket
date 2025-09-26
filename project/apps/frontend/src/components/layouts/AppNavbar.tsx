@@ -116,15 +116,15 @@ export function AppNavbar() {
       badge: unreadCount,
     },
     {
-      label: 'Create Ticket',
-      icon: IconPlus,
-      href: '/tickets/create',
-      show: true,
-    },
-    {
       label: 'Reports',
       icon: IconChartBar,
       href: '/reports',
+      show: true,
+    },
+    {
+      label: 'Create Ticket',
+      icon: IconPlus,
+      href: '/tickets/create',
       show: true,
     },
   ];

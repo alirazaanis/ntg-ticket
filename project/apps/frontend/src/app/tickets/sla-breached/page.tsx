@@ -37,6 +37,7 @@ import {
 import { useBreachedSLATickets } from '../../../hooks/useTickets';
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
+import { SimpleFiltersModal } from '../../../components/forms/SimpleFiltersModal';
 
 export default function SLABreachedTicketsPage() {
   const router = useRouter();
@@ -55,6 +56,12 @@ export default function SLABreachedTicketsPage() {
     createdAt: string;
   } | null>(null);
   const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [filtersModalOpen, setFiltersModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<{
+    status?: string[];
+    priority?: string[];
+    category?: string[];
+  }>({});
 
   const { data: breachedTickets, isLoading, refetch } = useBreachedSLATickets();
 
@@ -67,7 +74,29 @@ export default function SLABreachedTicketsPage() {
         priorityFilter === 'all' || ticket.priority === priorityFilter;
       const matchesCategory =
         categoryFilter === 'all' || ticket.category?.name === categoryFilter;
-      return matchesSearch && matchesPriority && matchesCategory;
+
+      // Apply advanced filters
+      const matchesAdvancedStatus =
+        !appliedFilters.status ||
+        appliedFilters.status.length === 0 ||
+        appliedFilters.status.includes(ticket.status);
+      const matchesAdvancedPriority =
+        !appliedFilters.priority ||
+        appliedFilters.priority.length === 0 ||
+        appliedFilters.priority.includes(ticket.priority);
+      const matchesAdvancedCategory =
+        !appliedFilters.category ||
+        appliedFilters.category.length === 0 ||
+        appliedFilters.category.includes(ticket.category?.name || '');
+
+      return (
+        matchesSearch &&
+        matchesPriority &&
+        matchesCategory &&
+        matchesAdvancedStatus &&
+        matchesAdvancedPriority &&
+        matchesAdvancedCategory
+      );
     }) || [];
 
   const totalPages = Math.ceil(filteredTickets.length / pageSize);
@@ -326,15 +355,21 @@ export default function SLABreachedTicketsPage() {
             placeholder='Filter by category'
             data={[
               { value: 'all', label: 'All Categories' },
-              { value: 'TECHNICAL', label: 'Technical' },
-              { value: 'ACCOUNT', label: 'Account' },
-              { value: 'BILLING', label: 'Billing' },
+              { value: 'HARDWARE', label: 'Hardware' },
+              { value: 'SOFTWARE', label: 'Software' },
+              { value: 'NETWORK', label: 'Network' },
+              { value: 'ACCESS', label: 'Access' },
+              { value: 'OTHER', label: 'Other' },
             ]}
             value={categoryFilter}
             onChange={value => setCategoryFilter(value || 'all')}
             style={{ width: 200 }}
           />
-          <Button variant='light' leftSection={<IconFilter size={16} />}>
+          <Button
+            variant='light'
+            leftSection={<IconFilter size={16} />}
+            onClick={() => setFiltersModalOpen(true)}
+          >
             More Filters
           </Button>
         </Group>
@@ -520,6 +555,17 @@ export default function SLABreachedTicketsPage() {
           </Group>
         </Stack>
       </Modal>
+
+      {/* Advanced Filters Modal */}
+      <SimpleFiltersModal
+        opened={filtersModalOpen}
+        onClose={() => setFiltersModalOpen(false)}
+        onApply={filters => {
+          setAppliedFilters(filters);
+          setCurrentPage(1); // Reset to first page when filters change
+        }}
+        initialFilters={appliedFilters}
+      />
     </Container>
   );
 }

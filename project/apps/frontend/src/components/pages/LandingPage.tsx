@@ -66,7 +66,7 @@ export function LandingPage() {
         <Center py='xl'>
           <Stack align='center' gap='md'>
             <Title order={1} size='3rem' ta='center'>
-              NTG Ticket System
+              NTG Ticket
             </Title>
             <Text size='xl' c='dimmed' ta='center' maw={600}>
               Streamline your IT support operations with our comprehensive
@@ -96,7 +96,7 @@ export function LandingPage() {
         {/* Features Section */}
         <div>
           <Title order={2} ta='center' mb='xl'>
-            Why Choose NTG Ticket System?
+            Why Choose NTG Ticket?
           </Title>
           <Grid>
             {features.map(feature => (
@@ -179,8 +179,8 @@ export function LandingPage() {
               Ready to Get Started?
             </Title>
             <Text c='dimmed' ta='center' maw={500}>
-              Join thousands of teams already using NTG Ticket System to improve
-              their support operations
+              Join thousands of teams already using NTG Ticket to improve their
+              support operations
             </Text>
             <Group mt='md'>
               <Button

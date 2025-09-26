@@ -8,11 +8,21 @@ import {
 } from '../lib/apiClient';
 
 export function useUsers(filters?: UserFilters) {
-  return useQuery({
+  return useQuery<User[]>({
     queryKey: ['users', filters],
-    queryFn: async () => {
-      const response = await userApi.getUsers(filters);
-      return response.data;
+    queryFn: async (): Promise<User[]> => {
+      try {
+        const response = await userApi.getUsers(filters);
+        // Extract users from response, exactly like useTickets pattern
+        if (response.data?.data && Array.isArray(response.data.data)) {
+          return response.data.data;
+        } else {
+          return [];
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+      }
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
   });

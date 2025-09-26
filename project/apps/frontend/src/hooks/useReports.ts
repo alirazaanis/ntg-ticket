@@ -66,12 +66,14 @@ export function useExportReport() {
   return useMutation({
     mutationFn: async ({
       type,
+      format,
       filters,
     }: {
       type: string;
+      format: string;
       filters?: ReportFilters;
     }) => {
-      const response = await reportsApi.exportReport(type, filters);
+      const response = await reportsApi.exportReport(type, format, filters);
       return response.data as Blob;
     },
   });

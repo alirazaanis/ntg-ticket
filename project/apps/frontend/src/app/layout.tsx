@@ -7,8 +7,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'NTG Ticket System',
-  description: 'IT Support Ticket Management System',
+  title: 'NTG Ticket',
+  description: 'IT Support - Ticket Management System',
 };
 
 export default function RootLayout({

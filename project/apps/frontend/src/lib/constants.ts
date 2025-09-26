@@ -1,8 +1,8 @@
 // Application Constants
 export const APP_CONFIG = {
-  name: 'NTG Ticket System',
+  name: 'NTG Ticket',
   version: '1.0.0',
-  description: 'IT Support Ticket Management System',
+  description: 'IT Support - Ticket Management System',
   author: 'NTG Development Team',
   supportEmail: 'support@ntg-ticket.com',
   website: 'https://ntg-ticket.com',

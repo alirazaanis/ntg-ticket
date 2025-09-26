@@ -63,7 +63,7 @@ export default function UsersPage() {
   const { data: usersData, isLoading, error } = useUsers(filters);
   const deleteUserMutation = useDeleteUser();
 
-  const users = usersData?.data || [];
+  const users = usersData || [];
 
   const handleCreateUser = () => {
     router.push('/users/create');
@@ -272,12 +272,13 @@ export default function UsersPage() {
           </Card>
         )}
 
-      {usersData?.pagination && usersData.pagination.totalPages > 1 && (
+      {/* Pagination temporarily disabled - need to implement separate hook for paginated users */}
+      {false && (
         <Group justify='center' mt='xl'>
           <Pagination
             value={currentPage}
             onChange={setCurrentPage}
-            total={usersData.pagination.totalPages}
+            total={1} // Pagination disabled
           />
         </Group>
       )}

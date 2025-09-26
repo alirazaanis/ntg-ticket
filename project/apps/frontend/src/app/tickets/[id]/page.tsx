@@ -720,7 +720,7 @@ export default function TicketDetailPage() {
             label='Assign To'
             placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
             data={
-              users?.data?.data?.map(user => ({
+              users?.map(user => ({
                 value: user.id,
                 label: `${user.name} (${user.role})`,
               })) || []
