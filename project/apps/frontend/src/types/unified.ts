@@ -138,8 +138,8 @@ export interface Ticket {
 export interface CreateTicketInput {
   title: string;
   description: string;
-  category: TicketCategory;
-  subcategory: string;
+  category: string; // Category ID
+  subcategory: string; // Subcategory ID
   priority?: TicketPriority;
   impact?: TicketImpact;
   urgency?: TicketUrgency;
@@ -449,8 +449,8 @@ export interface TicketFormData {
 export interface DynamicTicketFormValues {
   title: string;
   description: string;
-  category: TicketCategory;
-  subcategory: string;
+  category: string; // Category ID
+  subcategory: string; // Subcategory ID
   priority: TicketPriority;
   impact: TicketImpact;
   urgency: TicketUrgency;
@@ -559,10 +559,11 @@ export interface SearchCriteria {
 
 // ===== BULK OPERATIONS TYPES =====
 export type BulkUpdateData =
-  | { status: string; note?: string }
+  | { status: string; resolution?: string }
   | { assignedToId: string }
   | { priority: TicketPriority }
-  | Record<string, never>; // for delete and notify operations
+  | { message: string } // for notify operations
+  | Record<string, never>; // for delete operations
 
 // ===== FORM DATA TYPES =====
 export interface EmailTemplateFormData {

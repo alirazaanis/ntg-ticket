@@ -10,7 +10,6 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  TicketCategory,
   TicketPriority,
   TicketImpact,
   TicketUrgency,
@@ -42,12 +41,12 @@ export class CreateTicketDto {
   description: string;
 
   @ApiProperty({
-    description: 'Ticket category',
-    enum: TicketCategory,
-    example: TicketCategory.SOFTWARE,
+    description: 'Ticket category ID',
+    example: 'f31997ca-426e-476f-a27e-c532e6f0fb85',
   })
-  @IsEnum(TicketCategory)
-  category: TicketCategory;
+  @IsString()
+  @IsNotEmpty()
+  category: string;
 
   @ApiProperty({
     description: 'Ticket subcategory',
@@ -126,4 +125,15 @@ export class CreateTicketDto {
   @IsObject()
   @IsOptional()
   customFields?: Record<string, string | number | boolean>;
+
+  @ApiProperty({
+    description: 'File attachments',
+    type: 'array',
+    items: { type: 'string' },
+    required: false,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  attachments?: string[];
 }

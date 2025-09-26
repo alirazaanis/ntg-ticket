@@ -77,7 +77,8 @@ export function useDynamicFields(categoryName: string) {
     queryKey: ['dynamic-fields', categoryName],
     queryFn: async () => {
       const response = await categoriesApi.getDynamicFields(categoryName);
-      return response.data.data;
+      // Ensure we always return an array
+      return Array.isArray(response.data.data) ? response.data.data : [];
     },
     enabled: !!categoryName,
     staleTime: 10 * 60 * 1000, // 10 minutes

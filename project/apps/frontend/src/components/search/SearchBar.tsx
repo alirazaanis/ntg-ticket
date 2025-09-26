@@ -21,6 +21,7 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onAdvancedSearch: () => void;
+  onSimpleFilters?: () => void;
   placeholder?: string;
   showFilters?: boolean;
   recentSearches?: string[];
@@ -31,6 +32,7 @@ export function SearchBar({
   value,
   onChange,
   onAdvancedSearch,
+  onSimpleFilters,
   placeholder = 'Search tickets...',
   showFilters = true,
   recentSearches = [],
@@ -80,7 +82,7 @@ export function SearchBar({
           <Button
             variant='light'
             leftSection={<IconFilter size={16} />}
-            onClick={onAdvancedSearch}
+            onClick={onSimpleFilters || onAdvancedSearch}
           >
             Filters
           </Button>

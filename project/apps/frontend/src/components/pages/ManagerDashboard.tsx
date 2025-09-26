@@ -50,7 +50,7 @@ export function ManagerDashboard() {
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: reportData } = useTicketReport();
 
-  const allTickets = tickets?.data || [];
+  const allTickets = tickets || [];
   const openTickets = allTickets?.filter((ticket: Ticket) =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );

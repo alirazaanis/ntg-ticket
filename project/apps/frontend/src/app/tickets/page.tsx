@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Title,
@@ -32,7 +32,12 @@ import {
   IconAlertCircle,
   IconX,
 } from '@tabler/icons-react';
-import { useTickets, useDeleteTicket } from '../../hooks/useTickets';
+import {
+  useTicketsWithPagination,
+  useAllTicketsForCounting,
+  useTotalTicketsCount,
+  useDeleteTicket,
+} from '../../hooks/useTickets';
 import { useAuthStore } from '../../stores/useAuthStore';
 import {
   TicketStatus,
@@ -43,6 +48,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
 import { AdvancedSearchModal } from '../../components/search/AdvancedSearchModal';
+import { SimpleFiltersModal } from '../../components/forms/SimpleFiltersModal';
 import { SearchBar } from '../../components/search/SearchBar';
 import { useSearch } from '../../hooks/useSearch';
 import { BulkActionsBar } from '../../components/bulk/BulkActionsBar';
@@ -74,6 +80,7 @@ export default function TicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+  const [simpleFiltersOpen, setSimpleFiltersOpen] = useState(false);
 
   const {
     filters: searchFilters,
@@ -94,13 +101,54 @@ export default function TicketsPage() {
     isAllSelected,
     isIndeterminate,
     bulkUpdate,
+    isProcessing,
   } = useBulkOperations();
 
+  const searchQuery = getSearchQuery() as TicketFilters;
+  const ticketsQuery = {
+    ...searchQuery,
+    page: currentPage,
+    limit: 2, // 2 tickets per page
+    // Add activeTab filter for backend filtering
+    ...(activeTab === 'my' && { requesterId: [user?.id] }),
+    ...(activeTab === 'assigned' && { assignedToId: [user?.id] }),
+    ...(activeTab === 'overdue' && {
+      status: ['OPEN', 'IN_PROGRESS', 'ON_HOLD'] as TicketStatus[],
+    }),
+  };
+
+  // Reset to page 1 when search filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery.search, activeTab]);
+
+  // Clear selection when switching tabs
+  React.useEffect(() => {
+    clearSelection();
+  }, [activeTab, clearSelection]);
+
+  // Clear selection when switching pages
+  React.useEffect(() => {
+    clearSelection();
+  }, [currentPage, clearSelection]);
+
   const {
-    data: tickets,
+    data: ticketsData,
     isLoading,
     error,
-  } = useTickets(getSearchQuery() as TicketFilters);
+  } = useTicketsWithPagination(ticketsQuery);
+
+  // Get all tickets for counting (without pagination)
+  const { data: allTicketsForCounting } = useAllTicketsForCounting(searchQuery);
+
+  // Get total count of all tickets (no filters)
+  const { data: totalTicketsCount } = useTotalTicketsCount();
+
+  // Extract tickets and pagination from the response
+  const tickets = ticketsData?.tickets || [];
+  const pagination = ticketsData?.pagination;
+  const allTickets = allTicketsForCounting || [];
+
   const deleteTicketMutation = useDeleteTicket();
 
   const handleCreateTicket = () => {
@@ -133,18 +181,8 @@ export default function TicketsPage() {
     }
   };
 
-  const filteredTickets =
-    tickets?.data?.filter((ticket: Ticket) => {
-      if (activeTab === 'my' && ticket.requester.id !== user?.id) return false;
-      if (activeTab === 'assigned' && ticket.assignedTo?.id !== user?.id)
-        return false;
-      if (
-        activeTab === 'overdue' &&
-        !['OPEN', 'IN_PROGRESS', 'ON_HOLD'].includes(ticket.status)
-      )
-        return false;
-      return true;
-    }) || [];
+  // Backend handles filtering and pagination
+  const filteredTickets = tickets;
 
   if (isLoading) {
     return (
@@ -184,10 +222,25 @@ export default function TicketsPage() {
 
       <Tabs value={activeTab} onChange={setActiveTab} mb='md'>
         <Tabs.List>
-          <Tabs.Tab value='all'>All Tickets</Tabs.Tab>
-          <Tabs.Tab value='my'>My Tickets</Tabs.Tab>
-          <Tabs.Tab value='assigned'>Assigned to Me</Tabs.Tab>
-          <Tabs.Tab value='overdue'>Overdue</Tabs.Tab>
+          <Tabs.Tab value='all'>
+            All Tickets ({totalTicketsCount || 0})
+          </Tabs.Tab>
+          <Tabs.Tab value='my'>
+            My Tickets (
+            {allTickets?.filter(t => t.requester?.id === user?.id).length || 0})
+          </Tabs.Tab>
+          <Tabs.Tab value='assigned'>
+            Assigned to Me (
+            {allTickets?.filter(t => t.assignedTo?.id === user?.id).length || 0}
+            )
+          </Tabs.Tab>
+          <Tabs.Tab value='overdue'>
+            Overdue (
+            {allTickets?.filter(t =>
+              ['OPEN', 'IN_PROGRESS', 'ON_HOLD'].includes(t.status)
+            ).length || 0}
+            )
+          </Tabs.Tab>
         </Tabs.List>
       </Tabs>
 
@@ -197,6 +250,7 @@ export default function TicketsPage() {
             value={searchFilters.search}
             onChange={value => updateFilters({ search: value })}
             onAdvancedSearch={() => setAdvancedSearchOpen(true)}
+            onSimpleFilters={() => setSimpleFiltersOpen(true)}
             recentSearches={recentSearches}
             onRecentSearchClick={addRecentSearch}
           />
@@ -229,7 +283,15 @@ export default function TicketsPage() {
         selectedTickets={selectedTickets}
         onClearSelection={clearSelection}
         onBulkUpdate={bulkUpdate}
-        totalTickets={filteredTickets.length}
+        totalTickets={totalTicketsCount || 0}
+        isProcessing={isProcessing}
+        selectedTicketsData={filteredTickets
+          .filter(ticket => selectedTickets.includes(ticket.id))
+          .map(ticket => ({
+            id: ticket.id,
+            status: ticket.status as TicketStatus,
+            ticketNumber: ticket.ticketNumber,
+          }))}
       />
 
       {filteredTickets.length > 0 && (
@@ -373,12 +435,12 @@ export default function TicketsPage() {
         </Card>
       )}
 
-      {filteredTickets.length > 0 && (
+      {(pagination?.totalPages || 0) > 1 && (
         <Group justify='center' mt='xl'>
           <Pagination
             value={currentPage}
             onChange={setCurrentPage}
-            total={Math.ceil((tickets?.data?.length || 0) / 10)}
+            total={pagination?.totalPages || 1}
           />
         </Group>
       )}
@@ -414,6 +476,15 @@ export default function TicketsPage() {
         onSearch={filters => {
           updateFilters(filters);
           addRecentSearch(filters.search);
+        }}
+        initialFilters={searchFilters}
+      />
+
+      <SimpleFiltersModal
+        opened={simpleFiltersOpen}
+        onClose={() => setSimpleFiltersOpen(false)}
+        onApply={filters => {
+          updateFilters(filters);
         }}
         initialFilters={searchFilters}
       />

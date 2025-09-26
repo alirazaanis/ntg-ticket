@@ -403,7 +403,7 @@ export function AdminPanel() {
                 </Center>
               ) : (
                 <Grid>
-                  {users?.data?.map((user: User) => (
+                  {users?.data?.data?.map((user: User) => (
                     <Grid.Col span={6} key={user.id}>
                       <Card>
                         <Group justify='space-between'>

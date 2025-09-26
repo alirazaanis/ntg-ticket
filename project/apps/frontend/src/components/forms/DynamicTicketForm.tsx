@@ -23,7 +23,6 @@ import { RichTextEditorComponent } from '../ui/RichTextEditor';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 import {
-  TicketCategory,
   TicketPriority,
   TicketImpact,
   TicketUrgency,
@@ -35,6 +34,7 @@ import {
   Subcategory,
 } from '../../types/unified';
 import {
+  useCategories,
   useDynamicFields as useCategoryDynamicFields,
   useSubcategories as useCategorySubcategories,
 } from '../../hooks/useCategories';
@@ -52,18 +52,23 @@ export function DynamicTicketForm({
   loading = false,
   initialValues,
 }: DynamicTicketFormProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    initialValues?.category || ''
+  );
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string>('');
   const [attachments, setAttachments] = useState<FileWithPath[]>([]);
 
   // Use hooks for API calls
+  const { data: categories = [], isLoading: loadingCategories } =
+    useCategories();
   const {
     data: dynamicFields = [],
     isLoading: loadingFields,
     error: dynamicFieldsError,
-  } = useCategoryDynamicFields(selectedCategory);
+  } = useCategoryDynamicFields(selectedCategoryName);
 
   const { data: subcategories = [], error: subcategoriesError } =
-    useCategorySubcategories(selectedCategory);
+    useCategorySubcategories(selectedCategoryName);
 
   const error = dynamicFieldsError || subcategoriesError;
 
@@ -71,7 +76,7 @@ export function DynamicTicketForm({
     initialValues: {
       title: '',
       description: '',
-      category: TicketCategory.SOFTWARE,
+      category: '', // Will be set when categories are loaded
       subcategory: '',
       priority: TicketPriority.MEDIUM,
       impact: TicketImpact.MODERATE,
@@ -81,16 +86,40 @@ export function DynamicTicketForm({
       ...initialValues,
     },
     validate: {
-      title: value => (!value ? 'Title is required' : null),
-      description: value => (!value ? 'Description is required' : null),
+      title: value => {
+        if (!value) return 'Title is required';
+        if (value.length < 5) return 'Title must be at least 5 characters';
+        if (value.length > 200) return 'Title must be less than 200 characters';
+        return null;
+      },
+      description: value => {
+        if (!value) return 'Description is required';
+        // Strip HTML tags for length validation
+        const textContent = value.replace(/<[^>]*>/g, '');
+        if (textContent.length < 10)
+          return 'Description must be at least 10 characters';
+        return null;
+      },
       category: value => (!value ? 'Category is required' : null),
       subcategory: value => (!value ? 'Subcategory is required' : null),
     },
   });
 
+  // Sync selectedCategory with form's category value
+  useEffect(() => {
+    if (form.values.category && form.values.category !== selectedCategory) {
+      setSelectedCategory(form.values.category);
+      // Find the category name for API calls
+      const category = categories.find(cat => cat.id === form.values.category);
+      if (category) {
+        setSelectedCategoryName(category.name);
+      }
+    }
+  }, [form.values.category, selectedCategory, categories]);
+
   // Update form validation when dynamic fields change
   useEffect(() => {
-    if (dynamicFields.length > 0) {
+    if (Array.isArray(dynamicFields) && dynamicFields.length > 0) {
       const dynamicValidation: DynamicValidationRules = {};
       dynamicFields.forEach((field: DynamicField) => {
         if (field.required) {
@@ -104,7 +133,12 @@ export function DynamicTicketForm({
 
   const handleCategoryChange = (value: string | null) => {
     if (value) {
-      setSelectedCategory(value);
+      setSelectedCategory(value); // Store category ID
+      // Find the category name for API calls
+      const category = categories.find(cat => cat.id === value);
+      if (category) {
+        setSelectedCategoryName(category.name);
+      }
       form.setFieldValue('subcategory', ''); // Reset subcategory
     }
   };
@@ -112,11 +146,15 @@ export function DynamicTicketForm({
   const handleSubmit = (values: DynamicTicketFormValues) => {
     // Filter out empty dynamic field values
     const filteredValues: DynamicTicketFormValues = { ...values };
-    dynamicFields.forEach((field: DynamicField) => {
-      if (!filteredValues[field.name]) {
-        delete filteredValues[field.name];
-      }
-    });
+
+    // Ensure dynamicFields is an array before calling forEach
+    if (Array.isArray(dynamicFields)) {
+      dynamicFields.forEach((field: DynamicField) => {
+        if (!filteredValues[field.name]) {
+          delete filteredValues[field.name];
+        }
+      });
+    }
 
     // Add attachments to the form data
     filteredValues.attachments = attachments;
@@ -215,12 +253,16 @@ export function DynamicTicketForm({
                   label='Category'
                   placeholder='Select category'
                   required
-                  data={Object.values(TicketCategory).map(cat => ({
-                    value: cat,
-                    label: cat.replace('_', ' '),
+                  data={categories.map(cat => ({
+                    value: cat.id,
+                    label: cat.name.replace('_', ' '),
                   }))}
-                  value={selectedCategory}
-                  onChange={handleCategoryChange}
+                  disabled={loadingCategories}
+                  {...form.getInputProps('category')}
+                  onChange={value => {
+                    handleCategoryChange(value);
+                    form.setFieldValue('category', value as string);
+                  }}
                 />
               </Grid.Col>
 
@@ -288,7 +330,7 @@ export function DynamicTicketForm({
               </Center>
             )}
 
-            {dynamicFields.length > 0 && (
+            {Array.isArray(dynamicFields) && dynamicFields.length > 0 && (
               <>
                 <Divider my='md' />
                 <Text size='lg' fw={500}>

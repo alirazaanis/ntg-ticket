@@ -12,7 +12,7 @@ export function useUsers(filters?: UserFilters) {
     queryKey: ['users', filters],
     queryFn: async () => {
       const response = await userApi.getUsers(filters);
-      return response.data.data;
+      return response.data;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
   });

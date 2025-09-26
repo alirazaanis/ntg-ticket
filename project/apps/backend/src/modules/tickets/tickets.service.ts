@@ -32,6 +32,8 @@ interface TicketFilters {
   priority?: string[];
   category?: string[];
   assignedTo?: string[];
+  assignedToId?: string[];
+  requesterId?: string[];
   search?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -110,7 +112,14 @@ export class TicketsService {
     userId: string,
     userRole: string
   ) {
-    this.logger.log(`Creating ticket for user ${userId}`, 'TicketsService');
+    this.logger.log(
+      `Creating ticket for user ${userId} with role ${userRole}`,
+      'TicketsService'
+    );
+    this.logger.log(
+      `Ticket data: ${JSON.stringify(createTicketDto, null, 2)}`,
+      'TicketsService'
+    );
 
     // Validate user role can create tickets
     if (
@@ -118,28 +127,45 @@ export class TicketsService {
         userRole
       )
     ) {
+      this.logger.error(`Invalid user role: ${userRole}`, 'TicketsService');
       throw new BadRequestException('Invalid user role for ticket creation');
     }
 
     // Validate requester exists
+    this.logger.log(`Looking up user with ID: ${userId}`, 'TicketsService');
     const requester = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!requester) {
+      this.logger.error(`User not found with ID: ${userId}`, 'TicketsService');
       throw new NotFoundException('User not found');
     }
+    this.logger.log(`Found user: ${requester.email}`, 'TicketsService');
 
     // Validate category exists
+    this.logger.log(
+      `Looking up category with ID: ${createTicketDto.category}`,
+      'TicketsService'
+    );
     const category = await this.prisma.category.findUnique({
       where: { id: createTicketDto.category },
     });
 
     if (!category) {
+      this.logger.error(
+        `Category not found with ID: ${createTicketDto.category}`,
+        'TicketsService'
+      );
       throw new NotFoundException('Category not found');
     }
+    this.logger.log(`Found category: ${category.name}`, 'TicketsService');
 
     // Validate subcategory exists and belongs to category
+    this.logger.log(
+      `Looking up subcategory with ID: ${createTicketDto.subcategory} for category: ${createTicketDto.category}`,
+      'TicketsService'
+    );
     const subcategory = await this.prisma.subcategory.findUnique({
       where: {
         id: createTicketDto.subcategory,
@@ -148,10 +174,15 @@ export class TicketsService {
     });
 
     if (!subcategory) {
+      this.logger.error(
+        `Subcategory not found with ID: ${createTicketDto.subcategory} for category: ${createTicketDto.category}`,
+        'TicketsService'
+      );
       throw new NotFoundException(
         'Subcategory not found or does not belong to category'
       );
     }
+    this.logger.log(`Found subcategory: ${subcategory.name}`, 'TicketsService');
 
     // Generate ticket number
     const ticketNumber = await this.generateTicketNumber();
@@ -162,16 +193,13 @@ export class TicketsService {
       createTicketDto.priority
     );
 
-    // Find category and subcategory by name
-    const ticketCategory = await this.prisma.category.findFirst({
-      where: { name: createTicketDto.category },
+    // Find category and subcategory by ID
+    const ticketCategory = await this.prisma.category.findUnique({
+      where: { id: createTicketDto.category },
     });
 
-    const ticketSubcategory = await this.prisma.subcategory.findFirst({
-      where: {
-        name: createTicketDto.subcategory,
-        categoryId: ticketCategory?.id,
-      },
+    const ticketSubcategory = await this.prisma.subcategory.findUnique({
+      where: { id: createTicketDto.subcategory },
     });
 
     if (!ticketCategory || !ticketSubcategory) {
@@ -312,6 +340,14 @@ export class TicketsService {
 
     if (filters.assignedTo && filters.assignedTo.length > 0) {
       where.assignedToId = { in: filters.assignedTo };
+    }
+
+    if (filters.assignedToId && filters.assignedToId.length > 0) {
+      where.assignedToId = { in: filters.assignedToId };
+    }
+
+    if (filters.requesterId && filters.requesterId.length > 0) {
+      where.requesterId = { in: filters.requesterId };
     }
 
     if (filters.search) {

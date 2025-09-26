@@ -183,20 +183,22 @@ export const ticketApi = {
     apiClient.post<ApiResponse<Ticket>>('/tickets', data),
 
   updateTicket: (id: string, data: UpdateTicketInput) =>
-    apiClient.put<ApiResponse<Ticket>>(`/tickets/${id}`, data),
+    apiClient.patch<ApiResponse<Ticket>>(`/tickets/${id}`, data),
 
   deleteTicket: (id: string) => apiClient.delete(`/tickets/${id}`),
 
   assignTicket: (id: string, assignedToId: string) =>
-    apiClient.put<ApiResponse<Ticket>>(`/tickets/${id}/assign`, {
+    apiClient.patch<ApiResponse<Ticket>>(`/tickets/${id}/assign`, {
       assignedToId,
     }),
 
-  updateStatus: (id: string, status: string, note?: string) =>
-    apiClient.put<ApiResponse<Ticket>>(`/tickets/${id}/status`, {
-      status,
-      note,
-    }),
+  updateStatus: (id: string, status: string, resolution?: string) => {
+    const requestData = { status, resolution };
+    return apiClient.patch<ApiResponse<Ticket>>(
+      `/tickets/${id}/status`,
+      requestData
+    );
+  },
 
   addComment: (data: CreateCommentInput) =>
     apiClient.post<ApiResponse<Comment>>('/comments', data),
@@ -462,6 +464,15 @@ export const notificationsApi = {
   markAllAsRead: () => apiClient.put('/notifications/read-all'),
 
   deleteNotification: (id: string) => apiClient.delete(`/notifications/${id}`),
+
+  sendBulkNotification: (ticketIds: string[], message: string) =>
+    apiClient.post<ApiResponse<{ sent: number; failed: number }>>(
+      '/notifications/bulk',
+      {
+        ticketIds,
+        message,
+      }
+    ),
 };
 
 // ===== AUTH API =====

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { notifications } from '@mantine/notifications';
 import { DynamicTicketForm } from '../../../components/forms/DynamicTicketForm';
 import { DynamicTicketFormValues } from '../../../types/unified';
@@ -9,7 +10,19 @@ import { ticketApi, CreateTicketInput } from '../../../lib/apiClient';
 
 export default function CreateTicketPage() {
   const router = useRouter();
+  const { status } = useSession();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      notifications.show({
+        title: 'Authentication Required',
+        message: 'Please log in to create a ticket',
+        color: 'red',
+      });
+      router.push('/auth/signin');
+    }
+  }, [status, router]);
 
   const handleSubmit = async (values: DynamicTicketFormValues) => {
     setLoading(true);
@@ -19,8 +32,8 @@ export default function CreateTicketPage() {
       const createTicketData: CreateTicketInput = {
         title: values.title,
         description: values.description,
-        category: values.category as CreateTicketInput['category'],
-        subcategory: values.subcategory,
+        category: values.category, // Now sending category ID
+        subcategory: values.subcategory, // Now sending subcategory ID
         priority: values.priority as CreateTicketInput['priority'],
         impact: values.impact as CreateTicketInput['impact'],
         urgency: values.urgency as CreateTicketInput['urgency'],
@@ -72,6 +85,14 @@ export default function CreateTicketPage() {
       setLoading(false);
     }
   };
+
+  if (status === 'loading') {
+    return <div>Loading...</div>;
+  }
+
+  if (status === 'unauthenticated') {
+    return <div>Redirecting to login...</div>;
+  }
 
   return <DynamicTicketForm onSubmit={handleSubmit} loading={loading} />;
 }

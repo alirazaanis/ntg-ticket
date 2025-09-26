@@ -579,6 +579,12 @@ async function main() {
     { key: 'auto_escalation_enabled', value: 'true' },
     { key: 'escalation_interval_hours', value: '24' },
     { key: 'email_notifications_enabled', value: 'true' },
+    { key: 'smtp_host', value: 'smtp.gmail.com' },
+    { key: 'smtp_port', value: '587' },
+    { key: 'smtp_username', value: '' },
+    { key: 'smtp_password', value: '' },
+    { key: 'from_email', value: 'noreply@ntg-ticket.com' },
+    { key: 'from_name', value: 'NTG Ticket' },
     { key: 'websocket_enabled', value: 'true' },
     { key: 'file_upload_enabled', value: 'true' },
     {

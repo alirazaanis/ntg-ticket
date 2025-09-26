@@ -48,9 +48,7 @@ export function EndUserDashboard() {
   const { data: notifications } = useNotifications();
 
   const myTickets =
-    tickets?.data?.filter(
-      (ticket: Ticket) => ticket.requester.id === user?.id
-    ) || [];
+    tickets?.filter((ticket: Ticket) => ticket.requester.id === user?.id) || [];
   const openTickets = myTickets.filter((ticket: Ticket) =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );

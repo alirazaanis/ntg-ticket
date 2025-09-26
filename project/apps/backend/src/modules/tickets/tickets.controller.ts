@@ -168,28 +168,6 @@ export class TicketsController {
     };
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update ticket' })
-  @ApiResponse({ status: 200, description: 'Ticket updated successfully' })
-  @ApiResponse({ status: 404, description: 'Ticket not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateTicketDto: UpdateTicketDto,
-    @Request() req
-  ) {
-    const ticket = await this.ticketsService.update(
-      id,
-      updateTicketDto,
-      req.user.id,
-      req.user.role
-    );
-    return {
-      data: ticket,
-      message: 'Ticket updated successfully',
-    };
-  }
-
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update ticket status' })
   @ApiResponse({
@@ -237,6 +215,28 @@ export class TicketsController {
     return {
       data: ticket,
       message: 'Ticket assigned successfully',
+    };
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update ticket' })
+  @ApiResponse({ status: 200, description: 'Ticket updated successfully' })
+  @ApiResponse({ status: 404, description: 'Ticket not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateTicketDto: UpdateTicketDto,
+    @Request() req
+  ) {
+    const ticket = await this.ticketsService.update(
+      id,
+      updateTicketDto,
+      req.user.id,
+      req.user.role
+    );
+    return {
+      data: ticket,
+      message: 'Ticket updated successfully',
     };
   }
 

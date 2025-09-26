@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationType } from '@prisma/client';
 import { EmailNotificationService } from '../../common/email/email-notification.service';
+import { WebSocketService } from '../websocket/websocket.service';
 
 @Injectable()
 export class NotificationsService {
@@ -9,7 +10,8 @@ export class NotificationsService {
 
   constructor(
     private prisma: PrismaService,
-    private emailNotificationService: EmailNotificationService
+    private emailNotificationService: EmailNotificationService,
+    private webSocketService: WebSocketService
   ) {}
 
   async create(notificationData: {
@@ -212,6 +214,69 @@ export class NotificationsService {
     } catch (error) {
       this.logger.error('Error sending email notification:', error);
       // Don't throw error to avoid breaking notification creation
+    }
+  }
+
+  async sendBulkNotification(ticketIds: string[], message: string) {
+    let sent = 0;
+    let failed = 0;
+
+    try {
+      // Get tickets with their requesters
+      const tickets = await this.prisma.ticket.findMany({
+        where: {
+          id: { in: ticketIds },
+        },
+        include: {
+          requester: true,
+        },
+      });
+
+      // Send notification to each ticket's requester
+      for (const ticket of tickets) {
+        try {
+          if (ticket.requester) {
+            // Create notification in database
+            await this.prisma.notification.create({
+              data: {
+                userId: ticket.requester.id,
+                ticketId: ticket.id,
+                type: 'TICKET_STATUS_CHANGED',
+                title: 'Message from Support',
+                message: message,
+              },
+            });
+
+            // Send real-time notification via WebSocket
+            this.webSocketService.notifyUser(ticket.requester.id, {
+              type: 'NOTIFICATION',
+              title: 'Message from Support',
+              message: message,
+              data: {
+                ticketId: ticket.id,
+                ticketNumber: ticket.ticketNumber,
+              },
+            });
+
+            sent++;
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to send notification for ticket ${ticket.id}:`,
+            error
+          );
+          failed++;
+        }
+      }
+
+      this.logger.log(
+        `Bulk notification completed: ${sent} sent, ${failed} failed`
+      );
+
+      return { sent, failed };
+    } catch (error) {
+      this.logger.error('Error in bulk notification:', error);
+      throw error;
     }
   }
 }

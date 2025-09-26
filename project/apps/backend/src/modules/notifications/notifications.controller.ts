@@ -2,8 +2,10 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
   Param,
   Query,
+  Body,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -69,5 +71,39 @@ export class NotificationsController {
   async markAllAsRead(@Request() req) {
     const result = await this.notificationsService.markAllAsRead(req.user.id);
     return result;
+  }
+
+  @Post('bulk')
+  @ApiOperation({ summary: 'Send bulk notifications to ticket requesters' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk notifications sent successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'object',
+          properties: {
+            sent: { type: 'number' },
+            failed: { type: 'number' },
+          },
+        },
+        message: { type: 'string' },
+      },
+    },
+  })
+  async sendBulkNotification(
+    @Body() body: { ticketIds: string[]; message: string },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @Request() req
+  ) {
+    const result = await this.notificationsService.sendBulkNotification(
+      body.ticketIds,
+      body.message
+    );
+    return {
+      data: result,
+      message: 'Bulk notifications sent successfully',
+    };
   }
 }

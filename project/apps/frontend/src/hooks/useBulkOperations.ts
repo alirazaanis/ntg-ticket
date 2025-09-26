@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react';
 import { notifications } from '@mantine/notifications';
-import { ticketApi } from '../lib/apiClient';
+import { useQueryClient } from '@tanstack/react-query';
+import { ticketApi, notificationsApi } from '../lib/apiClient';
 import { BulkUpdateData, TicketPriority } from '../types/unified';
 
 export const useBulkOperations = () => {
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const queryClient = useQueryClient();
 
   const selectTicket = useCallback((ticketId: string) => {
     setSelectedTickets(prev => [...prev, ticketId]);
@@ -70,8 +72,8 @@ export const useBulkOperations = () => {
             case 'status':
               return ticketApi.updateStatus(
                 ticketId,
-                (data as { status: string; note?: string }).status,
-                (data as { status: string; note?: string }).note
+                (data as { status: string; resolution?: string }).status,
+                (data as { status: string; resolution?: string }).resolution
               );
 
             case 'assign':
@@ -89,10 +91,10 @@ export const useBulkOperations = () => {
               return ticketApi.deleteTicket(ticketId);
 
             case 'notify':
-              // This would need to be implemented in the backend
-              return ticketApi.updateTicket(ticketId, {
-                // Add notification logic here
-              });
+              return notificationsApi.sendBulkNotification(
+                selectedTickets,
+                (data as { message: string }).message
+              );
 
             default:
               throw new Error(`Unknown bulk action: ${action}`);
@@ -123,6 +125,22 @@ export const useBulkOperations = () => {
           });
         }
 
+        // Invalidate queries to refresh the ticket list
+        if (successful > 0) {
+          queryClient.invalidateQueries({ queryKey: ['tickets'] });
+          queryClient.invalidateQueries({
+            queryKey: ['tickets-with-pagination'],
+          });
+          queryClient.invalidateQueries({ queryKey: ['all-tickets-counting'] });
+          queryClient.invalidateQueries({ queryKey: ['total-tickets-count'] });
+          queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
+
+          // Invalidate individual ticket queries for updated tickets
+          selectedTickets.forEach(ticketId => {
+            queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+          });
+        }
+
         // Clear selection after successful operations
         if (action !== 'notify') {
           clearSelection();
@@ -141,7 +159,7 @@ export const useBulkOperations = () => {
         setIsProcessing(false);
       }
     },
-    [selectedTickets, clearSelection]
+    [selectedTickets, clearSelection, queryClient]
   );
 
   return {

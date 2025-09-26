@@ -59,7 +59,7 @@ export function AdminDashboard() {
   const { data: systemMetrics } = useSystemMetrics();
   const { data: userDistribution } = useUserDistribution();
 
-  const allTickets = tickets?.data || [];
+  const allTickets = tickets || [];
 
   const stats = [
     {
@@ -70,7 +70,7 @@ export function AdminDashboard() {
     },
     {
       title: 'Active Users',
-      value: usersData?.data?.filter((u: User) => u.isActive).length || 0,
+      value: usersData?.data?.data?.filter((u: User) => u.isActive).length || 0,
       icon: IconUsers,
       color: 'green',
     },
@@ -349,7 +349,7 @@ export function AdminDashboard() {
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {usersData?.data?.slice(0, 10).map((user: User) => (
+                    {usersData?.data?.data?.slice(0, 10).map((user: User) => (
                       <Table.Tr key={user.id}>
                         <Table.Td>
                           <Group>

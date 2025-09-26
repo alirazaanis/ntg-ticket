@@ -51,6 +51,7 @@ import {
   useAssignTicket,
 } from '../../../hooks/useTickets';
 import { useCreateComment } from '../../../hooks/useComments';
+import { useUsers } from '../../../hooks/useUsers';
 import { useAuthStore } from '../../../stores/useAuthStore';
 import {
   TicketStatus,
@@ -96,6 +97,7 @@ export default function TicketDetailPage() {
   const [activeTab, setActiveTab] = useState<string | null>('details');
 
   const { data: ticket, isLoading, error } = useTicket(ticketId);
+  const { data: users, isLoading: usersLoading } = useUsers({ limit: 100 });
   const updateStatusMutation = useUpdateTicketStatus();
   const assignTicketMutation = useAssignTicket();
   const addCommentMutation = useCreateComment();
@@ -112,7 +114,8 @@ export default function TicketDetailPage() {
       await updateStatusMutation.mutateAsync({
         id: ticketId,
         status: newStatus,
-        note: resolution || undefined,
+        resolution: resolution || undefined,
+        currentStatus: ticket?.status || '',
       });
       notifications.show({
         title: 'Success',
@@ -290,9 +293,16 @@ export default function TicketDetailPage() {
                   <Title order={3} mb='md'>
                     Description
                   </Title>
-                  <Text style={{ whiteSpace: 'pre-wrap' }}>
-                    {ticket.description}
-                  </Text>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: ticket.description || '',
+                    }}
+                    style={{
+                      lineHeight: '1.6',
+                      fontSize: '14px',
+                      color: 'var(--mantine-color-text)',
+                    }}
+                  />
                 </Paper>
 
                 <Paper withBorder p='md'>
@@ -708,14 +718,17 @@ export default function TicketDetailPage() {
         <Stack gap='md'>
           <Select
             label='Assign To'
-            placeholder='Select a support staff member'
-            data={[
-              { value: 'user1', label: 'John Doe (Support Staff)' },
-              { value: 'user2', label: 'Jane Smith (Support Staff)' },
-            ]}
+            placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
+            data={
+              users?.data?.data?.map(user => ({
+                value: user.id,
+                label: `${user.name} (${user.role})`,
+              })) || []
+            }
             value={selectedAssignee}
             onChange={value => setSelectedAssignee(value || '')}
             searchable
+            disabled={usersLoading}
           />
           <Group justify='flex-end'>
             <Button variant='outline' onClick={() => setAssignModalOpen(false)}>

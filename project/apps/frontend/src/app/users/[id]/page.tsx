@@ -59,7 +59,7 @@ export default function UserDetailPage() {
   const deleteUserMutation = useDeleteUser();
 
   const userTickets =
-    tickets?.data?.filter(
+    tickets?.filter(
       (ticket: Ticket) =>
         ticket.requester.id === userId || ticket.assignedTo?.id === userId
     ) || [];

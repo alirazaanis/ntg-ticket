@@ -55,7 +55,7 @@ export default function MyTicketsPage() {
   const { data: tickets, isLoading, error } = useTickets();
 
   const myTickets =
-    tickets?.data?.filter(ticket => ticket.requester.id === user?.id) || [];
+    tickets?.filter(ticket => ticket.requester.id === user?.id) || [];
   const openTickets = myTickets.filter(ticket =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );

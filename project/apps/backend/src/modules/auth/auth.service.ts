@@ -232,14 +232,13 @@ export class AuthService {
   }
 
   async validateJwtToken(token: string): Promise<{
-    sub: string;
+    id: string;
     email: string;
+    name: string;
     role: string;
-    iat: number;
-    exp: number;
-  }> {
-    this.logger.log('Validating JWT token', 'AuthService');
-
+    isActive: boolean;
+    avatar: string | null;
+  } | null> {
     try {
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
@@ -261,13 +260,7 @@ export class AuthService {
         return null;
       }
 
-      return decoded as {
-        sub: string;
-        email: string;
-        role: string;
-        iat: number;
-        exp: number;
-      };
+      return user;
     } catch (error) {
       this.logger.error('JWT validation failed', error);
       return null;

@@ -56,7 +56,7 @@ export default function AssignedTicketsPage() {
   const { data: tickets, isLoading, error } = useTickets();
 
   const assignedTickets =
-    tickets?.data?.filter(ticket => ticket.assignedTo?.id === user?.id) || [];
+    tickets?.filter(ticket => ticket.assignedTo?.id === user?.id) || [];
   const openTickets = assignedTickets.filter(ticket =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );

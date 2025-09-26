@@ -95,7 +95,7 @@ export class AttachmentsService {
         file.originalname,
         file.mimetype
       );
-      
+
       if (!scanResult.clean) {
         this.logger.warn('File upload blocked by virus scan', {
           fileName: file.originalname,
@@ -103,7 +103,7 @@ export class AttachmentsService {
           scanEngine: scanResult.scanEngine,
           scanTime: scanResult.scanTime,
         });
-        
+
         throw new BadRequestException(
           `File failed security scan: ${scanResult.threats?.join(', ')}`
         );
@@ -119,7 +119,9 @@ export class AttachmentsService {
         throw error; // Re-throw security-related errors
       }
       this.logger.error('Virus scan failed', error);
-      throw new BadRequestException('File security scan failed - upload rejected');
+      throw new BadRequestException(
+        'File security scan failed - upload rejected'
+      );
     }
 
     // Upload file to storage

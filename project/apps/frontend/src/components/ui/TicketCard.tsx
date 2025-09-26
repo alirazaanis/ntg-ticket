@@ -13,6 +13,7 @@ import {
   Modal,
   Textarea,
   Select,
+  Alert,
 } from '@mantine/core';
 import {
   IconEye,
@@ -29,7 +30,13 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Ticket } from '../../types/unified';
+import { Ticket, TicketStatus } from '../../types/unified';
+import { useUpdateTicketStatus } from '../../hooks/useTickets';
+import {
+  validateStatusUpdate,
+  statusTransitionRules,
+} from '../../lib/statusValidation';
+import { notifications } from '@mantine/notifications';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -55,6 +62,8 @@ export function TicketCard({
   const [statusModalOpened, setStatusModalOpened] = useState(false);
   const [newStatus, setNewStatus] = useState(ticket.status);
   const [resolution, setResolution] = useState('');
+
+  const updateStatusMutation = useUpdateTicketStatus();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -97,11 +106,52 @@ export function TicketCard({
     new Date(ticket.dueDate) < new Date() &&
     !['RESOLVED', 'CLOSED'].includes(ticket.status);
 
-  const handleStatusChange = () => {
-    if (onStatusChange) {
-      onStatusChange(newStatus);
+  const handleStatusChange = async () => {
+    // Validate status transition
+    const validation = validateStatusUpdate(
+      ticket.status as TicketStatus,
+      newStatus as TicketStatus,
+      resolution
+    );
+
+    if (!validation.isValid) {
+      notifications.show({
+        title: 'Invalid Status Update',
+        message: validation.errorMessage,
+        color: 'red',
+      });
+      return;
     }
-    setStatusModalOpened(false);
+
+    try {
+      await updateStatusMutation.mutateAsync({
+        id: ticket.id,
+        status: newStatus,
+        resolution,
+        currentStatus: ticket.status,
+      });
+
+      notifications.show({
+        title: 'Status Updated',
+        message: `Ticket #${ticket.ticketNumber} status updated to ${newStatus.replace('_', ' ')}`,
+        color: 'green',
+      });
+
+      // Call the parent callback if provided
+      if (onStatusChange) {
+        onStatusChange(newStatus);
+      }
+
+      setStatusModalOpened(false);
+      setResolution('');
+    } catch (error) {
+      notifications.show({
+        title: 'Update Failed',
+        message:
+          error instanceof Error ? error.message : 'Failed to update status',
+        color: 'red',
+      });
+    }
   };
 
   return (
@@ -328,6 +378,16 @@ export function TicketCard({
             }
           />
 
+          {/* Show status transition info */}
+          <Alert icon={<IconAlertCircle size={16} />} color='yellow'>
+            <Text size='sm' fw={500} mb='xs'>
+              Status Transition Rules:
+            </Text>
+            <Text size='xs' c='dimmed'>
+              {statusTransitionRules.map(rule => `• ${rule}`).join('\n')}
+            </Text>
+          </Alert>
+
           {(newStatus === 'RESOLVED' || newStatus === 'CLOSED') && (
             <Textarea
               label='Resolution Notes'
@@ -345,7 +405,16 @@ export function TicketCard({
             >
               Cancel
             </Button>
-            <Button onClick={handleStatusChange}>Update Status</Button>
+            <Button
+              onClick={handleStatusChange}
+              loading={updateStatusMutation.isPending}
+              disabled={
+                (newStatus === 'RESOLVED' && !resolution.trim()) ||
+                updateStatusMutation.isPending
+              }
+            >
+              Update Status
+            </Button>
           </Group>
         </Stack>
       </Modal>
