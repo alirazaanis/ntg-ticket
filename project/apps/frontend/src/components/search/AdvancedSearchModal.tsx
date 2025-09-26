@@ -312,27 +312,32 @@ export function AdvancedSearchModal({
                   <Group gap='xs' mt='sm'>
                     {(() => {
                       try {
-                        const criteria = JSON.parse(search.searchCriteria) as SearchCriteria;
+                        const criteria = JSON.parse(
+                          search.searchCriteria
+                        ) as SearchCriteria;
                         return (
                           <>
-                            {criteria.status?.length && criteria.status.length > 0 && (
-                              <Badge size='xs' variant='light'>
-                                {criteria.status.length} status
-                                {criteria.status.length > 1 ? 'es' : ''}
-                              </Badge>
-                            )}
-                            {criteria.priority?.length && criteria.priority.length > 0 && (
-                              <Badge size='xs' variant='light'>
-                                {criteria.priority.length} priorit
-                                {criteria.priority.length > 1 ? 'ies' : 'y'}
-                              </Badge>
-                            )}
-                            {criteria.category?.length && criteria.category.length > 0 && (
-                              <Badge size='xs' variant='light'>
-                                {criteria.category.length} categor
-                                {criteria.category.length > 1 ? 'ies' : 'y'}
-                              </Badge>
-                            )}
+                            {criteria.status?.length &&
+                              criteria.status.length > 0 && (
+                                <Badge size='xs' variant='light'>
+                                  {criteria.status.length} status
+                                  {criteria.status.length > 1 ? 'es' : ''}
+                                </Badge>
+                              )}
+                            {criteria.priority?.length &&
+                              criteria.priority.length > 0 && (
+                                <Badge size='xs' variant='light'>
+                                  {criteria.priority.length} priorit
+                                  {criteria.priority.length > 1 ? 'ies' : 'y'}
+                                </Badge>
+                              )}
+                            {criteria.category?.length &&
+                              criteria.category.length > 0 && (
+                                <Badge size='xs' variant='light'>
+                                  {criteria.category.length} categor
+                                  {criteria.category.length > 1 ? 'ies' : 'y'}
+                                </Badge>
+                              )}
                           </>
                         );
                       } catch {

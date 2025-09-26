@@ -72,7 +72,7 @@ export class SystemConfigService implements OnModuleInit {
 
       this.config = {
         // General Settings
-        siteName: settingsObj.site_name || 'NTG Ticket System',
+        siteName: settingsObj.site_name || 'NTG Ticket',
         siteDescription:
           settingsObj.site_description || 'IT Support Ticket Management System',
         timezone: settingsObj.timezone || 'UTC',
@@ -113,7 +113,7 @@ export class SystemConfigService implements OnModuleInit {
         fromEmail:
           settingsObj.from_email ||
           this.configService.get('SMTP_FROM', 'noreply@ntg-ticket.com'),
-        fromName: settingsObj.from_name || 'NTG Ticket System',
+        fromName: settingsObj.from_name || 'NTG Ticket',
       };
 
       this.lastCacheUpdate = Date.now();
@@ -248,7 +248,7 @@ export class SystemConfigService implements OnModuleInit {
 
   private getDefaultConfig(): SystemConfig {
     return {
-      siteName: 'NTG Ticket System',
+      siteName: 'NTG Ticket',
       siteDescription: 'IT Support Ticket Management System',
       timezone: 'UTC',
       language: 'en',
@@ -272,7 +272,7 @@ export class SystemConfigService implements OnModuleInit {
       smtpUsername: this.configService.get('SMTP_USER', ''),
       smtpPassword: this.configService.get('SMTP_PASS', ''),
       fromEmail: this.configService.get('SMTP_FROM', 'noreply@ntg-ticket.com'),
-      fromName: 'NTG Ticket System',
+      fromName: 'NTG Ticket',
     };
   }
 
@@ -306,7 +306,7 @@ export class SystemConfigService implements OnModuleInit {
       fromEmail:
         config?.fromEmail ||
         this.configService.get('SMTP_FROM', 'noreply@ntg-ticket.com'),
-      fromName: config?.fromName || 'NTG Ticket System',
+      fromName: config?.fromName || 'NTG Ticket',
     };
   }
 

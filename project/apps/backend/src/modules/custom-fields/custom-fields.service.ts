@@ -125,7 +125,12 @@ export class CustomFieldsService {
       this.validateFieldValue(
         customField.fieldType,
         value,
-        customField.options as { minLength?: number; maxLength?: number; required?: boolean; choices?: string[] }
+        customField.options as {
+          minLength?: number;
+          maxLength?: number;
+          required?: boolean;
+          choices?: string[];
+        }
       );
 
       const ticketCustomField = await this.prisma.ticketCustomField.upsert({
@@ -156,7 +161,12 @@ export class CustomFieldsService {
   private validateFieldValue(
     fieldType: CustomFieldType,
     value: string,
-    options: { minLength?: number; maxLength?: number; required?: boolean; choices?: string[] }
+    options: {
+      minLength?: number;
+      maxLength?: number;
+      required?: boolean;
+      choices?: string[];
+    }
   ) {
     switch (fieldType) {
       case CustomFieldType.TEXT:

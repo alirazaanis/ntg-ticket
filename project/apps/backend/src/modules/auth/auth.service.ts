@@ -216,7 +216,13 @@ export class AuthService {
     }
   }
 
-  async verifyToken(token: string): Promise<{ sub: string; email: string; role: string; iat: number; exp: number }> {
+  async verifyToken(token: string): Promise<{
+    sub: string;
+    email: string;
+    role: string;
+    iat: number;
+    exp: number;
+  }> {
     try {
       return this.jwtService.verify(token);
     } catch (error) {
@@ -225,7 +231,13 @@ export class AuthService {
     }
   }
 
-  async validateJwtToken(token: string): Promise<{ sub: string; email: string; role: string; iat: number; exp: number }> {
+  async validateJwtToken(token: string): Promise<{
+    sub: string;
+    email: string;
+    role: string;
+    iat: number;
+    exp: number;
+  }> {
     this.logger.log('Validating JWT token', 'AuthService');
 
     try {
@@ -249,14 +261,23 @@ export class AuthService {
         return null;
       }
 
-      return decoded as { sub: string; email: string; role: string; iat: number; exp: number };
+      return decoded as {
+        sub: string;
+        email: string;
+        role: string;
+        iat: number;
+        exp: number;
+      };
     } catch (error) {
       this.logger.error('JWT validation failed', error);
       return null;
     }
   }
 
-  async validateUserCredentials(email: string, password: string): Promise<{ id: string; email: string; name: string; role: string } | null> {
+  async validateUserCredentials(
+    email: string,
+    password: string
+  ): Promise<{ id: string; email: string; name: string; role: string } | null> {
     this.logger.log(`Validating credentials for user: ${email}`, 'AuthService');
 
     try {

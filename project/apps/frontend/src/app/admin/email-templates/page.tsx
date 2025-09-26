@@ -22,7 +22,7 @@ import {
   Select,
   Tabs,
 } from '@mantine/core';
-import { RichTextEditorComponent } from '../../../../components/ui/RichTextEditor';
+import { RichTextEditorComponent } from '../../../components/ui/RichTextEditor';
 import {
   IconPlus,
   IconDots,
@@ -35,14 +35,14 @@ import {
 } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { 
-  useEmailTemplates, 
-  useCreateEmailTemplate, 
-  useUpdateEmailTemplate, 
+import {
+  useEmailTemplates,
+  useCreateEmailTemplate,
+  useUpdateEmailTemplate,
   useDeleteEmailTemplate,
-  usePreviewEmailTemplate 
-} from '../../../../hooks/useEmailTemplates';
-import { EmailTemplate, EmailTemplateType } from '../../../../types/unified';
+  usePreviewEmailTemplate,
+} from '../../../hooks/useEmailTemplates';
+import { EmailTemplate, EmailTemplateType } from '../../../types/unified';
 
 const templateTypeColors: Record<EmailTemplateType, string> = {
   [EmailTemplateType.TICKET_CREATED]: 'blue',
@@ -54,7 +54,8 @@ const templateTypeColors: Record<EmailTemplateType, string> = {
 };
 
 export default function EmailTemplatesPage() {
-  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<EmailTemplate | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -393,8 +394,8 @@ export default function EmailTemplatesPage() {
                   placeholder='Select type'
                   required
                   data={Object.values(EmailTemplateType).map(type => ({
-                    value: type,
-                    label: type.replace('_', ' '),
+                    value: type as string,
+                    label: (type as string).replace('_', ' '),
                   }))}
                   {...createForm.getInputProps('type')}
                 />
@@ -413,7 +414,9 @@ export default function EmailTemplatesPage() {
               minHeight={300}
               maxHeight={500}
               value={createForm.values.html}
-              onChange={(value) => createForm.setFieldValue('html', value)}
+              onChange={(value: string) =>
+                createForm.setFieldValue('html', value)
+              }
               error={createForm.errors.html}
               allowImageUpload={false}
               allowTableInsertion={true}
@@ -479,8 +482,8 @@ export default function EmailTemplatesPage() {
                   placeholder='Select type'
                   required
                   data={Object.values(EmailTemplateType).map(type => ({
-                    value: type,
-                    label: type.replace('_', ' '),
+                    value: type as string,
+                    label: (type as string).replace('_', ' '),
                   }))}
                   {...editForm.getInputProps('type')}
                 />
@@ -499,7 +502,9 @@ export default function EmailTemplatesPage() {
               minHeight={300}
               maxHeight={500}
               value={editForm.values.html}
-              onChange={(value) => editForm.setFieldValue('html', value)}
+              onChange={(value: string) =>
+                editForm.setFieldValue('html', value)
+              }
               error={editForm.errors.html}
               allowImageUpload={false}
               allowTableInsertion={true}
@@ -522,10 +527,7 @@ export default function EmailTemplatesPage() {
               {...editForm.getInputProps('isActive', { type: 'checkbox' })}
             />
             <Group justify='flex-end'>
-              <Button
-                variant='outline'
-                onClick={() => setEditModalOpen(false)}
-              >
+              <Button variant='outline' onClick={() => setEditModalOpen(false)}>
                 Cancel
               </Button>
               <Button
@@ -577,16 +579,14 @@ export default function EmailTemplatesPage() {
             This action cannot be undone.
           </Text>
           <Group justify='flex-end'>
-            <Button
-              variant='outline'
-              onClick={() => setDeleteModalOpen(false)}
-            >
+            <Button variant='outline' onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button
               color='red'
               onClick={() =>
-                selectedTemplate?.id && handleDeleteTemplate(selectedTemplate.id)
+                selectedTemplate?.id &&
+                handleDeleteTemplate(selectedTemplate.id)
               }
               loading={deleteTemplateMutation.isPending}
             >

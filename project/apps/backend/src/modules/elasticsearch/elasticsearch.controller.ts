@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -28,7 +22,14 @@ export class ElasticsearchController {
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string
   ) {
-    const filters: { status?: string[]; priority?: string[]; category?: string[]; assignedTo?: string[]; dateFrom?: string; dateTo?: string } = {};
+    const filters: {
+      status?: string[];
+      priority?: string[];
+      category?: string[];
+      assignedTo?: string[];
+      dateFrom?: string;
+      dateTo?: string;
+    } = {};
 
     if (status) filters.status = status.split(',');
     if (priority) filters.priority = priority.split(',');
@@ -56,7 +57,11 @@ export class ElasticsearchController {
     @Query('priority') priority: string,
     @Query('category') category: string
   ) {
-    const filters: { status?: string[]; priority?: string[]; category?: string[] } = {};
+    const filters: {
+      status?: string[];
+      priority?: string[];
+      category?: string[];
+    } = {};
 
     if (status) filters.status = status.split(',');
     if (priority) filters.priority = priority.split(',');

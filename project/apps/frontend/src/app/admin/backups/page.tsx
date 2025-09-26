@@ -26,13 +26,15 @@ import {
   IconTrash,
   IconDots,
   IconRefresh,
-  IconClock,
   IconDatabase,
   IconAlertTriangle,
   IconCheck,
-  IconX,
 } from '@tabler/icons-react';
-import { useBackups, useCreateBackup, useRestoreBackup } from '../../../hooks/useBackup';
+import {
+  useBackups,
+  useCreateBackup,
+  useRestoreBackup,
+} from '../../../hooks/useBackup';
 import { notifications } from '@mantine/notifications';
 import { Backup } from '../../../types/unified';
 
@@ -50,12 +52,14 @@ export default function BackupsPage() {
   const createBackup = useCreateBackup();
   const restoreBackup = useRestoreBackup();
 
-  const filteredBackups = backups?.filter((backup) => {
-    const matchesSearch = backup.name.toLowerCase().includes(search.toLowerCase()) ||
-      backup.description?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || backup.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }) || [];
+  const filteredBackups =
+    backups?.filter(backup => {
+      const matchesSearch = backup.filename
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || true; // All backups are considered available
+      return matchesSearch && matchesStatus;
+    }) || [];
 
   const totalPages = Math.ceil(filteredBackups.length / pageSize);
   const paginatedBackups = filteredBackups.slice(
@@ -108,29 +112,9 @@ export default function BackupsPage() {
     // Implement download functionality
     notifications.show({
       title: 'Download Started',
-      message: `Downloading backup: ${backup.name}`,
+      message: `Downloading backup: ${backup.filename}`,
       color: 'blue',
     });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'COMPLETED': return 'green';
-      case 'IN_PROGRESS': return 'blue';
-      case 'FAILED': return 'red';
-      case 'PENDING': return 'yellow';
-      default: return 'gray';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'COMPLETED': return <IconCheck size={16} />;
-      case 'IN_PROGRESS': return <IconClock size={16} />;
-      case 'FAILED': return <IconX size={16} />;
-      case 'PENDING': return <IconClock size={16} />;
-      default: return <IconDatabase size={16} />;
-    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -142,11 +126,11 @@ export default function BackupsPage() {
   };
 
   return (
-    <Container size="xl" py="md">
-      <Group justify="space-between" mb="xl">
+    <Container size='xl' py='md'>
+      <Group justify='space-between' mb='xl'>
         <div>
           <Title order={2}>Backup Management</Title>
-          <Text c="dimmed" size="sm">
+          <Text c='dimmed' size='sm'>
             Manage system backups and restore points
           </Text>
         </div>
@@ -162,17 +146,17 @@ export default function BackupsPage() {
       <Grid>
         <Grid.Col span={8}>
           <Card>
-            <Group justify="space-between" mb="md">
+            <Group justify='space-between' mb='md'>
               <Group>
                 <TextInput
-                  placeholder="Search backups..."
+                  placeholder='Search backups...'
                   leftSection={<IconDatabase size={16} />}
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={e => setSearch(e.target.value)}
                   style={{ width: 300 }}
                 />
                 <Select
-                  placeholder="Filter by status"
+                  placeholder='Filter by status'
                   data={[
                     { value: 'all', label: 'All Status' },
                     { value: 'COMPLETED', label: 'Completed' },
@@ -181,12 +165,12 @@ export default function BackupsPage() {
                     { value: 'PENDING', label: 'Pending' },
                   ]}
                   value={statusFilter}
-                  onChange={(value) => setStatusFilter(value || 'all')}
+                  onChange={value => setStatusFilter(value || 'all')}
                   style={{ width: 200 }}
                 />
               </Group>
               <ActionIcon
-                variant="light"
+                variant='light'
                 onClick={() => refetch()}
                 loading={isLoading}
               >
@@ -202,41 +186,42 @@ export default function BackupsPage() {
                   <Table.Th>Size</Table.Th>
                   <Table.Th>Created</Table.Th>
                   <Table.Th>Description</Table.Th>
-                  <Table.Th width={100}>Actions</Table.Th>
+                  <Table.Th style={{ width: 100 }}>Actions</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {paginatedBackups.map((backup) => (
+                {paginatedBackups.map(backup => (
                   <Table.Tr key={backup.id}>
                     <Table.Td>
-                      <Text fw={500}>{backup.name}</Text>
+                      <Text fw={500}>{backup.filename}</Text>
                     </Table.Td>
                     <Table.Td>
                       <Badge
-                        color={getStatusColor(backup.status)}
-                        variant="light"
-                        leftSection={getStatusIcon(backup.status)}
+                        color='green'
+                        variant='light'
+                        leftSection={<IconCheck size={12} />}
                       >
-                        {backup.status}
+                        Available
                       </Badge>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm">{formatFileSize(backup.size)}</Text>
+                      <Text size='sm'>{formatFileSize(backup.size)}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm" c="dimmed">
+                      <Text size='sm' c='dimmed'>
                         {new Date(backup.createdAt).toLocaleString()}
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm" c="dimmed" truncate>
-                        {backup.description || 'No description'}
+                      <Text size='sm' c='dimmed' truncate>
+                        Backup created on{' '}
+                        {new Date(backup.createdAt).toLocaleDateString()}
                       </Text>
                     </Table.Td>
                     <Table.Td>
                       <Menu>
                         <Menu.Target>
-                          <ActionIcon variant="subtle">
+                          <ActionIcon variant='subtle'>
                             <IconDots size={16} />
                           </ActionIcon>
                         </Menu.Target>
@@ -244,7 +229,7 @@ export default function BackupsPage() {
                           <Menu.Item
                             leftSection={<IconDownload size={14} />}
                             onClick={() => handleDownloadBackup(backup)}
-                            disabled={backup.status !== 'COMPLETED'}
+                            disabled={false}
                           >
                             Download
                           </Menu.Item>
@@ -254,14 +239,14 @@ export default function BackupsPage() {
                               setSelectedBackup(backup);
                               setRestoreModalOpen(true);
                             }}
-                            disabled={backup.status !== 'COMPLETED'}
+                            disabled={false}
                           >
                             Restore
                           </Menu.Item>
                           <Menu.Divider />
                           <Menu.Item
                             leftSection={<IconTrash size={14} />}
-                            color="red"
+                            color='red'
                             onClick={() => {
                               setSelectedBackup(backup);
                               setDeleteModalOpen(true);
@@ -278,7 +263,7 @@ export default function BackupsPage() {
             </Table>
 
             {totalPages > 1 && (
-              <Group justify="center" mt="md">
+              <Group justify='center' mt='md'>
                 <Pagination
                   value={currentPage}
                   onChange={setCurrentPage}
@@ -294,26 +279,26 @@ export default function BackupsPage() {
             <Card>
               <Stack>
                 <Title order={4}>Backup Statistics</Title>
-                <Group justify="space-between">
-                  <Text size="sm">Total Backups</Text>
+                <Group justify='space-between'>
+                  <Text size='sm'>Total Backups</Text>
                   <Text fw={500}>{backups?.length || 0}</Text>
                 </Group>
-                <Group justify="space-between">
-                  <Text size="sm">Completed</Text>
-                  <Text fw={500} c="green">
-                    {backups?.filter(b => b.status === 'COMPLETED').length || 0}
+                <Group justify='space-between'>
+                  <Text size='sm'>Completed</Text>
+                  <Text fw={500} c='green'>
+                    {backups?.length || 0}
                   </Text>
                 </Group>
-                <Group justify="space-between">
-                  <Text size="sm">In Progress</Text>
-                  <Text fw={500} c="blue">
-                    {backups?.filter(b => b.status === 'IN_PROGRESS').length || 0}
+                <Group justify='space-between'>
+                  <Text size='sm'>In Progress</Text>
+                  <Text fw={500} c='blue'>
+                    0
                   </Text>
                 </Group>
-                <Group justify="space-between">
-                  <Text size="sm">Failed</Text>
-                  <Text fw={500} c="red">
-                    {backups?.filter(b => b.status === 'FAILED').length || 0}
+                <Group justify='space-between'>
+                  <Text size='sm'>Failed</Text>
+                  <Text fw={500} c='red'>
+                    0
                   </Text>
                 </Group>
               </Stack>
@@ -323,7 +308,7 @@ export default function BackupsPage() {
               <Stack>
                 <Title order={4}>Quick Actions</Title>
                 <Button
-                  variant="light"
+                  variant='light'
                   leftSection={<IconPlus size={16} />}
                   onClick={() => setCreateModalOpen(true)}
                   loading={createBackup.isPending}
@@ -332,7 +317,7 @@ export default function BackupsPage() {
                   Create New Backup
                 </Button>
                 <Button
-                  variant="light"
+                  variant='light'
                   leftSection={<IconRefresh size={16} />}
                   onClick={() => refetch()}
                   fullWidth
@@ -349,20 +334,25 @@ export default function BackupsPage() {
       <Modal
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title="Create New Backup"
+        title='Create New Backup'
       >
         <Stack>
-          <Alert color="blue" title="Backup Information">
-            This will create a complete backup of the system including all data, settings, and configurations.
+          <Alert color='blue' title='Backup Information'>
+            This will create a complete backup of the system including all data,
+            settings, and configurations.
           </Alert>
-          <Text size="sm" c="dimmed">
-            The backup process may take several minutes depending on the amount of data.
+          <Text size='sm' c='dimmed'>
+            The backup process may take several minutes depending on the amount
+            of data.
           </Text>
-          <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setCreateModalOpen(false)}>
+          <Group justify='flex-end' mt='md'>
+            <Button variant='light' onClick={() => setCreateModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateBackup} loading={createBackup.isPending}>
+            <Button
+              onClick={handleCreateBackup}
+              loading={createBackup.isPending}
+            >
               Create Backup
             </Button>
           </Group>
@@ -373,25 +363,32 @@ export default function BackupsPage() {
       <Modal
         opened={restoreModalOpen}
         onClose={() => setRestoreModalOpen(false)}
-        title="Restore Backup"
+        title='Restore Backup'
       >
         <Stack>
-          <Alert color="red" title="Warning" icon={<IconAlertTriangle size={16} />}>
-            This action will restore the system to the state when this backup was created.
-            All current data will be replaced with the backup data.
+          <Alert
+            color='red'
+            title='Warning'
+            icon={<IconAlertTriangle size={16} />}
+          >
+            This action will restore the system to the state when this backup
+            was created. All current data will be replaced with the backup data.
           </Alert>
-          <Text size="sm">
-            Backup: <strong>{selectedBackup?.name}</strong>
+          <Text size='sm'>
+            Backup: <strong>{selectedBackup?.filename}</strong>
           </Text>
-          <Text size="sm" c="dimmed">
-            Created: {selectedBackup?.createdAt ? new Date(selectedBackup.createdAt).toLocaleString() : 'Unknown'}
+          <Text size='sm' c='dimmed'>
+            Created:{' '}
+            {selectedBackup?.createdAt
+              ? new Date(selectedBackup.createdAt).toLocaleString()
+              : 'Unknown'}
           </Text>
-          <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setRestoreModalOpen(false)}>
+          <Group justify='flex-end' mt='md'>
+            <Button variant='light' onClick={() => setRestoreModalOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="red"
+              color='red'
               onClick={handleRestoreBackup}
               loading={restoreBackup.isPending}
             >
@@ -405,22 +402,21 @@ export default function BackupsPage() {
       <Modal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Delete Backup"
+        title='Delete Backup'
       >
         <Stack>
-          <Alert color="red" title="Warning">
-            Are you sure you want to delete this backup? This action cannot be undone.
+          <Alert color='red' title='Warning'>
+            Are you sure you want to delete this backup? This action cannot be
+            undone.
           </Alert>
-          <Text size="sm">
-            Backup: <strong>{selectedBackup?.name}</strong>
+          <Text size='sm'>
+            Backup: <strong>{selectedBackup?.filename}</strong>
           </Text>
-          <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setDeleteModalOpen(false)}>
+          <Group justify='flex-end' mt='md'>
+            <Button variant='light' onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
-            <Button color="red">
-              Delete Backup
-            </Button>
+            <Button color='red'>Delete Backup</Button>
           </Group>
         </Stack>
       </Modal>

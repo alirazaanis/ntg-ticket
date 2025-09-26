@@ -53,12 +53,13 @@ export default function MyTicketsPage() {
   const { user } = useAuthStore();
 
   const { data: tickets, isLoading, error } = useTickets();
-  
-  const myTickets = tickets?.filter(ticket => ticket.requester.id === user?.id) || [];
-  const openTickets = myTickets.filter(ticket => 
+
+  const myTickets =
+    tickets?.data?.filter(ticket => ticket.requester.id === user?.id) || [];
+  const openTickets = myTickets.filter(ticket =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );
-  const resolvedTickets = myTickets.filter(ticket => 
+  const resolvedTickets = myTickets.filter(ticket =>
     ['RESOLVED', 'CLOSED'].includes(ticket.status)
   );
 
@@ -69,8 +70,6 @@ export default function MyTicketsPage() {
   const handleEditTicket = (ticketId: string) => {
     router.push(`/tickets/${ticketId}/edit`);
   };
-
-
 
   if (isLoading) {
     return (
@@ -99,7 +98,8 @@ export default function MyTicketsPage() {
         <div>
           <Title order={1}>My Tickets</Title>
           <Text c='dimmed'>
-            {myTickets.length} total tickets • {openTickets.length} open • {resolvedTickets.length} resolved
+            {myTickets.length} total tickets • {openTickets.length} open •{' '}
+            {resolvedTickets.length} resolved
           </Text>
         </div>
         <Button
@@ -114,22 +114,30 @@ export default function MyTicketsPage() {
         <Grid.Col span={3}>
           <Stack gap='md'>
             <Card withBorder p='md'>
-              <Title order={4} mb='md'>Quick Stats</Title>
+              <Title order={4} mb='md'>
+                Quick Stats
+              </Title>
               <Stack gap='sm'>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Total Tickets</Text>
+                  <Text size='sm' fw={500}>
+                    Total Tickets
+                  </Text>
                   <Badge color='blue' variant='light'>
                     {myTickets.length}
                   </Badge>
                 </Group>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Open Tickets</Text>
+                  <Text size='sm' fw={500}>
+                    Open Tickets
+                  </Text>
                   <Badge color='green' variant='light'>
                     {openTickets.length}
                   </Badge>
                 </Group>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Resolved Tickets</Text>
+                  <Text size='sm' fw={500}>
+                    Resolved Tickets
+                  </Text>
                   <Badge color='gray' variant='light'>
                     {resolvedTickets.length}
                   </Badge>
@@ -138,7 +146,9 @@ export default function MyTicketsPage() {
             </Card>
 
             <Card withBorder p='md'>
-              <Title order={4} mb='md'>Quick Actions</Title>
+              <Title order={4} mb='md'>
+                Quick Actions
+              </Title>
               <Stack gap='sm'>
                 <Button
                   variant='outline'
@@ -166,7 +176,7 @@ export default function MyTicketsPage() {
             <Title order={3} mb='md'>
               Your Tickets
             </Title>
-            
+
             {myTickets.length === 0 ? (
               <Stack align='center' gap='md' py='xl'>
                 <IconTicket size={48} color='var(--mantine-color-dimmed)' />
@@ -174,7 +184,8 @@ export default function MyTicketsPage() {
                   No tickets found
                 </Text>
                 <Text c='dimmed' ta='center'>
-                  You haven't created any tickets yet. Create your first ticket to get started.
+                  You haven't created any tickets yet. Create your first ticket
+                  to get started.
                 </Text>
                 <Button onClick={() => router.push('/tickets/create')}>
                   Create Your First Ticket
@@ -224,7 +235,9 @@ export default function MyTicketsPage() {
                       </Table.Td>
                       <Table.Td>
                         <Text size='sm'>
-                          {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(ticket.createdAt), {
+                            addSuffix: true,
+                          })}
                         </Text>
                       </Table.Td>
                       <Table.Td>

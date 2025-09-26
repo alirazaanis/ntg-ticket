@@ -1,9 +1,6 @@
 import { InputType, Field, Int } from '@nestjs/graphql';
 import { IsString, IsOptional, IsDateString } from 'class-validator';
-import {
-  TicketPriority,
-  TicketStatus,
-} from '@prisma/client';
+import { TicketPriority, TicketStatus } from '@prisma/client';
 
 @InputType()
 export class TicketFiltersInput {

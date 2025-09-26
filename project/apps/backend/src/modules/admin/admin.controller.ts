@@ -101,7 +101,10 @@ export class AdminController {
     status: 403,
     description: 'Forbidden - Admin access required',
   })
-  async updateSystemConfiguration(@Request() req, @Body() config: Record<string, unknown>) {
+  async updateSystemConfiguration(
+    @Request() req,
+    @Body() config: Record<string, unknown>
+  ) {
     // Check if user is admin
     if (req.user.role !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');

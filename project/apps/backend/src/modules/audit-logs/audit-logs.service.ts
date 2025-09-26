@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AuditLogsService {
@@ -10,14 +11,45 @@ export class AuditLogsService {
   /**
    * Get audit logs with filtering and pagination
    */
-  async getAuditLogs(filters: { userId?: string; action?: string }, pagination: { page: number; limit: number }) {
+  async getAuditLogs(
+    filters: { userId?: string; action?: string },
+    pagination: { page: number; limit: number }
+  ) {
     try {
       const { page, limit } = pagination;
       const skip = (page - 1) * limit;
 
-      const where: { userId?: string; action?: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'ASSIGN' | 'ESCALATE' | 'COMMENT' | 'ATTACH' | 'STATUS_CHANGE' | 'PRIORITY_CHANGE' | 'CATEGORY_CHANGE' } = {};
+      const where: {
+        userId?: string;
+        action?:
+          | 'CREATE'
+          | 'UPDATE'
+          | 'DELETE'
+          | 'LOGIN'
+          | 'LOGOUT'
+          | 'ASSIGN'
+          | 'ESCALATE'
+          | 'COMMENT'
+          | 'ATTACH'
+          | 'STATUS_CHANGE'
+          | 'PRIORITY_CHANGE'
+          | 'CATEGORY_CHANGE';
+      } = {};
       if (filters.userId) where.userId = filters.userId;
-      if (filters.action) where.action = filters.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'ASSIGN' | 'ESCALATE' | 'COMMENT' | 'ATTACH' | 'STATUS_CHANGE' | 'PRIORITY_CHANGE' | 'CATEGORY_CHANGE';
+      if (filters.action)
+        where.action = filters.action as
+          | 'CREATE'
+          | 'UPDATE'
+          | 'DELETE'
+          | 'LOGIN'
+          | 'LOGOUT'
+          | 'ASSIGN'
+          | 'ESCALATE'
+          | 'COMMENT'
+          | 'ATTACH'
+          | 'STATUS_CHANGE'
+          | 'PRIORITY_CHANGE'
+          | 'CATEGORY_CHANGE';
 
       const [auditLogs, total] = await Promise.all([
         this.prisma.auditLog.findMany({
@@ -74,7 +106,19 @@ export class AuditLogsService {
       return await this.prisma.auditLog.create({
         data: {
           userId: data.userId,
-          action: data.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'ASSIGN' | 'ESCALATE' | 'COMMENT' | 'ATTACH' | 'STATUS_CHANGE' | 'PRIORITY_CHANGE' | 'CATEGORY_CHANGE',
+          action: data.action as
+            | 'CREATE'
+            | 'UPDATE'
+            | 'DELETE'
+            | 'LOGIN'
+            | 'LOGOUT'
+            | 'ASSIGN'
+            | 'ESCALATE'
+            | 'COMMENT'
+            | 'ATTACH'
+            | 'STATUS_CHANGE'
+            | 'PRIORITY_CHANGE'
+            | 'CATEGORY_CHANGE',
           resource: data.resource,
           resourceId: data.resourceId,
           fieldName: data.fieldName,
@@ -82,8 +126,7 @@ export class AuditLogsService {
           newValue: data.newValue,
           ipAddress: data.ipAddress,
           userAgent: data.userAgent,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          metadata: data.metadata as any,
+          metadata: data.metadata as Prisma.JsonValue,
         },
       });
     } catch (error) {
@@ -156,7 +199,12 @@ export class AuditLogsService {
     }
   ) {
     try {
-      const where: { userId?: string; ticketId?: string; fieldName?: string; createdAt?: { gte?: Date; lte?: Date } } = {};
+      const where: {
+        userId?: string;
+        ticketId?: string;
+        fieldName?: string;
+        createdAt?: { gte?: Date; lte?: Date };
+      } = {};
 
       if (filters?.userId) {
         where.userId = filters.userId;
@@ -313,7 +361,6 @@ export class AuditLogsService {
     }
   }
 
-
   /**
    * Export audit logs to CSV
    */
@@ -325,7 +372,12 @@ export class AuditLogsService {
     dateTo?: Date;
   }) {
     try {
-      const where: { userId?: string; ticketId?: string; fieldName?: string; createdAt?: { gte?: Date; lte?: Date } } = {};
+      const where: {
+        userId?: string;
+        ticketId?: string;
+        fieldName?: string;
+        createdAt?: { gte?: Date; lte?: Date };
+      } = {};
 
       if (filters?.userId) {
         where.userId = filters.userId;

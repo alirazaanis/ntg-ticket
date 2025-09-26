@@ -16,7 +16,7 @@ import {
   Select,
   TextInput,
 } from '@mantine/core';
-import { RichTextEditorComponent } from '../../../../../components/ui/RichTextEditor';
+import { RichTextEditorComponent } from '../../../../components/ui/RichTextEditor';
 import {
   IconArrowLeft,
   IconAlertCircle,
@@ -24,16 +24,16 @@ import {
 } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { useTicket, useUpdateTicket } from '../../../../../hooks/useTickets';
-import { useAuthStore } from '../../../../../stores/useAuthStore';
-import { 
-  TicketStatus, 
-  TicketPriority, 
-  TicketCategory, 
-  TicketImpact, 
-  TicketUrgency, 
-  SlaLevel 
-} from '../../../../../types/unified';
+import { useTicket, useUpdateTicket } from '../../../../hooks/useTickets';
+import { useAuthStore } from '../../../../stores/useAuthStore';
+import {
+  TicketStatus,
+  TicketPriority,
+  TicketCategory,
+  TicketImpact,
+  TicketUrgency,
+  SlaLevel,
+} from '../../../../types/unified';
 
 export default function EditTicketPage() {
   const params = useParams();
@@ -69,7 +69,7 @@ export default function EditTicketPage() {
       form.setValues({
         title: ticket.title,
         description: ticket.description,
-        category: ticket.category as TicketCategory,
+        category: ticket.category.id as TicketCategory,
         priority: ticket.priority,
         impact: ticket.impact,
         urgency: ticket.urgency,
@@ -108,7 +108,7 @@ export default function EditTicketPage() {
     router.push(`/tickets/${ticketId}`);
   };
 
-  const canEdit = 
+  const canEdit =
     user?.role === 'ADMIN' ||
     user?.role === 'SUPPORT_MANAGER' ||
     (user?.role === 'SUPPORT_STAFF' && ticket?.assignedTo?.id === user?.id);
@@ -146,7 +146,11 @@ export default function EditTicketPage() {
   if (!canEdit) {
     return (
       <Container size='xl' py='md'>
-        <Alert icon={<IconAlertCircle size={16} />} title='Access Denied' color='red'>
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title='Access Denied'
+          color='red'
+        >
           You don't have permission to edit this ticket.
         </Alert>
         <Group mt='md'>
@@ -212,7 +216,9 @@ export default function EditTicketPage() {
                     minHeight={200}
                     maxHeight={400}
                     value={form.values.description}
-                    onChange={(value) => form.setFieldValue('description', value)}
+                    onChange={(value: string) =>
+                      form.setFieldValue('description', value)
+                    }
                     error={form.errors.description}
                     allowImageUpload={true}
                     allowTableInsertion={true}
@@ -243,8 +249,8 @@ export default function EditTicketPage() {
                       placeholder='Select category'
                       required
                       data={Object.values(TicketCategory).map(cat => ({
-                        value: cat,
-                        label: cat.replace('_', ' '),
+                        value: cat as string,
+                        label: (cat as string).replace('_', ' '),
                       }))}
                       {...form.getInputProps('category')}
                     />
@@ -255,8 +261,8 @@ export default function EditTicketPage() {
                       placeholder='Select priority'
                       required
                       data={Object.values(TicketPriority).map(pri => ({
-                        value: pri,
-                        label: pri,
+                        value: pri as string,
+                        label: (pri as string).replace('_', ' '),
                       }))}
                       {...form.getInputProps('priority')}
                     />
@@ -269,8 +275,8 @@ export default function EditTicketPage() {
                       placeholder='Select impact'
                       required
                       data={Object.values(TicketImpact).map(imp => ({
-                        value: imp,
-                        label: imp,
+                        value: imp as string,
+                        label: (imp as string).replace('_', ' '),
                       }))}
                       {...form.getInputProps('impact')}
                     />
@@ -281,8 +287,8 @@ export default function EditTicketPage() {
                       placeholder='Select urgency'
                       required
                       data={Object.values(TicketUrgency).map(urg => ({
-                        value: urg,
-                        label: urg,
+                        value: urg as string,
+                        label: (urg as string).replace('_', ' '),
                       }))}
                       {...form.getInputProps('urgency')}
                     />
@@ -293,8 +299,8 @@ export default function EditTicketPage() {
                       placeholder='Select SLA level'
                       required
                       data={Object.values(SlaLevel).map(sla => ({
-                        value: sla,
-                        label: sla.replace('_', ' '),
+                        value: sla as string,
+                        label: (sla as string).replace('_', ' '),
                       }))}
                       {...form.getInputProps('slaLevel')}
                     />
@@ -316,19 +322,22 @@ export default function EditTicketPage() {
                     placeholder='Select status'
                     required
                     data={Object.values(TicketStatus).map(status => ({
-                      value: status,
-                      label: status.replace('_', ' '),
+                      value: status as string,
+                      label: (status as string).replace('_', ' '),
                     }))}
                     {...form.getInputProps('status')}
                   />
-                  {(form.values.status === 'RESOLVED' || form.values.status === 'CLOSED') && (
+                  {(form.values.status === 'RESOLVED' ||
+                    form.values.status === 'CLOSED') && (
                     <RichTextEditorComponent
                       label='Resolution Notes'
                       placeholder='Describe how the issue was resolved...'
                       minHeight={150}
                       maxHeight={300}
                       value={form.values.resolution}
-                      onChange={(value) => form.setFieldValue('resolution', value)}
+                      onChange={(value: string) =>
+                        form.setFieldValue('resolution', value)
+                      }
                       allowImageUpload={false}
                       allowTableInsertion={true}
                       allowCodeBlocks={true}
@@ -354,27 +363,41 @@ export default function EditTicketPage() {
                 </Title>
                 <Stack gap='sm'>
                   <Group justify='space-between'>
-                    <Text size='sm' fw={500}>Ticket Number</Text>
-                    <Text size='sm' c='dimmed'>#{ticket.ticketNumber}</Text>
+                    <Text size='sm' fw={500}>
+                      Ticket Number
+                    </Text>
+                    <Text size='sm' c='dimmed'>
+                      #{ticket.ticketNumber}
+                    </Text>
                   </Group>
                   <Group justify='space-between'>
-                    <Text size='sm' fw={500}>Created By</Text>
-                    <Text size='sm' c='dimmed'>{ticket.requester.name}</Text>
+                    <Text size='sm' fw={500}>
+                      Created By
+                    </Text>
+                    <Text size='sm' c='dimmed'>
+                      {ticket.requester.name}
+                    </Text>
                   </Group>
                   <Group justify='space-between'>
-                    <Text size='sm' fw={500}>Assigned To</Text>
+                    <Text size='sm' fw={500}>
+                      Assigned To
+                    </Text>
                     <Text size='sm' c='dimmed'>
                       {ticket.assignedTo?.name || 'Unassigned'}
                     </Text>
                   </Group>
                   <Group justify='space-between'>
-                    <Text size='sm' fw={500}>Created</Text>
+                    <Text size='sm' fw={500}>
+                      Created
+                    </Text>
                     <Text size='sm' c='dimmed'>
                       {new Date(ticket.createdAt).toLocaleDateString()}
                     </Text>
                   </Group>
                   <Group justify='space-between'>
-                    <Text size='sm' fw={500}>Last Updated</Text>
+                    <Text size='sm' fw={500}>
+                      Last Updated
+                    </Text>
                     <Text size='sm' c='dimmed'>
                       {new Date(ticket.updatedAt).toLocaleDateString()}
                     </Text>

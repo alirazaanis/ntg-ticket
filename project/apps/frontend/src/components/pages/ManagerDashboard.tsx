@@ -50,15 +50,14 @@ export function ManagerDashboard() {
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: reportData } = useTicketReport();
 
-  const allTickets = tickets || [];
-  const openTickets = allTickets.filter((ticket: Ticket) =>
+  const allTickets = tickets?.data || [];
+  const openTickets = allTickets?.filter((ticket: Ticket) =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );
-  const resolvedTickets = allTickets.filter(
-    (ticket: Ticket) => ticket.status === 'RESOLVED'
-  );
+  const resolvedTickets =
+    allTickets?.filter((ticket: Ticket) => ticket.status === 'RESOLVED') || [];
 
-  const overdueTickets = allTickets.filter((ticket: Ticket) => {
+  const overdueTickets = allTickets?.filter((ticket: Ticket) => {
     if (!ticket.dueDate) return false;
     return (
       new Date(ticket.dueDate) < new Date() &&
@@ -69,7 +68,7 @@ export function ManagerDashboard() {
   const stats = [
     {
       title: 'Total Tickets',
-      value: allTickets.length,
+      value: allTickets?.length || 0,
       icon: IconTicket,
       color: 'blue',
     },
@@ -307,7 +306,7 @@ export function ManagerDashboard() {
                     Recent Activity
                   </Title>
                   <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                    {allTickets.slice(0, 5).map((ticket: Ticket) => (
+                    {allTickets?.slice(0, 5).map((ticket: Ticket) => (
                       <Timeline.Item
                         key={ticket.id}
                         bullet={<IconTicket size={12} />}
@@ -382,7 +381,7 @@ export function ManagerDashboard() {
               </Group>
 
               <Grid>
-                {allTickets.map((ticket: Ticket) => (
+                {allTickets?.map((ticket: Ticket) => (
                   <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
                     <TicketCard ticket={ticket} showActions />
                   </Grid.Col>

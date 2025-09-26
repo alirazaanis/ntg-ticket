@@ -202,7 +202,11 @@ export class CommentsService {
     }
   }
 
-  private checkCommentAccess(ticket: { requesterId: string; assignedToId?: string }, userId: string, userRole: UserRole) {
+  private checkCommentAccess(
+    ticket: { requesterId: string; assignedToId?: string },
+    userId: string,
+    userRole: UserRole
+  ) {
     if (userRole === UserRole.ADMIN || userRole === UserRole.SUPPORT_MANAGER) {
       return; // Admins and managers can access all comments
     }

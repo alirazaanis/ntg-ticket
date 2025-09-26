@@ -32,6 +32,7 @@ import {
   IconClock,
   IconUser,
   IconExclamationMark,
+  IconAlertTriangle,
 } from '@tabler/icons-react';
 import { useBreachedSLATickets } from '../../../hooks/useTickets';
 import { useRouter } from 'next/navigation';
@@ -57,13 +58,17 @@ export default function SLABreachedTicketsPage() {
 
   const { data: breachedTickets, isLoading, refetch } = useBreachedSLATickets();
 
-  const filteredTickets = breachedTickets?.filter((ticket) => {
-    const matchesSearch = ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.ticketNumber.toLowerCase().includes(search.toLowerCase());
-    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
-    const matchesCategory = categoryFilter === 'all' || ticket.category?.name === categoryFilter;
-    return matchesSearch && matchesPriority && matchesCategory;
-  }) || [];
+  const filteredTickets =
+    breachedTickets?.filter(ticket => {
+      const matchesSearch =
+        ticket.title.toLowerCase().includes(search.toLowerCase()) ||
+        ticket.ticketNumber.toLowerCase().includes(search.toLowerCase());
+      const matchesPriority =
+        priorityFilter === 'all' || ticket.priority === priorityFilter;
+      const matchesCategory =
+        categoryFilter === 'all' || ticket.category?.name === categoryFilter;
+      return matchesSearch && matchesPriority && matchesCategory;
+    }) || [];
 
   const totalPages = Math.ceil(filteredTickets.length / pageSize);
   const paginatedTickets = filteredTickets.slice(
@@ -73,48 +78,74 @@ export default function SLABreachedTicketsPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'CRITICAL': return 'red';
-      case 'HIGH': return 'orange';
-      case 'MEDIUM': return 'blue';
-      case 'LOW': return 'green';
-      default: return 'gray';
+      case 'CRITICAL':
+        return 'red';
+      case 'HIGH':
+        return 'orange';
+      case 'MEDIUM':
+        return 'blue';
+      case 'LOW':
+        return 'green';
+      default:
+        return 'gray';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'OPEN': return 'blue';
-      case 'IN_PROGRESS': return 'yellow';
-      case 'PENDING': return 'orange';
-      case 'RESOLVED': return 'green';
-      case 'CLOSED': return 'gray';
-      default: return 'gray';
+      case 'OPEN':
+        return 'blue';
+      case 'IN_PROGRESS':
+        return 'yellow';
+      case 'PENDING':
+        return 'orange';
+      case 'RESOLVED':
+        return 'green';
+      case 'CLOSED':
+        return 'gray';
+      default:
+        return 'gray';
     }
   };
 
   const calculateBreachHours = (createdAt: string, slaHours: number) => {
     const created = new Date(createdAt);
     const now = new Date();
-    const hoursSinceCreation = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
+    const hoursSinceCreation =
+      (now.getTime() - created.getTime()) / (1000 * 60 * 60);
     return Math.max(0, hoursSinceCreation - slaHours);
   };
 
   const getBreachSeverity = (breachHours: number) => {
-    if (breachHours > 168) return { color: 'red', label: 'Critical Breach', icon: IconExclamationMark };
-    if (breachHours > 72) return { color: 'orange', label: 'Major Breach', icon: IconAlertTriangle };
-    if (breachHours > 24) return { color: 'yellow', label: 'Moderate Breach', icon: IconClock };
+    if (breachHours > 168)
+      return {
+        color: 'red',
+        label: 'Critical Breach',
+        icon: IconExclamationMark,
+      };
+    if (breachHours > 72)
+      return {
+        color: 'orange',
+        label: 'Major Breach',
+        icon: IconAlertTriangle,
+      };
+    if (breachHours > 24)
+      return { color: 'yellow', label: 'Moderate Breach', icon: IconClock };
     return { color: 'blue', label: 'Minor Breach', icon: IconClock };
   };
 
-  const handleQuickAction = (ticket: {
-    id: string;
-    ticketNumber: string;
-    title: string;
-    priority: string;
-    status: string;
-    assignedTo?: { name: string };
-    createdAt: string;
-  }, action: string) => {
+  const handleQuickAction = (
+    ticket: {
+      id: string;
+      ticketNumber: string;
+      title: string;
+      priority: string;
+      status: string;
+      assignedTo?: { name: string };
+      createdAt: string;
+    },
+    action: string
+  ) => {
     setSelectedTicket(ticket);
     setActionModalOpen(true);
     notifications.show({
@@ -157,16 +188,16 @@ export default function SLABreachedTicketsPage() {
   };
 
   return (
-    <Container size="xl" py="md">
-      <Group justify="space-between" mb="xl">
+    <Container size='xl' py='md'>
+      <Group justify='space-between' mb='xl'>
         <div>
           <Title order={2}>SLA Breached Tickets</Title>
-          <Text c="dimmed" size="sm">
+          <Text c='dimmed' size='sm'>
             Tickets that have severely breached their SLA deadlines
           </Text>
         </div>
         <Button
-          variant="light"
+          variant='light'
           leftSection={<IconRefresh size={16} />}
           onClick={() => refetch()}
           loading={isLoading}
@@ -176,21 +207,29 @@ export default function SLABreachedTicketsPage() {
       </Group>
 
       {/* Critical Alert */}
-      <Alert color="red" title="Critical SLA Breaches" icon={<IconExclamationMark size={16} />} mb="xl">
-        These tickets have severely breached their SLA deadlines and require immediate attention.
-        Consider escalating to management or taking urgent corrective action.
+      <Alert
+        color='red'
+        title='Critical SLA Breaches'
+        icon={<IconExclamationMark size={16} />}
+        mb='xl'
+      >
+        These tickets have severely breached their SLA deadlines and require
+        immediate attention. Consider escalating to management or taking urgent
+        corrective action.
       </Alert>
 
       {/* Statistics Cards */}
-      <Grid mb="xl">
+      <Grid mb='xl'>
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">Total Breached</Text>
-                <IconExclamationMark size={20} color="red" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  Total Breached
+                </Text>
+                <IconExclamationMark size={20} color='red' />
               </Group>
-              <Text size="xl" fw={700} c="red">
+              <Text size='xl' fw={700} c='red'>
                 {breachedTickets?.length || 0}
               </Text>
             </Stack>
@@ -199,11 +238,13 @@ export default function SLABreachedTicketsPage() {
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">Critical Breaches</Text>
-                <IconExclamationMark size={20} color="red" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  Critical Breaches
+                </Text>
+                <IconExclamationMark size={20} color='red' />
               </Group>
-              <Text size="xl" fw={700} c="red">
+              <Text size='xl' fw={700} c='red'>
                 {breachedTickets?.filter(t => {
                   const breachHours = calculateBreachHours(t.createdAt, 24);
                   return breachHours > 168;
@@ -215,11 +256,13 @@ export default function SLABreachedTicketsPage() {
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">Major Breaches</Text>
-                <IconAlertTriangle size={20} color="orange" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  Major Breaches
+                </Text>
+                <IconAlertTriangle size={20} color='orange' />
               </Group>
-              <Text size="xl" fw={700} c="orange">
+              <Text size='xl' fw={700} c='orange'>
                 {breachedTickets?.filter(t => {
                   const breachHours = calculateBreachHours(t.createdAt, 24);
                   return breachHours > 72 && breachHours <= 168;
@@ -231,17 +274,25 @@ export default function SLABreachedTicketsPage() {
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">Avg Breach Time</Text>
-                <IconClock size={20} color="blue" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  Avg Breach Time
+                </Text>
+                <IconClock size={20} color='blue' />
               </Group>
-              <Text size="xl" fw={700} c="blue">
+              <Text size='xl' fw={700} c='blue'>
                 {breachedTickets && breachedTickets.length > 0
-                  ? Math.round(breachedTickets.reduce((acc, t) => {
-                      const breachHours = calculateBreachHours(t.createdAt, 24);
-                      return acc + breachHours;
-                    }, 0) / breachedTickets.length)
-                  : 0}h
+                  ? Math.round(
+                      breachedTickets.reduce((acc, t) => {
+                        const breachHours = calculateBreachHours(
+                          t.createdAt,
+                          24
+                        );
+                        return acc + breachHours;
+                      }, 0) / breachedTickets.length
+                    )
+                  : 0}
+                h
               </Text>
             </Stack>
           </Card>
@@ -249,17 +300,17 @@ export default function SLABreachedTicketsPage() {
       </Grid>
 
       {/* Filters */}
-      <Card mb="md">
+      <Card mb='md'>
         <Group>
           <TextInput
-            placeholder="Search breached tickets..."
+            placeholder='Search breached tickets...'
             leftSection={<IconSearch size={16} />}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             style={{ width: 300 }}
           />
           <Select
-            placeholder="Filter by priority"
+            placeholder='Filter by priority'
             data={[
               { value: 'all', label: 'All Priorities' },
               { value: 'CRITICAL', label: 'Critical' },
@@ -268,11 +319,11 @@ export default function SLABreachedTicketsPage() {
               { value: 'LOW', label: 'Low' },
             ]}
             value={priorityFilter}
-            onChange={(value) => setPriorityFilter(value || 'all')}
+            onChange={value => setPriorityFilter(value || 'all')}
             style={{ width: 200 }}
           />
           <Select
-            placeholder="Filter by category"
+            placeholder='Filter by category'
             data={[
               { value: 'all', label: 'All Categories' },
               { value: 'TECHNICAL', label: 'Technical' },
@@ -280,13 +331,10 @@ export default function SLABreachedTicketsPage() {
               { value: 'BILLING', label: 'Billing' },
             ]}
             value={categoryFilter}
-            onChange={(value) => setCategoryFilter(value || 'all')}
+            onChange={value => setCategoryFilter(value || 'all')}
             style={{ width: 200 }}
           />
-          <Button
-            variant="light"
-            leftSection={<IconFilter size={16} />}
-          >
+          <Button variant='light' leftSection={<IconFilter size={16} />}>
             More Filters
           </Button>
         </Group>
@@ -307,56 +355,69 @@ export default function SLABreachedTicketsPage() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {paginatedTickets.map((ticket) => {
+            {paginatedTickets.map(ticket => {
               const breachHours = calculateBreachHours(ticket.createdAt, 24);
               const severity = getBreachSeverity(breachHours);
               const SeverityIcon = severity.icon;
-              
+
               return (
                 <Table.Tr key={ticket.id}>
                   <Table.Td>
                     <Stack gap={4}>
                       <Text fw={500}>{ticket.ticketNumber}</Text>
-                      <Text size="sm" c="dimmed" truncate>
+                      <Text size='sm' c='dimmed' truncate>
                         {ticket.title}
                       </Text>
                     </Stack>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={getPriorityColor(ticket.priority)} variant="light">
+                    <Badge
+                      color={getPriorityColor(ticket.priority)}
+                      variant='light'
+                    >
                       {ticket.priority}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={getStatusColor(ticket.status)} variant="light">
+                    <Badge
+                      color={getStatusColor(ticket.status)}
+                      variant='light'
+                    >
                       {ticket.status}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
-                    <Group gap="xs">
+                    <Group gap='xs'>
                       <IconUser size={14} />
-                      <Text size="sm">{ticket.assignedTo?.name || 'Unassigned'}</Text>
+                      <Text size='sm'>
+                        {ticket.assignedTo?.name || 'Unassigned'}
+                      </Text>
                     </Group>
                   </Table.Td>
                   <Table.Td>
                     <Stack gap={4}>
-                      <Text size="sm" fw={500} c={severity.color}>
+                      <Text size='sm' fw={500} c={severity.color}>
                         {Math.round(breachHours)}h breached
                       </Text>
-                      <Text size="xs" c="dimmed">
-                        Created: {new Date(ticket.createdAt).toLocaleDateString()}
+                      <Text size='xs' c='dimmed'>
+                        Created:{' '}
+                        {new Date(ticket.createdAt).toLocaleDateString()}
                       </Text>
                     </Stack>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={severity.color} variant="light" leftSection={<SeverityIcon size={12} />}>
+                    <Badge
+                      color={severity.color}
+                      variant='light'
+                      leftSection={<SeverityIcon size={12} />}
+                    >
                       {severity.label}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
                     <Menu>
                       <Menu.Target>
-                        <ActionIcon variant="subtle">
+                        <ActionIcon variant='subtle'>
                           <IconDots size={16} />
                         </ActionIcon>
                       </Menu.Target>
@@ -369,7 +430,9 @@ export default function SLABreachedTicketsPage() {
                         </Menu.Item>
                         <Menu.Item
                           leftSection={<IconEdit size={14} />}
-                          onClick={() => router.push(`/tickets/${ticket.id}/edit`)}
+                          onClick={() =>
+                            router.push(`/tickets/${ticket.id}/edit`)
+                          }
                         >
                           Edit Ticket
                         </Menu.Item>
@@ -383,14 +446,14 @@ export default function SLABreachedTicketsPage() {
                         <Menu.Item
                           leftSection={<IconAlertTriangle size={14} />}
                           onClick={() => handleEscalate(ticket)}
-                          color="orange"
+                          color='orange'
                         >
                           Escalate to Management
                         </Menu.Item>
                         <Menu.Item
                           leftSection={<IconExclamationMark size={14} />}
                           onClick={() => handleUrgentResponse(ticket)}
-                          color="red"
+                          color='red'
                         >
                           Send Urgent Response
                         </Menu.Item>
@@ -404,7 +467,7 @@ export default function SLABreachedTicketsPage() {
         </Table>
 
         {totalPages > 1 && (
-          <Group justify="center" mt="md">
+          <Group justify='center' mt='md'>
             <Pagination
               value={currentPage}
               onChange={setCurrentPage}
@@ -418,27 +481,37 @@ export default function SLABreachedTicketsPage() {
       <Modal
         opened={actionModalOpen}
         onClose={() => setActionModalOpen(false)}
-        title="Quick Action"
+        title='Quick Action'
       >
         <Stack>
-          <Text size="sm" fw={500}>Ticket: {selectedTicket?.ticketNumber}</Text>
-          <Text size="sm" c="dimmed">{selectedTicket?.title}</Text>
-          
-          <Divider />
-          
-          <Text size="sm" fw={500}>SLA Breach Details</Text>
-          <Text size="sm" c="dimmed">
-            This ticket has breached its SLA by {selectedTicket ? Math.round(calculateBreachHours(selectedTicket.createdAt, 24)) : 0} hours.
+          <Text size='sm' fw={500}>
+            Ticket: {selectedTicket?.ticketNumber}
           </Text>
-          
+          <Text size='sm' c='dimmed'>
+            {selectedTicket?.title}
+          </Text>
+
+          <Divider />
+
+          <Text size='sm' fw={500}>
+            SLA Breach Details
+          </Text>
+          <Text size='sm' c='dimmed'>
+            This ticket has breached its SLA by{' '}
+            {selectedTicket
+              ? Math.round(calculateBreachHours(selectedTicket.createdAt, 24))
+              : 0}{' '}
+            hours.
+          </Text>
+
           <Textarea
-            label="Action Note"
-            placeholder="Add a note about the action taken..."
+            label='Action Note'
+            placeholder='Add a note about the action taken...'
             minRows={3}
           />
-          
-          <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setActionModalOpen(false)}>
+
+          <Group justify='flex-end' mt='md'>
+            <Button variant='light' onClick={() => setActionModalOpen(false)}>
               Cancel
             </Button>
             <Button onClick={() => setActionModalOpen(false)}>

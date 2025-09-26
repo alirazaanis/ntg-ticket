@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { customFieldsApi, CustomField, CreateCustomFieldInput, UpdateCustomFieldInput } from '../lib/apiClient';
+import {
+  customFieldsApi,
+  CustomField,
+  CreateCustomFieldInput,
+  UpdateCustomFieldInput,
+} from '../lib/apiClient';
 
 export function useCustomFields() {
   return useQuery({
@@ -41,7 +46,13 @@ export function useUpdateCustomField() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateCustomFieldInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateCustomFieldInput;
+    }) => {
       const response = await customFieldsApi.updateCustomField(id, data);
       return response.data.data as CustomField;
     },
@@ -71,7 +82,10 @@ export function useTicketCustomFields(ticketId: string) {
     queryKey: ['ticket-custom-fields', ticketId],
     queryFn: async () => {
       const response = await customFieldsApi.getTicketCustomFields(ticketId);
-      return response.data.data as Record<string, string | number | boolean | string[]>;
+      return response.data.data as Record<
+        string,
+        string | number | boolean | string[]
+      >;
     },
     enabled: !!ticketId,
     staleTime: 1 * 60 * 1000, // 1 minute
@@ -82,12 +96,26 @@ export function useSetTicketCustomField() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ticketId, customFieldId, value }: { ticketId: string; customFieldId: string; value: string }) => {
-      const response = await customFieldsApi.setTicketCustomField(ticketId, customFieldId, value);
+    mutationFn: async ({
+      ticketId,
+      customFieldId,
+      value,
+    }: {
+      ticketId: string;
+      customFieldId: string;
+      value: string;
+    }) => {
+      const response = await customFieldsApi.setTicketCustomField(
+        ticketId,
+        customFieldId,
+        value
+      );
       return response.data.data;
     },
     onSuccess: (_, { ticketId }) => {
-      queryClient.invalidateQueries({ queryKey: ['ticket-custom-fields', ticketId] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-custom-fields', ticketId],
+      });
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
     },
   });

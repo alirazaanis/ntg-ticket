@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userApi, User, CreateUserInput, UpdateUserInput, UserFilters } from '../lib/apiClient';
+import {
+  userApi,
+  User,
+  CreateUserInput,
+  UpdateUserInput,
+  UserFilters,
+} from '../lib/apiClient';
 
 export function useUsers(filters?: UserFilters) {
   return useQuery({
@@ -76,5 +82,3 @@ export function useSupportStaff() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
-
-

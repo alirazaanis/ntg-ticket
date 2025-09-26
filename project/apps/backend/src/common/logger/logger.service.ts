@@ -111,7 +111,17 @@ export class LoggerService implements NestLoggerService {
   }
 
   // Custom logging methods
-  logRequest(req: { method: string; url: string; get: (header: string) => string; ip: string; user?: { id: string } }, res: { statusCode: number }, responseTime: number) {
+  logRequest(
+    req: {
+      method: string;
+      url: string;
+      get: (header: string) => string;
+      ip: string;
+      user?: { id: string };
+    },
+    res: { statusCode: number },
+    responseTime: number
+  ) {
     const logData = {
       method: req.method,
       url: req.url,
@@ -125,7 +135,11 @@ export class LoggerService implements NestLoggerService {
     this.logger.info('HTTP Request', { context: 'HTTP', ...logData });
   }
 
-  logError(error: Error, context?: string, additionalData?: Record<string, unknown>) {
+  logError(
+    error: Error,
+    context?: string,
+    additionalData?: Record<string, unknown>
+  ) {
     this.logger.error(error.message, {
       context: context || 'Error',
       stack: error.stack,
@@ -140,7 +154,12 @@ export class LoggerService implements NestLoggerService {
     });
   }
 
-  logAudit(action: string, userId: string, resource: string, details?: Record<string, unknown>) {
+  logAudit(
+    action: string,
+    userId: string,
+    resource: string,
+    details?: Record<string, unknown>
+  ) {
     this.logger.info(`Audit: ${action}`, {
       context: 'Audit',
       userId,
@@ -149,7 +168,11 @@ export class LoggerService implements NestLoggerService {
     });
   }
 
-  logPerformance(operation: string, duration: number, details?: Record<string, unknown>) {
+  logPerformance(
+    operation: string,
+    duration: number,
+    details?: Record<string, unknown>
+  ) {
     this.logger.info(`Performance: ${operation}`, {
       context: 'Performance',
       duration: `${duration}ms`,

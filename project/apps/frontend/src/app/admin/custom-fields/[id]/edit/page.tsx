@@ -8,22 +8,26 @@ import {
   TextInput,
   Select,
   Switch,
-  Textarea,
   Grid,
   Stack,
   Group,
   Alert,
   Card,
   NumberInput,
-  MultiSelect,
   LoadingOverlay,
   Text,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { useRouter } from 'next/navigation';
-import { useCustomField, useUpdateCustomField } from '../../../../../hooks/useCustomFields';
-import { UpdateCustomFieldInput, CustomFieldType } from '../../../../../types/unified';
+import {
+  useCustomField,
+  useUpdateCustomField,
+} from '../../../../../hooks/useCustomFields';
+import {
+  UpdateCustomFieldInput,
+  CustomFieldType,
+} from '../../../../../types/unified';
 import { IconArrowLeft, IconPlus, IconTrash } from '@tabler/icons-react';
 
 interface EditCustomFieldPageProps {
@@ -32,7 +36,9 @@ interface EditCustomFieldPageProps {
   };
 }
 
-export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps) {
+export default function EditCustomFieldPage({
+  params,
+}: EditCustomFieldPageProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: customField, isLoading } = useCustomField(params.id);
@@ -47,8 +53,9 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
       isActive: true,
     },
     validate: {
-      name: (value: string) => (!value ? 'Name is required' : null),
-      fieldType: (value: string) => (!value ? 'Type is required' : null),
+      name: (value: string | undefined) => (!value ? 'Name is required' : null),
+      fieldType: (value: CustomFieldType | undefined) =>
+        !value ? 'Type is required' : null,
     },
   });
 
@@ -118,7 +125,7 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
 
   if (isLoading) {
     return (
-      <Container size="lg" py="md">
+      <Container size='lg' py='md'>
         <LoadingOverlay visible />
       </Container>
     );
@@ -126,8 +133,8 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
 
   if (!customField) {
     return (
-      <Container size="lg" py="md">
-        <Alert color="red" title="Error">
+      <Container size='lg' py='md'>
+        <Alert color='red' title='Error'>
           Custom field not found
         </Alert>
       </Container>
@@ -135,10 +142,10 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
   }
 
   return (
-    <Container size="lg" py="md">
-      <Group mb="xl">
+    <Container size='lg' py='md'>
+      <Group mb='xl'>
         <Button
-          variant="light"
+          variant='light'
           leftSection={<IconArrowLeft size={16} />}
           onClick={() => router.back()}
         >
@@ -146,7 +153,7 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
         </Button>
         <div>
           <Title order={2}>Edit Custom Field</Title>
-          <Text c="dimmed" size="sm">
+          <Text c='dimmed' size='sm'>
             Update custom field: {customField.name}
           </Text>
         </div>
@@ -162,9 +169,9 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
                   <Grid>
                     <Grid.Col span={6}>
                       <TextInput
-                        label="Name"
-                        placeholder="field_name"
-                        description="Internal field name (used in API)"
+                        label='Name'
+                        placeholder='field_name'
+                        description='Internal field name (used in API)'
                         required
                         {...form.getInputProps('name')}
                       />
@@ -174,9 +181,9 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
                   <Grid>
                     <Grid.Col span={6}>
                       <Select
-                        label="Type"
-                        placeholder="Select field type"
-                        description="Choose the field type"
+                        label='Type'
+                        placeholder='Select field type'
+                        description='Choose the field type'
                         required
                         data={fieldTypeOptions}
                         {...form.getInputProps('fieldType')}
@@ -190,22 +197,24 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
                 <Card>
                   <Stack>
                     <Title order={4}>Options</Title>
-                    <Text size="sm" c="dimmed">
+                    <Text size='sm' c='dimmed'>
                       Define the available options for this field
                     </Text>
-                    
+
                     {form.values.options?.map((option, index) => (
-                      <Group key={`option-${option}-${index}-${Date.now()}`}>
+                      <Group key={`option-${option}-${Date.now()}`}>
                         <TextInput
                           placeholder={`Option ${index + 1}`}
                           value={option}
-                          onChange={(e) => handleOptionChange(index, e.target.value)}
+                          onChange={e =>
+                            handleOptionChange(index, e.target.value)
+                          }
                           style={{ flex: 1 }}
                         />
                         <Button
-                          variant="light"
-                          color="red"
-                          size="sm"
+                          variant='light'
+                          color='red'
+                          size='sm'
                           onClick={() => handleRemoveOption(index)}
                         >
                           <IconTrash size={14} />
@@ -214,7 +223,7 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
                     ))}
 
                     <Button
-                      variant="light"
+                      variant='light'
                       leftSection={<IconPlus size={14} />}
                       onClick={handleAddOption}
                     >
@@ -223,7 +232,6 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
                   </Stack>
                 </Card>
               )}
-
             </Stack>
           </Grid.Col>
 
@@ -232,16 +240,16 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
               <Card>
                 <Stack>
                   <Title order={4}>Settings</Title>
-                  
+
                   <Switch
-                    label="Required Field"
-                    description="Make this field mandatory"
+                    label='Required Field'
+                    description='Make this field mandatory'
                     {...form.getInputProps('isRequired', { type: 'checkbox' })}
                   />
 
                   <Switch
-                    label="Active"
-                    description="Enable this field"
+                    label='Active'
+                    description='Enable this field'
                     {...form.getInputProps('isActive', { type: 'checkbox' })}
                   />
                 </Stack>
@@ -250,38 +258,43 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
               <Card>
                 <Stack>
                   <Title order={4}>Preview</Title>
-                  <Text size="sm" c="dimmed">
+                  <Text size='sm' c='dimmed'>
                     How this field will appear in forms
                   </Text>
-                  
+
                   <div>
-                    <Text size="sm" fw={500} mb={4}>
+                    <Text size='sm' fw={500} mb={4}>
                       {form.values.name}
-                      {form.values.isRequired && <Text component="span" c="red"> *</Text>}
+                      {form.values.isRequired && (
+                        <Text component='span' c='red'>
+                          {' '}
+                          *
+                        </Text>
+                      )}
                     </Text>
-                    
+
                     {form.values.fieldType === CustomFieldType.TEXT && (
-                      <TextInput placeholder="Enter text..." disabled />
+                      <TextInput placeholder='Enter text...' disabled />
                     )}
-                    
+
                     {form.values.fieldType === CustomFieldType.NUMBER && (
-                      <NumberInput placeholder="Enter number..." disabled />
+                      <NumberInput placeholder='Enter number...' disabled />
                     )}
-                    
+
                     {form.values.fieldType === CustomFieldType.SELECT && (
                       <Select
-                        placeholder="Select option..."
+                        placeholder='Select option...'
                         data={form.values.options || []}
                         disabled
                       />
                     )}
-                    
+
                     {form.values.fieldType === CustomFieldType.DATE && (
-                      <TextInput placeholder="Select date..." disabled />
+                      <TextInput placeholder='Select date...' disabled />
                     )}
-                    
+
                     {form.values.fieldType === CustomFieldType.BOOLEAN && (
-                      <Switch label="Yes/No" disabled />
+                      <Switch label='Yes/No' disabled />
                     )}
                   </div>
                 </Stack>
@@ -290,11 +303,11 @@ export default function EditCustomFieldPage({ params }: EditCustomFieldPageProps
           </Grid.Col>
         </Grid>
 
-        <Group justify="flex-end" mt="xl">
-          <Button variant="light" onClick={() => router.back()}>
+        <Group justify='flex-end' mt='xl'>
+          <Button variant='light' onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="submit" loading={isSubmitting}>
+          <Button type='submit' loading={isSubmitting}>
             Update Custom Field
           </Button>
         </Group>

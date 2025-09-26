@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { emailTemplatesApi, EmailTemplate, CreateEmailTemplateInput, UpdateEmailTemplateInput } from '../lib/apiClient';
+import {
+  emailTemplatesApi,
+  EmailTemplate,
+  CreateEmailTemplateInput,
+  UpdateEmailTemplateInput,
+} from '../lib/apiClient';
 
 export function useEmailTemplates() {
   return useQuery({
@@ -41,7 +46,13 @@ export function useUpdateEmailTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateEmailTemplateInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateEmailTemplateInput;
+    }) => {
       const response = await emailTemplatesApi.updateEmailTemplate(id, data);
       return response.data.data as EmailTemplate;
     },
@@ -82,8 +93,17 @@ export function useCreateDefaultTemplates() {
 
 export function usePreviewEmailTemplate() {
   return useMutation({
-    mutationFn: async ({ id, variables }: { id: string; variables: Record<string, unknown> }) => {
-      const response = await emailTemplatesApi.previewEmailTemplate(id, variables);
+    mutationFn: async ({
+      id,
+      variables,
+    }: {
+      id: string;
+      variables: Record<string, unknown>;
+    }) => {
+      const response = await emailTemplatesApi.previewEmailTemplate(
+        id,
+        variables
+      );
       return response.data.data as { subject: string; html: string };
     },
   });

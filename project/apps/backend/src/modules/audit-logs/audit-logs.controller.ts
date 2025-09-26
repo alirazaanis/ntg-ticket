@@ -35,7 +35,7 @@ export class AuditLogsController {
     const filters: { userId?: string; action?: string } = {};
     if (userId) filters.userId = userId;
     if (action) filters.action = action;
-    
+
     const pagination = {
       page: page || 1,
       limit: Math.min(limit || 20, 100), // Max 100 items per page

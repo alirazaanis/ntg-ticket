@@ -7,7 +7,14 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { TicketStatus, Prisma } from '@prisma/client';
+import {
+  TicketStatus,
+  TicketPriority,
+  TicketImpact,
+  TicketUrgency,
+  SLALevel,
+  Prisma,
+} from '@prisma/client';
 import { LoggerService } from '../../common/logger/logger.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -30,8 +37,23 @@ interface TicketFilters {
   dateTo?: string;
 }
 
+interface TicketUpdateData {
+  status?: TicketStatus;
+  resolution?: string;
+  title?: string;
+  description?: string;
+  priority?: TicketPriority;
+  impact?: TicketImpact;
+  urgency?: TicketUrgency;
+  slaLevel?: SLALevel;
+  categoryId?: string;
+  subcategoryId?: string;
+  assignedToId?: string;
+  customFields?: Record<string, unknown>;
+}
+
 /**
- * Service for managing tickets in the NTG Ticket System.
+ * Service for managing tickets in the NTG Ticket.
  *
  * This service provides comprehensive ticket management functionality including:
  * - Creating, reading, updating, and deleting tickets
@@ -91,7 +113,11 @@ export class TicketsService {
     this.logger.log(`Creating ticket for user ${userId}`, 'TicketsService');
 
     // Validate user role can create tickets
-    if (!['END_USER', 'SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
+    if (
+      !['END_USER', 'SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(
+        userRole
+      )
+    ) {
       throw new BadRequestException('Invalid user role for ticket creation');
     }
 
@@ -261,11 +287,23 @@ export class TicketsService {
 
     // Apply filters
     if (filters.status && filters.status.length > 0) {
-      where.status = { in: filters.status as ('NEW' | 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'CLOSED' | 'REOPENED')[] };
+      where.status = {
+        in: filters.status as (
+          | 'NEW'
+          | 'OPEN'
+          | 'IN_PROGRESS'
+          | 'ON_HOLD'
+          | 'RESOLVED'
+          | 'CLOSED'
+          | 'REOPENED'
+        )[],
+      };
     }
 
     if (filters.priority && filters.priority.length > 0) {
-      where.priority = { in: filters.priority as ('LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')[] };
+      where.priority = {
+        in: filters.priority as ('LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')[],
+      };
     }
 
     if (filters.category && filters.category.length > 0) {
@@ -453,15 +491,33 @@ export class TicketsService {
     }
 
     // Track changes for history
-    const changes = this.trackChanges(existingTicket, updateTicketDto as Record<string, unknown>);
+    const changes = this.trackChanges(
+      existingTicket,
+      updateTicketDto as Record<string, unknown>
+    );
 
-    // Prepare update data, excluding relation fields that cause Prisma issues
-    // These fields are excluded because they need special handling for relations
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { category, subcategory, assignedToId, relatedTickets, ...updateData } = updateTicketDto;
-    
-    // Note: category, subcategory, assignedToId, and relatedTickets are excluded from updateData
-    // because they require special handling for Prisma relations
+    // Extract fields that should not be updated directly
+    const {
+      category,
+      subcategory,
+      assignedToId,
+      relatedTickets,
+      ...baseUpdateData
+    } = updateTicketDto;
+
+    // Build the complete update data object
+    const updateData: TicketUpdateData = { ...baseUpdateData };
+
+    // Handle category and subcategory updates if provided
+    if (category && subcategory) {
+      updateData.categoryId = category;
+      updateData.subcategoryId = subcategory;
+    }
+
+    // Handle assignment if provided
+    if (assignedToId !== undefined) {
+      updateData.assignedToId = assignedToId;
+    }
 
     const ticket = await this.prisma.ticket.update({
       where: { id },
@@ -486,6 +542,25 @@ export class TicketsService {
         },
       },
     });
+
+    // Handle related tickets if provided
+    if (relatedTickets && Array.isArray(relatedTickets)) {
+      // Remove existing relations
+      await this.prisma.ticketRelation.deleteMany({
+        where: { ticketId: id },
+      });
+
+      // Create new relations
+      if (relatedTickets.length > 0) {
+        await this.prisma.ticketRelation.createMany({
+          data: relatedTickets.map((relatedTicketId: string) => ({
+            ticketId: id,
+            relatedTicketId,
+            relationType: 'related',
+          })),
+        });
+      }
+    }
 
     // Record changes in history
     if (changes.length > 0) {
@@ -583,27 +658,6 @@ export class TicketsService {
     this.logger.log(`Ticket deleted: ${ticket.ticketNumber}`, 'TicketsService');
   }
 
-  /**
-   * Updates the status of a ticket.
-   *
-   * This method updates the status of a ticket with validation for status transitions
-   * and business rules, such as requiring resolution for resolved tickets.
-   *
-   * @param id - The ID of the ticket to update
-   * @param status - The new status for the ticket
-   * @param resolution - Optional resolution text for resolved tickets
-   * @param userId - The ID of the user updating the status
-   * @param userRole - The role of the user updating the status
-   * @returns Promise<Ticket> - The updated ticket
-   *
-   * @throws {NotFoundException} When the ticket is not found
-   * @throws {BadRequestException} When status transition is invalid or resolution is required
-   *
-   * @example
-   * ```typescript
-   * const ticket = await ticketsService.updateStatus('ticket-123', 'RESOLVED', 'Issue fixed by restarting service', 'user-123', 'SUPPORT_STAFF')
-   * ```
-   */
   async updateStatus(
     id: string,
     status: TicketStatus,
@@ -618,7 +672,9 @@ export class TicketsService {
 
     // Validate user role can update ticket status
     if (!['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
-      throw new BadRequestException('Only support staff can update ticket status');
+      throw new BadRequestException(
+        'Only support staff can update ticket status'
+      );
     }
 
     const ticket = await this.prisma.ticket.findUnique({
@@ -701,26 +757,6 @@ export class TicketsService {
     return updatedTicket;
   }
 
-  /**
-   * Assigns a ticket to a support staff member.
-   *
-   * This method assigns a ticket to a specific support staff member,
-   * updates the ticket status, and sends appropriate notifications.
-   *
-   * @param id - The ID of the ticket to assign
-   * @param assignedToId - The ID of the user to assign the ticket to
-   * @param userId - The ID of the user making the assignment
-   * @param userRole - The role of the user making the assignment
-   * @returns Promise<Ticket> - The updated ticket
-   *
-   * @throws {NotFoundException} When the ticket or assignee is not found
-   * @throws {BadRequestException} When the assignee is not a support staff member
-   *
-   * @example
-   * ```typescript
-   * const ticket = await ticketsService.assignTicket('ticket-123', 'support-user-456', 'manager-789', 'SUPPORT_MANAGER')
-   * ```
-   */
   async assignTicket(
     id: string,
     assignedToId: string,
@@ -734,7 +770,9 @@ export class TicketsService {
 
     // Validate user role can assign tickets
     if (!['SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
-      throw new BadRequestException('Only managers and admins can assign tickets');
+      throw new BadRequestException(
+        'Only managers and admins can assign tickets'
+      );
     }
 
     const ticket = await this.prisma.ticket.findUnique({
@@ -822,20 +860,6 @@ export class TicketsService {
     return updatedTicket;
   }
 
-  /**
-   * Generates a unique ticket number.
-   *
-   * This method generates a unique ticket number in the format TKT-YYYY-NNNNNN
-   * where YYYY is the current year and NNNNNN is a sequential number.
-   *
-   * @returns Promise<string> - The generated ticket number
-   *
-   * @example
-   * ```typescript
-   * const ticketNumber = await ticketsService.generateTicketNumber()
-   * // Returns: "TKT-2024-000001"
-   * ```
-   */
   private async generateTicketNumber(): Promise<string> {
     const year = new Date().getFullYear();
     const prefix = `TKT-${year}-`;
@@ -861,36 +885,14 @@ export class TicketsService {
     return `${prefix}${nextNumber.toString().padStart(6, '0')}`;
   }
 
-  /**
-   * Get tickets approaching SLA breach
-   */
   async getTicketsApproachingSLA() {
     return this.slaService.getTicketsApproachingSLA();
   }
 
-  /**
-   * Get tickets that have breached SLA
-   */
   async getBreachedSLATickets() {
     return this.slaService.getBreachedSLATickets();
   }
 
-  /**
-   * Validates if a status transition is allowed.
-   *
-   * This method validates if a ticket can transition from one status to another
-   * based on the defined workflow rules.
-   *
-   * @param currentStatus - The current status of the ticket
-   * @param newStatus - The desired new status
-   * @returns boolean - True if the transition is valid, false otherwise
-   *
-   * @example
-   * ```typescript
-   * const isValid = ticketsService.isValidStatusTransition('NEW', 'OPEN')
-   * // Returns: true
-   * ```
-   */
   private isValidStatusTransition(
     currentStatus: TicketStatus,
     newStatus: TicketStatus
@@ -920,13 +922,6 @@ export class TicketsService {
     return validTransitions[currentStatus]?.includes(newStatus) || false;
   }
 
-  /**
-   * Retrieves tickets for the current user.
-   *
-   * @param userId - The ID of the user
-   * @param filters - Filter criteria
-   * @returns Promise<PaginatedTickets> - User's tickets
-   */
   async getMyTickets(userId: string, filters: TicketFilters) {
     this.logger.log(`Getting tickets for user ${userId}`, 'TicketsService');
 
@@ -936,11 +931,23 @@ export class TicketsService {
 
     // Apply filters
     if (filters.status && filters.status.length > 0) {
-      where.status = { in: filters.status as ('NEW' | 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'CLOSED' | 'REOPENED')[] };
+      where.status = {
+        in: filters.status as (
+          | 'NEW'
+          | 'OPEN'
+          | 'IN_PROGRESS'
+          | 'ON_HOLD'
+          | 'RESOLVED'
+          | 'CLOSED'
+          | 'REOPENED'
+        )[],
+      };
     }
 
     if (filters.priority && filters.priority.length > 0) {
-      where.priority = { in: filters.priority as ('LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')[] };
+      where.priority = {
+        in: filters.priority as ('LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')[],
+      };
     }
 
     if (filters.category && filters.category.length > 0) {
@@ -1004,13 +1011,6 @@ export class TicketsService {
     };
   }
 
-  /**
-   * Retrieves tickets assigned to the current user.
-   *
-   * @param userId - The ID of the user
-   * @param filters - Filter criteria
-   * @returns Promise<PaginatedTickets> - Assigned tickets
-   */
   async getAssignedTickets(userId: string, filters: TicketFilters) {
     this.logger.log(
       `Getting assigned tickets for user ${userId}`,
@@ -1023,11 +1023,23 @@ export class TicketsService {
 
     // Apply filters
     if (filters.status && filters.status.length > 0) {
-      where.status = { in: filters.status as ('NEW' | 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'CLOSED' | 'REOPENED')[] };
+      where.status = {
+        in: filters.status as (
+          | 'NEW'
+          | 'OPEN'
+          | 'IN_PROGRESS'
+          | 'ON_HOLD'
+          | 'RESOLVED'
+          | 'CLOSED'
+          | 'REOPENED'
+        )[],
+      };
     }
 
     if (filters.priority && filters.priority.length > 0) {
-      where.priority = { in: filters.priority as ('LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')[] };
+      where.priority = {
+        in: filters.priority as ('LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')[],
+      };
     }
 
     if (filters.category && filters.category.length > 0) {
@@ -1091,11 +1103,6 @@ export class TicketsService {
     };
   }
 
-  /**
-   * Retrieves overdue tickets.
-   *
-   * @returns Promise<Ticket[]> - Overdue tickets
-   */
   async getOverdueTickets() {
     this.logger.log('Getting overdue tickets', 'TicketsService');
 
@@ -1129,22 +1136,6 @@ export class TicketsService {
     return tickets;
   }
 
-  /**
-   * Tracks changes between old and new ticket data for audit history.
-   *
-   * This method compares old and new ticket data and returns an array of changes
-   * that can be recorded in the ticket history.
-   *
-   * @param oldTicket - The original ticket data
-   * @param newTicket - The updated ticket data
-   * @returns Array<{field: string, oldValue: string, newValue: string}> - Array of changes
-   *
-   * @example
-   * ```typescript
-   * const changes = ticketsService.trackChanges(oldTicket, updateData)
-   * // Returns: [{ field: 'title', oldValue: 'Old Title', newValue: 'New Title' }]
-   * ```
-   */
   private trackChanges(
     oldTicket: Prisma.TicketGetPayload<Record<string, never>>,
     newTicket: Partial<Prisma.TicketUpdateInput>
@@ -1186,7 +1177,9 @@ export class TicketsService {
     if (userRole === 'END_USER') {
       // End users can only see tickets they created
       whereClause = { requesterId: userId };
-    } else if (['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
+    } else if (
+      ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)
+    ) {
       // Support staff can see tickets they created or are assigned to
       whereClause = { OR: [{ requesterId: userId }, { assignedToId: userId }] };
     } else {
@@ -1208,7 +1201,9 @@ export class TicketsService {
   async findAssignedTickets(userId: string, userRole: string) {
     // Only support staff can see assigned tickets
     if (!['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
-      throw new BadRequestException('Only support staff can view assigned tickets');
+      throw new BadRequestException(
+        'Only support staff can view assigned tickets'
+      );
     }
     return this.getAssignedTickets(userId, {});
   }
@@ -1216,14 +1211,13 @@ export class TicketsService {
   async findOverdueTickets(userId: string, userRole: string) {
     // Only support staff and managers can see overdue tickets
     if (!['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
-      throw new BadRequestException('Only support staff can view overdue tickets');
+      throw new BadRequestException(
+        'Only support staff can view overdue tickets'
+      );
     }
     return this.getOverdueTickets();
   }
 
-  /**
-   * Auto-assigns a ticket to an available support staff member
-   */
   private async autoAssignTicket(
     categoryId: string,
     subcategoryId: string

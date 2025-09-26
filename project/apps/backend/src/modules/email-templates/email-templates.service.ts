@@ -143,7 +143,7 @@ export class EmailTemplatesService {
                   <p>If you have any questions, please don't hesitate to contact our support team.</p>
                 </div>
                 <div class="footer">
-                  <p>This is an automated message from the NTG Ticket System.</p>
+                  <p>This is an automated message from the NTG Ticket.</p>
                 </div>
               </div>
             </body>
@@ -194,7 +194,7 @@ export class EmailTemplatesService {
                   <p><a href="{{ticket.url}}" class="button">View Ticket</a></p>
                 </div>
                 <div class="footer">
-                  <p>This is an automated message from the NTG Ticket System.</p>
+                  <p>This is an automated message from the NTG Ticket.</p>
                 </div>
               </div>
             </body>
@@ -250,7 +250,7 @@ export class EmailTemplatesService {
                   <p><a href="{{ticket.url}}" class="button">View Ticket</a></p>
                 </div>
                 <div class="footer">
-                  <p>This is an automated message from the NTG Ticket System.</p>
+                  <p>This is an automated message from the NTG Ticket.</p>
                 </div>
           </div>
             </body>
@@ -305,7 +305,7 @@ export class EmailTemplatesService {
                   <p><a href="{{ticket.url}}" class="button">View Ticket</a></p>
                 </div>
                 <div class="footer">
-                  <p>This is an automated message from the NTG Ticket System.</p>
+                  <p>This is an automated message from the NTG Ticket.</p>
                 </div>
               </div>
             </body>
@@ -361,7 +361,7 @@ export class EmailTemplatesService {
                   <p><a href="{{ticket.url}}" class="button">View Ticket</a></p>
                 </div>
                 <div class="footer">
-                  <p>This is an automated message from the NTG Ticket System.</p>
+                  <p>This is an automated message from the NTG Ticket.</p>
                 </div>
               </div>
             </body>
@@ -390,16 +390,29 @@ export class EmailTemplatesService {
     }
   }
 
-  async previewTemplate(id: string, variables: {
-    user?: { name?: string; email?: string };
-    ticket?: { ticketNumber?: string; title?: string; priority?: string; status?: string; category?: string; createdAt?: Date; updatedAt?: Date; dueDate?: Date; url?: string };
-    assignee?: { name?: string; email?: string };
-    requester?: { name?: string; email?: string };
-    comment?: { content?: string; author?: string };
-    oldStatus?: string;
-    newStatus?: string;
-    daysOverdue?: string;
-  }) {
+  async previewTemplate(
+    id: string,
+    variables: {
+      user?: { name?: string; email?: string };
+      ticket?: {
+        ticketNumber?: string;
+        title?: string;
+        priority?: string;
+        status?: string;
+        category?: string;
+        createdAt?: Date;
+        updatedAt?: Date;
+        dueDate?: Date;
+        url?: string;
+      };
+      assignee?: { name?: string; email?: string };
+      requester?: { name?: string; email?: string };
+      comment?: { content?: string; author?: string };
+      oldStatus?: string;
+      newStatus?: string;
+      daysOverdue?: string;
+    }
+  ) {
     try {
       const template = await this.findOne(id);
 
@@ -411,19 +424,30 @@ export class EmailTemplatesService {
       const replacements = {
         '{{user.name}}': variables.user?.name || 'John Doe',
         '{{user.email}}': variables.user?.email || 'john.doe@example.com',
-        '{{ticket.ticketNumber}}': variables.ticket?.ticketNumber || 'TKT-2024-000001',
+        '{{ticket.ticketNumber}}':
+          variables.ticket?.ticketNumber || 'TKT-2024-000001',
         '{{ticket.title}}': variables.ticket?.title || 'Sample Ticket Title',
         '{{ticket.priority}}': variables.ticket?.priority || 'MEDIUM',
         '{{ticket.status}}': variables.ticket?.status || 'NEW',
         '{{ticket.category}}': variables.ticket?.category || 'SOFTWARE',
-        '{{ticket.createdAt}}': variables.ticket?.createdAt?.toLocaleDateString() || new Date().toLocaleDateString(),
-        '{{ticket.updatedAt}}': variables.ticket?.updatedAt?.toLocaleDateString() || new Date().toLocaleDateString(),
-        '{{ticket.dueDate}}': variables.ticket?.dueDate?.toLocaleDateString() || new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString(),
-        '{{ticket.url}}': variables.ticket?.url || 'https://tickets.example.com/tickets/TKT-2024-000001',
+        '{{ticket.createdAt}}':
+          variables.ticket?.createdAt?.toLocaleDateString() ||
+          new Date().toLocaleDateString(),
+        '{{ticket.updatedAt}}':
+          variables.ticket?.updatedAt?.toLocaleDateString() ||
+          new Date().toLocaleDateString(),
+        '{{ticket.dueDate}}':
+          variables.ticket?.dueDate?.toLocaleDateString() ||
+          new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString(),
+        '{{ticket.url}}':
+          variables.ticket?.url ||
+          'https://tickets.example.com/tickets/TKT-2024-000001',
         '{{assignee.name}}': variables.assignee?.name || 'Jane Smith',
-        '{{assignee.email}}': variables.assignee?.email || 'jane.smith@example.com',
+        '{{assignee.email}}':
+          variables.assignee?.email || 'jane.smith@example.com',
         '{{requester.name}}': variables.requester?.name || 'John Doe',
-        '{{requester.email}}': variables.requester?.email || 'john.doe@example.com',
+        '{{requester.email}}':
+          variables.requester?.email || 'john.doe@example.com',
         '{{oldStatus}}': variables.oldStatus || 'NEW',
         '{{newStatus}}': variables.newStatus || 'IN_PROGRESS',
         '{{daysOverdue}}': variables.daysOverdue || '2',

@@ -10,14 +10,11 @@ import {
   Card,
   Alert,
 } from '@mantine/core';
-import {
-  IconArrowLeft,
-  IconAlertCircle,
-} from '@tabler/icons-react';
+import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { UserForm } from '../../../../components/forms/UserForm';
-import { useCreateUser } from '../../../../hooks/useUsers';
-import { UserFormData } from '../../../../types/unified';
+import { UserForm } from '../../../components/forms/UserForm';
+import { useCreateUser } from '../../../hooks/useUsers';
+import { UserFormData, UserRole } from '../../../types/unified';
 
 export default function CreateUserPage() {
   const router = useRouter();
@@ -25,7 +22,11 @@ export default function CreateUserPage() {
 
   const handleSubmit = async (data: UserFormData) => {
     try {
-      await createUserMutation.mutateAsync(data);
+      await createUserMutation.mutateAsync({
+        ...data,
+        role: data.role as UserRole,
+        password: data.password || '',
+      });
       notifications.show({
         title: 'Success',
         message: 'User created successfully',

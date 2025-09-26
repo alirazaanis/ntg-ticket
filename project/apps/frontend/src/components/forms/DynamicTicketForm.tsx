@@ -32,10 +32,11 @@ import {
   DynamicField,
   DynamicTicketFormValues,
   DynamicValidationRules,
+  Subcategory,
 } from '../../types/unified';
 import {
-  useCategoryDynamicFields,
-  useCategorySubcategories,
+  useDynamicFields as useCategoryDynamicFields,
+  useSubcategories as useCategorySubcategories,
 } from '../../hooks/useCategories';
 import { FileUpload } from './FileUpload';
 import { FileWithPath } from '@mantine/dropzone';
@@ -91,7 +92,7 @@ export function DynamicTicketForm({
   useEffect(() => {
     if (dynamicFields.length > 0) {
       const dynamicValidation: DynamicValidationRules = {};
-      dynamicFields.forEach(field => {
+      dynamicFields.forEach((field: DynamicField) => {
         if (field.required) {
           dynamicValidation[field.name] = (value: unknown) =>
             !value ? `${field.name} is required` : null;
@@ -111,7 +112,7 @@ export function DynamicTicketForm({
   const handleSubmit = (values: DynamicTicketFormValues) => {
     // Filter out empty dynamic field values
     const filteredValues: DynamicTicketFormValues = { ...values };
-    dynamicFields.forEach(field => {
+    dynamicFields.forEach((field: DynamicField) => {
       if (!filteredValues[field.name]) {
         delete filteredValues[field.name];
       }
@@ -190,7 +191,7 @@ export function DynamicTicketForm({
                   minHeight={200}
                   maxHeight={400}
                   value={form.values.description}
-                  onChange={(value) => form.setFieldValue('description', value)}
+                  onChange={value => form.setFieldValue('description', value)}
                   error={form.errors.description}
                   allowImageUpload={true}
                   allowTableInsertion={true}
@@ -228,7 +229,7 @@ export function DynamicTicketForm({
                   label='Subcategory'
                   placeholder='Select subcategory'
                   required
-                  data={subcategories.map(sub => ({
+                  data={subcategories.map((sub: Subcategory) => ({
                     value: sub.id,
                     label: sub.name,
                   }))}
@@ -294,7 +295,7 @@ export function DynamicTicketForm({
                   Additional Information
                 </Text>
                 <Grid>
-                  {dynamicFields.map(field => (
+                  {dynamicFields.map((field: DynamicField) => (
                     <Grid.Col
                       span={field.type === DynamicFieldType.TEXTAREA ? 12 : 6}
                       key={field.name}

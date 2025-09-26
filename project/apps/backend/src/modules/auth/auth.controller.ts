@@ -21,9 +21,7 @@ import { AuthService } from './auth.service';
 import { NextAuthJwtGuard } from './guards/nextauth-jwt.guard';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { User } from '../users/entities/user.entity';
-import {
-  RateLimitGuard,
-} from '../../common/guards/rate-limit.guard';
+import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
 import { SanitizationService } from '../../common/validation/sanitization.service';
 import { TokenBlacklistService } from '../../common/security/token-blacklist.service';
 // import { CsrfGuard } from '../../common/guards/csrf.guard';
@@ -46,9 +44,13 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
-  async login(
-    @Body() body: { email: string; password: string }
-  ): Promise<{ data: { access_token: string; user: { id: string; email: string; name: string; role: string } }; message: string }> {
+  async login(@Body() body: { email: string; password: string }): Promise<{
+    data: {
+      access_token: string;
+      user: { id: string; email: string; name: string; role: string };
+    };
+    message: string;
+  }> {
     try {
       // Sanitize inputs
       const email = this.sanitizationService.sanitizeEmail(body.email);
@@ -120,7 +122,10 @@ export class AuthController {
   @ApiResponse({ status: 429, description: 'Too many requests' })
   async validateCredentials(
     @Body() body: { email: string; password: string }
-  ): Promise<{ data: { user: { id: string; email: string; name: string; role: string } }; message: string }> {
+  ): Promise<{
+    data: { user: { id: string; email: string; name: string; role: string } };
+    message: string;
+  }> {
     try {
       // Sanitize inputs
       const email = this.sanitizationService.sanitizeEmail(body.email);

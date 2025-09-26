@@ -69,7 +69,7 @@ async function bootstrap() {
     // Swagger documentation
     if (configService.get('NODE_ENV') !== 'production') {
       const config = new DocumentBuilder()
-        .setTitle('NTG Ticket System API')
+        .setTitle('NTG Ticket API')
         .setDescription('Complete IT Support Ticket Management System API')
         .setVersion('1.0')
         .addBearerAuth()

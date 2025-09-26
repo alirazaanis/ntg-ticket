@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ticketApi, Ticket, CreateTicketInput, UpdateTicketInput, TicketFilters } from '../lib/apiClient';
+import {
+  ticketApi,
+  Ticket,
+  CreateTicketInput,
+  UpdateTicketInput,
+  TicketFilters,
+} from '../lib/apiClient';
 
 export function useTickets(filters?: TicketFilters) {
   return useQuery({
@@ -41,7 +47,13 @@ export function useUpdateTicket() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateTicketInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateTicketInput;
+    }) => {
       const response = await ticketApi.updateTicket(id, data);
       return response.data.data as Ticket;
     },
@@ -70,7 +82,13 @@ export function useAssignTicket() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, assignedToId }: { id: string; assignedToId: string }) => {
+    mutationFn: async ({
+      id,
+      assignedToId,
+    }: {
+      id: string;
+      assignedToId: string;
+    }) => {
       const response = await ticketApi.assignTicket(id, assignedToId);
       return response.data.data as Ticket;
     },
@@ -85,7 +103,15 @@ export function useUpdateTicketStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, status, note }: { id: string; status: string; note?: string }) => {
+    mutationFn: async ({
+      id,
+      status,
+      note,
+    }: {
+      id: string;
+      status: string;
+      note?: string;
+    }) => {
       const response = await ticketApi.updateStatus(id, status, note);
       return response.data.data as Ticket;
     },

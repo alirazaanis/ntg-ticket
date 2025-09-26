@@ -130,7 +130,26 @@ export class NotificationsService {
     });
   }
 
-  private async sendEmailNotification(notification: { id: string; userId: string; ticketId?: string; type: string; title: string; message: string; ticket?: { id: string; ticketNumber: string; title: string; requesterId: string; assignedToId?: string; description: string; status: string; priority: string; createdAt: Date }; user?: { id: string; name: string; email: string } }) {
+  private async sendEmailNotification(notification: {
+    id: string;
+    userId: string;
+    ticketId?: string;
+    type: string;
+    title: string;
+    message: string;
+    ticket?: {
+      id: string;
+      ticketNumber: string;
+      title: string;
+      requesterId: string;
+      assignedToId?: string;
+      description: string;
+      status: string;
+      priority: string;
+      createdAt: Date;
+    };
+    user?: { id: string; name: string; email: string };
+  }) {
     try {
       if (!notification.ticket) {
         return; // No ticket associated, skip email
@@ -152,13 +171,13 @@ export class NotificationsService {
             // Get assigned user details
             const assignedUser = await this.prisma.user.findUnique({
               where: { id: ticket.assignedToId },
-              select: { id: true, name: true, email: true }
+              select: { id: true, name: true, email: true },
             });
             const requesterUser = await this.prisma.user.findUnique({
               where: { id: ticket.requesterId },
-              select: { id: true, name: true, email: true }
+              select: { id: true, name: true, email: true },
             });
-            
+
             if (assignedUser && requesterUser) {
               await this.emailNotificationService.sendTicketAssignedEmail(
                 ticket,

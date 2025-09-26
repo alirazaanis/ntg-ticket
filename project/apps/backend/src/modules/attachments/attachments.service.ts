@@ -34,7 +34,7 @@ export class AttachmentsService {
     // Validate user has permission to upload attachments to this ticket
     const ticket = await this.prisma.ticket.findUnique({
       where: { id: ticketId },
-      select: { requesterId: true, assignedToId: true }
+      select: { requesterId: true, assignedToId: true },
     });
 
     if (!ticket) {
@@ -42,13 +42,15 @@ export class AttachmentsService {
     }
 
     // Check if user has permission to upload to this ticket
-    const hasPermission = 
-      ticket.requesterId === userId || 
-      ticket.assignedToId === userId || 
+    const hasPermission =
+      ticket.requesterId === userId ||
+      ticket.assignedToId === userId ||
       ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole);
 
     if (!hasPermission) {
-      throw new BadRequestException('You do not have permission to upload attachments to this ticket');
+      throw new BadRequestException(
+        'You do not have permission to upload attachments to this ticket'
+      );
     }
 
     // Validate file size (10MB max per file)
@@ -140,7 +142,7 @@ export class AttachmentsService {
     // Validate user has permission to view attachments for this ticket
     const ticket = await this.prisma.ticket.findUnique({
       where: { id: ticketId },
-      select: { requesterId: true, assignedToId: true }
+      select: { requesterId: true, assignedToId: true },
     });
 
     if (!ticket) {
@@ -148,13 +150,15 @@ export class AttachmentsService {
     }
 
     // Check if user has permission to view attachments for this ticket
-    const hasPermission = 
-      ticket.requesterId === userId || 
-      ticket.assignedToId === userId || 
+    const hasPermission =
+      ticket.requesterId === userId ||
+      ticket.assignedToId === userId ||
       ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole);
 
     if (!hasPermission) {
-      throw new BadRequestException('You do not have permission to view attachments for this ticket');
+      throw new BadRequestException(
+        'You do not have permission to view attachments for this ticket'
+      );
     }
 
     const attachments = await this.prisma.attachment.findMany({
@@ -192,13 +196,15 @@ export class AttachmentsService {
 
     // Check if user has permission to view this attachment
     const ticket = attachment.ticket;
-    const hasPermission = 
-      ticket.requesterId === userId || 
-      ticket.assignedToId === userId || 
+    const hasPermission =
+      ticket.requesterId === userId ||
+      ticket.assignedToId === userId ||
       ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole);
 
     if (!hasPermission) {
-      throw new BadRequestException('You do not have permission to view this attachment');
+      throw new BadRequestException(
+        'You do not have permission to view this attachment'
+      );
     }
 
     return attachment;
@@ -215,7 +221,7 @@ export class AttachmentsService {
     // Check permissions - user must be requester, assignee, or have admin role
     const ticket = attachment.ticket;
     const hasPermission =
-      ticket.requesterId === userId || 
+      ticket.requesterId === userId ||
       ticket.assignedToId === userId ||
       ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole);
 
@@ -260,8 +266,8 @@ export class AttachmentsService {
     }
 
     // Check permissions - user can update their own attachments or admins can update any
-    const canUpdate = 
-      attachment.uploadedBy === userId || 
+    const canUpdate =
+      attachment.uploadedBy === userId ||
       ['ADMIN', 'SUPPORT_MANAGER'].includes(userRole);
 
     if (!canUpdate) {
@@ -303,8 +309,8 @@ export class AttachmentsService {
     }
 
     // Check permissions - user can delete their own attachments or admins can delete any
-    const canDelete = 
-      attachment.uploadedBy === userId || 
+    const canDelete =
+      attachment.uploadedBy === userId ||
       ['ADMIN', 'SUPPORT_MANAGER'].includes(userRole);
 
     if (!canDelete) {
@@ -340,7 +346,7 @@ export class AttachmentsService {
     // Check permissions
     const ticket = attachment.ticket;
     const hasPermission =
-      ticket.requesterId === userId || 
+      ticket.requesterId === userId ||
       ticket.assignedToId === userId ||
       ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole);
 

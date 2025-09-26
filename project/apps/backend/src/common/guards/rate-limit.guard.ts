@@ -79,7 +79,8 @@ export class RateLimitGuard implements CanActivate {
 
     // Default key generation based on IP and user
     const ip = request.ip || request.connection.remoteAddress;
-    const userId = (request as { user?: { id?: string } }).user?.id || 'anonymous';
+    const userId =
+      (request as { user?: { id?: string } }).user?.id || 'anonymous';
 
     return `rate_limit:${ip}:${userId}`;
   }
@@ -87,7 +88,11 @@ export class RateLimitGuard implements CanActivate {
 
 // Decorator for rate limiting
 export const RateLimit = (options: RateLimitOptions) => {
-  return (target: object, propertyKey: string, descriptor: PropertyDescriptor) => {
+  return (
+    target: object,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) => {
     Reflect.defineMetadata('rateLimit', options, descriptor.value);
     return descriptor;
   };

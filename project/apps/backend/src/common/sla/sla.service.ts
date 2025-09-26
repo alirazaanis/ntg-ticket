@@ -207,7 +207,9 @@ export class SLAService {
   /**
    * Get SLA compliance percentage
    */
-  async getSLACompliance(tickets: Array<{ status: string; dueDate?: Date; closedAt?: Date }>): Promise<number> {
+  async getSLACompliance(
+    tickets: Array<{ status: string; dueDate?: Date; closedAt?: Date }>
+  ): Promise<number> {
     const resolvedTickets = tickets.filter(
       t => ['RESOLVED', 'CLOSED'].includes(t.status) && t.dueDate && t.closedAt
     );
@@ -224,7 +226,18 @@ export class SLAService {
   /**
    * Get tickets approaching SLA breach (within 2 hours of due date)
    */
-  async getTicketsApproachingSLA(): Promise<Array<{ id: string; ticketNumber: string; title: string; dueDate: Date; status: string; priority: string; requesterId: string; assignedToId?: string }>> {
+  async getTicketsApproachingSLA(): Promise<
+    Array<{
+      id: string;
+      ticketNumber: string;
+      title: string;
+      dueDate: Date;
+      status: string;
+      priority: string;
+      requesterId: string;
+      assignedToId?: string;
+    }>
+  > {
     const twoHoursFromNow = new Date(Date.now() + 2 * 60 * 60 * 1000);
 
     return this.prisma.ticket.findMany({
@@ -248,7 +261,18 @@ export class SLAService {
   /**
    * Get tickets that have breached SLA
    */
-  async getBreachedSLATickets(): Promise<Array<{ id: string; ticketNumber: string; title: string; dueDate: Date; status: string; priority: string; requesterId: string; assignedToId?: string }>> {
+  async getBreachedSLATickets(): Promise<
+    Array<{
+      id: string;
+      ticketNumber: string;
+      title: string;
+      dueDate: Date;
+      status: string;
+      priority: string;
+      requesterId: string;
+      assignedToId?: string;
+    }>
+  > {
     return this.prisma.ticket.findMany({
       where: {
         dueDate: {

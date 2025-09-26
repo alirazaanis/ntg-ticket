@@ -44,8 +44,9 @@ export function SupportStaffDashboard() {
   const { data: reportData } = useTicketReport({ userId: user?.id });
 
   const assignedTickets =
-    tickets?.filter((ticket: Ticket) => ticket.assignedTo?.id === user?.id) ||
-    [];
+    tickets?.data?.filter(
+      (ticket: Ticket) => ticket.assignedTo?.id === user?.id
+    ) || [];
   const openTickets = assignedTickets.filter((ticket: Ticket) =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );

@@ -26,11 +26,26 @@ import {
   IconUser,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useNotifications, useMarkNotificationAsRead, useDeleteNotification } from '../../../hooks/useNotifications';
-import { Notification } from '../../../types/notification';
+import {
+  useNotifications,
+  useMarkNotificationAsRead,
+  useDeleteNotification,
+} from '../../hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 
-const notificationIcons: Record<string, React.ComponentType<{ size?: number }>> = {
+// Type for the actual data returned by useNotifications hook (matches API response)
+type NotificationData = {
+  id: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+};
+
+const notificationIcons: Record<
+  string,
+  React.ComponentType<{ size?: number }>
+> = {
   ticket: IconTicket,
   user: IconUser,
   system: IconBell,
@@ -49,15 +64,21 @@ const notificationColors: Record<string, string> = {
 
 export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState<string | null>('all');
-  const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
+  const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
+    []
+  );
 
   const { data: notificationsData, isLoading, error } = useNotifications();
   const markAsReadMutation = useMarkNotificationAsRead();
   const deleteNotificationMutation = useDeleteNotification();
 
   const allNotifications = notificationsData || [];
-  const unreadNotifications = allNotifications.filter((n: any) => !n.isRead);
-  const readNotifications = allNotifications.filter((n: any) => n.isRead);
+  const unreadNotifications = allNotifications.filter(
+    (n: NotificationData) => !n.read
+  );
+  const readNotifications = allNotifications.filter(
+    (n: NotificationData) => n.read
+  );
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
@@ -95,8 +116,10 @@ export default function NotificationsPage() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const unreadIds = unreadNotifications.map((n: any) => n.id);
-      await Promise.all(unreadIds.map((id: string) => markAsReadMutation.mutateAsync(id)));
+      const unreadIds = unreadNotifications.map((n: NotificationData) => n.id);
+      await Promise.all(
+        unreadIds.map((id: string) => markAsReadMutation.mutateAsync(id))
+      );
       notifications.show({
         title: 'Success',
         message: 'All notifications marked as read',
@@ -113,7 +136,11 @@ export default function NotificationsPage() {
 
   const handleBulkDelete = async () => {
     try {
-      await Promise.all(selectedNotifications.map(id => deleteNotificationMutation.mutateAsync(id)));
+      await Promise.all(
+        selectedNotifications.map(id =>
+          deleteNotificationMutation.mutateAsync(id)
+        )
+      );
       setSelectedNotifications([]);
       notifications.show({
         title: 'Success',
@@ -133,8 +160,9 @@ export default function NotificationsPage() {
     return notificationColors[type] || notificationColors.default;
   };
 
-  const renderNotification = (notification: Notification) => {
-    const IconComponent = notificationIcons[notification.type] || notificationIcons.default;
+  const renderNotification = (notification: NotificationData) => {
+    const IconComponent =
+      notificationIcons[notification.type] || notificationIcons.default;
 
     return (
       <Card
@@ -144,7 +172,7 @@ export default function NotificationsPage() {
         radius='md'
         withBorder
         style={{
-          opacity: notification.isRead ? 0.7 : 1,
+          opacity: notification.read ? 0.7 : 1,
           borderLeft: `4px solid var(--mantine-color-${getNotificationColor(notification.type)}-6)`,
         }}
       >
@@ -153,15 +181,17 @@ export default function NotificationsPage() {
             <IconComponent size={20} />
             <div>
               <Text fw={500} size='sm'>
-                {notification.title}
+                {notification.message}
               </Text>
               <Text size='xs' c='dimmed'>
-                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(notification.createdAt), {
+                  addSuffix: true,
+                })}
               </Text>
             </div>
           </Group>
           <Group gap='xs'>
-            {!notification.isRead && (
+            {!notification.read && (
               <Badge size='xs' color='red' variant='dot'>
                 New
               </Badge>
@@ -173,7 +203,7 @@ export default function NotificationsPage() {
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {!notification.isRead && (
+                {!notification.read && (
                   <Menu.Item
                     leftSection={<IconCheck size={14} />}
                     onClick={() => handleMarkAsRead(notification.id)}
@@ -268,15 +298,11 @@ export default function NotificationsPage() {
 
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
-          <Tabs.Tab value='all'>
-            All ({allNotifications.length})
-          </Tabs.Tab>
+          <Tabs.Tab value='all'>All ({allNotifications.length})</Tabs.Tab>
           <Tabs.Tab value='unread'>
             Unread ({unreadNotifications.length})
           </Tabs.Tab>
-          <Tabs.Tab value='read'>
-            Read ({readNotifications.length})
-          </Tabs.Tab>
+          <Tabs.Tab value='read'>Read ({readNotifications.length})</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value={activeTab || 'unread'} pt='md'>
@@ -289,20 +315,22 @@ export default function NotificationsPage() {
                     {activeTab === 'unread'
                       ? 'No unread notifications'
                       : activeTab === 'read'
-                      ? 'No read notifications'
-                      : 'No notifications yet'}
+                        ? 'No read notifications'
+                        : 'No notifications yet'}
                   </Text>
                   <Text c='dimmed' ta='center'>
                     {activeTab === 'unread'
                       ? 'You are all caught up!'
                       : activeTab === 'read'
-                      ? 'No notifications have been read yet'
-                      : 'You will see notifications here when they arrive.'}
+                        ? 'No notifications have been read yet'
+                        : 'You will see notifications here when they arrive.'}
                   </Text>
                 </Stack>
               </Card>
             ) : (
-              getFilteredNotifications().map(renderNotification)
+              getFilteredNotifications().map((notification: NotificationData) =>
+                renderNotification(notification)
+              )
             )}
           </Stack>
         </Tabs.Panel>

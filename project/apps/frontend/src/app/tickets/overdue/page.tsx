@@ -55,13 +55,17 @@ export default function OverdueTicketsPage() {
 
   const { data: overdueTickets, isLoading, refetch } = useOverdueTickets();
 
-  const filteredTickets = overdueTickets?.filter((ticket) => {
-    const matchesSearch = ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.ticketNumber.toLowerCase().includes(search.toLowerCase());
-    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
-    const matchesCategory = categoryFilter === 'all' || ticket.category?.name === categoryFilter;
-    return matchesSearch && matchesPriority && matchesCategory;
-  }) || [];
+  const filteredTickets =
+    overdueTickets?.filter(ticket => {
+      const matchesSearch =
+        ticket.title.toLowerCase().includes(search.toLowerCase()) ||
+        ticket.ticketNumber.toLowerCase().includes(search.toLowerCase());
+      const matchesPriority =
+        priorityFilter === 'all' || ticket.priority === priorityFilter;
+      const matchesCategory =
+        categoryFilter === 'all' || ticket.category?.name === categoryFilter;
+      return matchesSearch && matchesPriority && matchesCategory;
+    }) || [];
 
   const totalPages = Math.ceil(filteredTickets.length / pageSize);
   const paginatedTickets = filteredTickets.slice(
@@ -71,29 +75,41 @@ export default function OverdueTicketsPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'CRITICAL': return 'red';
-      case 'HIGH': return 'orange';
-      case 'MEDIUM': return 'blue';
-      case 'LOW': return 'green';
-      default: return 'gray';
+      case 'CRITICAL':
+        return 'red';
+      case 'HIGH':
+        return 'orange';
+      case 'MEDIUM':
+        return 'blue';
+      case 'LOW':
+        return 'green';
+      default:
+        return 'gray';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'OPEN': return 'blue';
-      case 'IN_PROGRESS': return 'yellow';
-      case 'PENDING': return 'orange';
-      case 'RESOLVED': return 'green';
-      case 'CLOSED': return 'gray';
-      default: return 'gray';
+      case 'OPEN':
+        return 'blue';
+      case 'IN_PROGRESS':
+        return 'yellow';
+      case 'PENDING':
+        return 'orange';
+      case 'RESOLVED':
+        return 'green';
+      case 'CLOSED':
+        return 'gray';
+      default:
+        return 'gray';
     }
   };
 
   const calculateOverdueHours = (createdAt: string, slaHours: number) => {
     const created = new Date(createdAt);
     const now = new Date();
-    const hoursSinceCreation = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
+    const hoursSinceCreation =
+      (now.getTime() - created.getTime()) / (1000 * 60 * 60);
     return Math.max(0, hoursSinceCreation - slaHours);
   };
 
@@ -104,15 +120,18 @@ export default function OverdueTicketsPage() {
     return { color: 'blue', label: 'Low' };
   };
 
-  const handleQuickAction = (ticket: {
-    id: string;
-    ticketNumber: string;
-    title: string;
-    priority: string;
-    status: string;
-    assignedTo?: { name: string };
-    createdAt: string;
-  }, action: string) => {
+  const handleQuickAction = (
+    ticket: {
+      id: string;
+      ticketNumber: string;
+      title: string;
+      priority: string;
+      status: string;
+      assignedTo?: { name: string };
+      createdAt: string;
+    },
+    action: string
+  ) => {
     setSelectedTicket(ticket);
     setActionModalOpen(true);
     // Implement quick actions
@@ -124,16 +143,16 @@ export default function OverdueTicketsPage() {
   };
 
   return (
-    <Container size="xl" py="md">
-      <Group justify="space-between" mb="xl">
+    <Container size='xl' py='md'>
+      <Group justify='space-between' mb='xl'>
         <div>
           <Title order={2}>Overdue Tickets</Title>
-          <Text c="dimmed" size="sm">
+          <Text c='dimmed' size='sm'>
             Tickets that have exceeded their SLA deadlines
           </Text>
         </div>
         <Button
-          variant="light"
+          variant='light'
           leftSection={<IconRefresh size={16} />}
           onClick={() => refetch()}
           loading={isLoading}
@@ -143,15 +162,17 @@ export default function OverdueTicketsPage() {
       </Group>
 
       {/* Statistics Cards */}
-      <Grid mb="xl">
+      <Grid mb='xl'>
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">Total Overdue</Text>
-                <IconAlertTriangle size={20} color="red" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  Total Overdue
+                </Text>
+                <IconAlertTriangle size={20} color='red' />
               </Group>
-              <Text size="xl" fw={700} c="red">
+              <Text size='xl' fw={700} c='red'>
                 {overdueTickets?.length || 0}
               </Text>
             </Stack>
@@ -160,11 +181,13 @@ export default function OverdueTicketsPage() {
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">Critical</Text>
-                <IconAlertTriangle size={20} color="red" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  Critical
+                </Text>
+                <IconAlertTriangle size={20} color='red' />
               </Group>
-              <Text size="xl" fw={700} c="red">
+              <Text size='xl' fw={700} c='red'>
                 {overdueTickets?.filter(t => {
                   const overdueHours = calculateOverdueHours(t.createdAt, 24);
                   return overdueHours > 72;
@@ -176,11 +199,13 @@ export default function OverdueTicketsPage() {
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">High Priority</Text>
-                <IconAlertTriangle size={20} color="orange" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  High Priority
+                </Text>
+                <IconAlertTriangle size={20} color='orange' />
               </Group>
-              <Text size="xl" fw={700} c="orange">
+              <Text size='xl' fw={700} c='orange'>
                 {overdueTickets?.filter(t => t.priority === 'HIGH').length || 0}
               </Text>
             </Stack>
@@ -189,17 +214,25 @@ export default function OverdueTicketsPage() {
         <Grid.Col span={3}>
           <Card>
             <Stack>
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">Avg Overdue</Text>
-                <IconClock size={20} color="blue" />
+              <Group justify='space-between'>
+                <Text size='sm' c='dimmed'>
+                  Avg Overdue
+                </Text>
+                <IconClock size={20} color='blue' />
               </Group>
-              <Text size="xl" fw={700} c="blue">
-                {overdueTickets && overdueTickets.length > 0 
-                  ? Math.round(overdueTickets.reduce((acc, t) => {
-                      const overdueHours = calculateOverdueHours(t.createdAt, 24);
-                      return acc + overdueHours;
-                    }, 0) / overdueTickets.length)
-                  : 0}h
+              <Text size='xl' fw={700} c='blue'>
+                {overdueTickets && overdueTickets.length > 0
+                  ? Math.round(
+                      overdueTickets.reduce((acc, t) => {
+                        const overdueHours = calculateOverdueHours(
+                          t.createdAt,
+                          24
+                        );
+                        return acc + overdueHours;
+                      }, 0) / overdueTickets.length
+                    )
+                  : 0}
+                h
               </Text>
             </Stack>
           </Card>
@@ -207,17 +240,17 @@ export default function OverdueTicketsPage() {
       </Grid>
 
       {/* Filters */}
-      <Card mb="md">
+      <Card mb='md'>
         <Group>
           <TextInput
-            placeholder="Search overdue tickets..."
+            placeholder='Search overdue tickets...'
             leftSection={<IconSearch size={16} />}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             style={{ width: 300 }}
           />
           <Select
-            placeholder="Filter by priority"
+            placeholder='Filter by priority'
             data={[
               { value: 'all', label: 'All Priorities' },
               { value: 'CRITICAL', label: 'Critical' },
@@ -226,11 +259,11 @@ export default function OverdueTicketsPage() {
               { value: 'LOW', label: 'Low' },
             ]}
             value={priorityFilter}
-            onChange={(value) => setPriorityFilter(value || 'all')}
+            onChange={value => setPriorityFilter(value || 'all')}
             style={{ width: 200 }}
           />
           <Select
-            placeholder="Filter by category"
+            placeholder='Filter by category'
             data={[
               { value: 'all', label: 'All Categories' },
               { value: 'TECHNICAL', label: 'Technical' },
@@ -238,13 +271,10 @@ export default function OverdueTicketsPage() {
               { value: 'BILLING', label: 'Billing' },
             ]}
             value={categoryFilter}
-            onChange={(value) => setCategoryFilter(value || 'all')}
+            onChange={value => setCategoryFilter(value || 'all')}
             style={{ width: 200 }}
           />
-          <Button
-            variant="light"
-            leftSection={<IconFilter size={16} />}
-          >
+          <Button variant='light' leftSection={<IconFilter size={16} />}>
             More Filters
           </Button>
         </Group>
@@ -265,55 +295,64 @@ export default function OverdueTicketsPage() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {paginatedTickets.map((ticket) => {
+            {paginatedTickets.map(ticket => {
               const overdueHours = calculateOverdueHours(ticket.createdAt, 24);
               const severity = getOverdueSeverity(overdueHours);
-              
+
               return (
                 <Table.Tr key={ticket.id}>
                   <Table.Td>
                     <Stack gap={4}>
                       <Text fw={500}>{ticket.ticketNumber}</Text>
-                      <Text size="sm" c="dimmed" truncate>
+                      <Text size='sm' c='dimmed' truncate>
                         {ticket.title}
                       </Text>
                     </Stack>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={getPriorityColor(ticket.priority)} variant="light">
+                    <Badge
+                      color={getPriorityColor(ticket.priority)}
+                      variant='light'
+                    >
                       {ticket.priority}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={getStatusColor(ticket.status)} variant="light">
+                    <Badge
+                      color={getStatusColor(ticket.status)}
+                      variant='light'
+                    >
                       {ticket.status}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
-                    <Group gap="xs">
+                    <Group gap='xs'>
                       <IconUser size={14} />
-                      <Text size="sm">{ticket.assignedTo?.name || 'Unassigned'}</Text>
+                      <Text size='sm'>
+                        {ticket.assignedTo?.name || 'Unassigned'}
+                      </Text>
                     </Group>
                   </Table.Td>
                   <Table.Td>
                     <Stack gap={4}>
-                      <Text size="sm" fw={500} c={severity.color}>
+                      <Text size='sm' fw={500} c={severity.color}>
                         {Math.round(overdueHours)}h overdue
                       </Text>
-                      <Text size="xs" c="dimmed">
-                        Created: {new Date(ticket.createdAt).toLocaleDateString()}
+                      <Text size='xs' c='dimmed'>
+                        Created:{' '}
+                        {new Date(ticket.createdAt).toLocaleDateString()}
                       </Text>
                     </Stack>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={severity.color} variant="light">
+                    <Badge color={severity.color} variant='light'>
                       {severity.label}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
                     <Menu>
                       <Menu.Target>
-                        <ActionIcon variant="subtle">
+                        <ActionIcon variant='subtle'>
                           <IconDots size={16} />
                         </ActionIcon>
                       </Menu.Target>
@@ -326,7 +365,9 @@ export default function OverdueTicketsPage() {
                         </Menu.Item>
                         <Menu.Item
                           leftSection={<IconEdit size={14} />}
-                          onClick={() => router.push(`/tickets/${ticket.id}/edit`)}
+                          onClick={() =>
+                            router.push(`/tickets/${ticket.id}/edit`)
+                          }
                         >
                           Edit Ticket
                         </Menu.Item>
@@ -353,7 +394,7 @@ export default function OverdueTicketsPage() {
         </Table>
 
         {totalPages > 1 && (
-          <Group justify="center" mt="md">
+          <Group justify='center' mt='md'>
             <Pagination
               value={currentPage}
               onChange={setCurrentPage}
@@ -367,20 +408,24 @@ export default function OverdueTicketsPage() {
       <Modal
         opened={actionModalOpen}
         onClose={() => setActionModalOpen(false)}
-        title="Quick Action"
+        title='Quick Action'
       >
         <Stack>
-          <Text size="sm" fw={500}>Ticket: {selectedTicket?.ticketNumber}</Text>
-          <Text size="sm" c="dimmed">{selectedTicket?.title}</Text>
-          
+          <Text size='sm' fw={500}>
+            Ticket: {selectedTicket?.ticketNumber}
+          </Text>
+          <Text size='sm' c='dimmed'>
+            {selectedTicket?.title}
+          </Text>
+
           <Textarea
-            label="Action Note"
-            placeholder="Add a note about the action taken..."
+            label='Action Note'
+            placeholder='Add a note about the action taken...'
             minRows={3}
           />
-          
-          <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setActionModalOpen(false)}>
+
+          <Group justify='flex-end' mt='md'>
+            <Button variant='light' onClick={() => setActionModalOpen(false)}>
               Cancel
             </Button>
             <Button onClick={() => setActionModalOpen(false)}>

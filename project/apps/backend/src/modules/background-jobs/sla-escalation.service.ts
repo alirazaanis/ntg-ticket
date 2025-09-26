@@ -124,7 +124,18 @@ export class SLAEscalationService {
   /**
    * Send SLA warning notification
    */
-  private async sendSLAWarning(ticket: { id: string; ticketNumber: string; title: string; dueDate: Date; priority: string; requesterId: string; assignedToId?: string; description: string; status: string; createdAt: Date }) {
+  private async sendSLAWarning(ticket: {
+    id: string;
+    ticketNumber: string;
+    title: string;
+    dueDate: Date;
+    priority: string;
+    requesterId: string;
+    assignedToId?: string;
+    description: string;
+    status: string;
+    createdAt: Date;
+  }) {
     try {
       // Get ticket with relations for recipients
       const ticketWithRelations = await this.prisma.ticket.findUnique({
@@ -174,7 +185,18 @@ export class SLAEscalationService {
   /**
    * Send SLA breach notification
    */
-  private async sendSLABreach(ticket: { id: string; ticketNumber: string; title: string; dueDate: Date; priority: string; requesterId: string; assignedToId?: string; description: string; status: string; createdAt: Date }) {
+  private async sendSLABreach(ticket: {
+    id: string;
+    ticketNumber: string;
+    title: string;
+    dueDate: Date;
+    priority: string;
+    requesterId: string;
+    assignedToId?: string;
+    description: string;
+    status: string;
+    createdAt: Date;
+  }) {
     try {
       // Get ticket with relations for recipients
       const ticketWithRelations = await this.prisma.ticket.findUnique({
@@ -226,7 +248,15 @@ export class SLAEscalationService {
   /**
    * Escalate a ticket to a support manager
    */
-  private async escalateTicket(ticket: { id: string; ticketNumber: string; title: string; dueDate: Date; priority: string; requesterId: string; assignedToId?: string }) {
+  private async escalateTicket(ticket: {
+    id: string;
+    ticketNumber: string;
+    title: string;
+    dueDate: Date;
+    priority: string;
+    requesterId: string;
+    assignedToId?: string;
+  }) {
     try {
       // Find available support managers
       const managers = await this.prisma.user.findMany({
@@ -256,7 +286,11 @@ export class SLAEscalationService {
         where: { id: ticket.id },
         data: {
           assignedToId: manager.id,
-          priority: this.getEscalatedPriority(ticket.priority) as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+          priority: this.getEscalatedPriority(ticket.priority) as
+            | 'LOW'
+            | 'MEDIUM'
+            | 'HIGH'
+            | 'CRITICAL',
           updatedAt: new Date(),
         },
       });
@@ -301,7 +335,10 @@ export class SLAEscalationService {
   /**
    * Get recipients for SLA warning notifications
    */
-  private getSLAWarningRecipients(ticket: { requester: { id: string; name: string; email: string }; assignedTo?: { id: string; name: string; email: string } }) {
+  private getSLAWarningRecipients(ticket: {
+    requester: { id: string; name: string; email: string };
+    assignedTo?: { id: string; name: string; email: string };
+  }) {
     const recipients = [ticket.requester];
 
     if (ticket.assignedTo) {
@@ -314,7 +351,10 @@ export class SLAEscalationService {
   /**
    * Get recipients for SLA breach notifications
    */
-  private async getSLABreachRecipients(ticket: { requester: { id: string; name: string; email: string }; assignedTo?: { id: string; name: string; email: string } }) {
+  private async getSLABreachRecipients(ticket: {
+    requester: { id: string; name: string; email: string };
+    assignedTo?: { id: string; name: string; email: string };
+  }) {
     const recipients = [ticket.requester];
 
     if (ticket.assignedTo) {
@@ -337,7 +377,10 @@ export class SLAEscalationService {
   /**
    * Check if ticket is already escalated
    */
-  private isTicketEscalated(ticket: { assignedTo?: { role: string }; priority: string }): boolean {
+  private isTicketEscalated(ticket: {
+    assignedTo?: { role: string };
+    priority: string;
+  }): boolean {
     // Check if assigned to a manager
     if (
       ticket.assignedTo &&

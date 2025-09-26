@@ -33,7 +33,8 @@ import {
   IconAlertCircle,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import { useUsers, useDeleteUser, User } from '../../../hooks/useUsers';
+import { useUsers, useDeleteUser } from '../../../hooks/useUsers';
+import { User } from '../../../lib/apiClient';
 
 const roleColors: Record<string, string> = {
   ADMIN: 'red',

@@ -32,7 +32,10 @@ import {
   IconSettings,
   IconTrendingUp,
 } from '@tabler/icons-react';
-import { useSystemStats, useSystemHealth } from '../../../hooks/useSystemMonitoring';
+import {
+  useSystemStats,
+  useSystemHealth,
+} from '../../../hooks/useSystemMonitoring';
 import { useRouter } from 'next/navigation';
 
 export default function SystemMonitoringPage() {
@@ -44,8 +47,16 @@ export default function SystemMonitoringPage() {
   } | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
-  const { data: systemStats, isLoading: statsLoading, refetch: refetchStats } = useSystemStats();
-  const { data: systemHealth, isLoading: healthLoading, refetch: refetchHealth } = useSystemHealth();
+  const {
+    data: systemStats,
+    isLoading: statsLoading,
+    refetch: refetchStats,
+  } = useSystemStats();
+  const {
+    data: systemHealth,
+    isLoading: healthLoading,
+    refetch: refetchHealth,
+  } = useSystemHealth();
 
   const handleRefresh = () => {
     refetchStats();
@@ -54,45 +65,41 @@ export default function SystemMonitoringPage() {
 
   const getHealthColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'healthy': return 'green';
-      case 'warning': return 'yellow';
-      case 'critical': return 'red';
-      default: return 'gray';
+      case 'healthy':
+        return 'green';
+      case 'warning':
+        return 'yellow';
+      case 'critical':
+        return 'red';
+      default:
+        return 'gray';
     }
   };
 
   const getHealthIcon = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'healthy': return <IconCheck size={16} />;
-      case 'warning': return <IconAlertTriangle size={16} />;
-      case 'critical': return <IconX size={16} />;
-      default: return <IconClock size={16} />;
+      case 'healthy':
+        return <IconCheck size={16} />;
+      case 'warning':
+        return <IconAlertTriangle size={16} />;
+      case 'critical':
+        return <IconX size={16} />;
+      default:
+        return <IconClock size={16} />;
     }
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
-  };
-
   return (
-    <Container size="xl" py="md">
-      <Group justify="space-between" mb="xl">
+    <Container size='xl' py='md'>
+      <Group justify='space-between' mb='xl'>
         <div>
           <Title order={2}>System Monitoring</Title>
-          <Text c="dimmed" size="sm">
+          <Text c='dimmed' size='sm'>
             Monitor system performance and health
           </Text>
         </div>
         <Button
-          variant="light"
+          variant='light'
           leftSection={<IconRefresh size={16} />}
           onClick={handleRefresh}
           loading={statsLoading || healthLoading}
@@ -102,36 +109,52 @@ export default function SystemMonitoringPage() {
       </Group>
 
       {/* System Health Overview */}
-      <Grid mb="xl">
+      <Grid mb='xl'>
         <Grid.Col span={12}>
           <Card>
             <Stack>
-              <Group justify="space-between">
+              <Group justify='space-between'>
                 <Title order={3}>System Health</Title>
                 <Badge
-                  color={getHealthColor(systemHealth?.overallStatus || 'unknown')}
-                  variant="light"
-                  leftSection={getHealthIcon(systemHealth?.overallStatus || 'unknown')}
-                  size="lg"
+                  color={getHealthColor(systemHealth?.status || 'unhealthy')}
+                  variant='light'
+                  leftSection={getHealthIcon(
+                    systemHealth?.status || 'unhealthy'
+                  )}
+                  size='lg'
                 >
-                  {systemHealth?.overallStatus || 'Unknown'}
+                  {systemHealth?.status || 'Unknown'}
                 </Badge>
               </Group>
-              
-              {systemHealth?.overallStatus === 'critical' && (
-                <Alert color="red" title="Critical System Issues" icon={<IconAlertTriangle size={16} />}>
-                  The system is experiencing critical issues. Please check the detailed metrics below.
+
+              {systemHealth?.status === 'unhealthy' && (
+                <Alert
+                  color='red'
+                  title='Critical System Issues'
+                  icon={<IconAlertTriangle size={16} />}
+                >
+                  The system is experiencing critical issues. Please check the
+                  detailed metrics below.
                 </Alert>
               )}
 
-              {systemHealth?.overallStatus === 'warning' && (
-                <Alert color="yellow" title="System Warnings" icon={<IconAlertTriangle size={16} />}>
-                  The system is experiencing some issues. Monitor the metrics below for more details.
+              {systemHealth?.status === 'degraded' && (
+                <Alert
+                  color='yellow'
+                  title='System Warnings'
+                  icon={<IconAlertTriangle size={16} />}
+                >
+                  The system is experiencing some issues. Monitor the metrics
+                  below for more details.
                 </Alert>
               )}
 
-              {systemHealth?.overallStatus === 'healthy' && (
-                <Alert color="green" title="System Healthy" icon={<IconCheck size={16} />}>
+              {systemHealth?.status === 'healthy' && (
+                <Alert
+                  color='green'
+                  title='System Healthy'
+                  icon={<IconCheck size={16} />}
+                >
                   All systems are operating normally.
                 </Alert>
               )}
@@ -141,21 +164,21 @@ export default function SystemMonitoringPage() {
       </Grid>
 
       {/* System Statistics */}
-      <Grid mb="xl">
+      <Grid mb='xl'>
         <Grid.Col span={6}>
           <Card>
             <Stack>
-              <Group justify="space-between">
+              <Group justify='space-between'>
                 <Title order={4}>CPU Usage</Title>
                 <IconCpu size={24} />
               </Group>
               <Progress
-                value={systemStats?.cpuUsage || 0}
-                color={systemStats?.cpuUsage > 80 ? 'red' : systemStats?.cpuUsage > 60 ? 'yellow' : 'green'}
-                size="lg"
+                value={0} // CPU usage not available in current SystemStats interface
+                color='green'
+                size='lg'
               />
-              <Text size="sm" c="dimmed">
-                {formatPercentage(systemStats?.cpuUsage || 0)} used
+              <Text size='sm' c='dimmed'>
+                N/A - Not available in current interface
               </Text>
             </Stack>
           </Card>
@@ -164,17 +187,17 @@ export default function SystemMonitoringPage() {
         <Grid.Col span={6}>
           <Card>
             <Stack>
-              <Group justify="space-between">
+              <Group justify='space-between'>
                 <Title order={4}>Memory Usage</Title>
                 <IconCpu size={24} />
               </Group>
               <Progress
-                value={systemStats?.memoryUsage || 0}
-                color={systemStats?.memoryUsage > 80 ? 'red' : systemStats?.memoryUsage > 60 ? 'yellow' : 'green'}
-                size="lg"
+                value={0} // Memory usage not available in current SystemStats interface
+                color='green'
+                size='lg'
               />
-              <Text size="sm" c="dimmed">
-                {formatPercentage(systemStats?.memoryUsage || 0)} used
+              <Text size='sm' c='dimmed'>
+                N/A - Not available in current interface
               </Text>
             </Stack>
           </Card>
@@ -199,25 +222,29 @@ export default function SystemMonitoringPage() {
                 <Table.Tbody>
                   <Table.Tr>
                     <Table.Td>
-                      <Group gap="xs">
+                      <Group gap='xs'>
                         <IconServer size={16} />
-                        <Text size="sm">Server Uptime</Text>
+                        <Text size='sm'>Server Uptime</Text>
                       </Group>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm">{systemStats?.uptime || 'N/A'}</Text>
+                      <Text size='sm'>
+                        {systemStats?.systemUptime || 'N/A'}
+                      </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">Healthy</Badge>
+                      <Badge color='green' variant='light'>
+                        Healthy
+                      </Badge>
                     </Table.Td>
                     <Table.Td>
                       <ActionIcon
-                        variant="subtle"
+                        variant='subtle'
                         onClick={() => {
                           setSelectedMetric({
                             name: 'Server Uptime',
-                            value: systemStats?.uptime,
-                            details: 'System uptime information'
+                            value: systemStats?.systemUptime || 'N/A',
+                            details: 'System uptime information',
                           });
                           setDetailModalOpen(true);
                         }}
@@ -229,25 +256,29 @@ export default function SystemMonitoringPage() {
 
                   <Table.Tr>
                     <Table.Td>
-                      <Group gap="xs">
+                      <Group gap='xs'>
                         <IconDatabase size={16} />
-                        <Text size="sm">Database Connections</Text>
+                        <Text size='sm'>Database Connections</Text>
                       </Group>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm">{systemStats?.databaseConnections || 'N/A'}</Text>
+                      <Text size='sm'>
+                        N/A - Not available in current interface
+                      </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">Healthy</Badge>
+                      <Badge color='green' variant='light'>
+                        Healthy
+                      </Badge>
                     </Table.Td>
                     <Table.Td>
                       <ActionIcon
-                        variant="subtle"
+                        variant='subtle'
                         onClick={() => {
                           setSelectedMetric({
                             name: 'Database Connections',
-                            value: systemStats?.databaseConnections,
-                            details: 'Active database connections'
+                            value: 'N/A - Not available in current interface',
+                            details: 'Active database connections',
                           });
                           setDetailModalOpen(true);
                         }}
@@ -259,25 +290,27 @@ export default function SystemMonitoringPage() {
 
                   <Table.Tr>
                     <Table.Td>
-                      <Group gap="xs">
+                      <Group gap='xs'>
                         <IconActivity size={16} />
-                        <Text size="sm">Active Users</Text>
+                        <Text size='sm'>Active Users</Text>
                       </Group>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm">{systemStats?.activeUsers || 'N/A'}</Text>
+                      <Text size='sm'>{systemStats?.activeUsers || 'N/A'}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">Healthy</Badge>
+                      <Badge color='green' variant='light'>
+                        Healthy
+                      </Badge>
                     </Table.Td>
                     <Table.Td>
                       <ActionIcon
-                        variant="subtle"
+                        variant='subtle'
                         onClick={() => {
                           setSelectedMetric({
                             name: 'Active Users',
-                            value: systemStats?.activeUsers,
-                            details: 'Currently active users'
+                            value: systemStats?.activeUsers || 0,
+                            details: 'Currently active users',
                           });
                           setDetailModalOpen(true);
                         }}
@@ -289,25 +322,29 @@ export default function SystemMonitoringPage() {
 
                   <Table.Tr>
                     <Table.Td>
-                      <Group gap="xs">
+                      <Group gap='xs'>
                         <IconServer size={16} />
-                        <Text size="sm">Disk Usage</Text>
+                        <Text size='sm'>Disk Usage</Text>
                       </Group>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm">{formatBytes(systemStats?.diskUsage || 0)}</Text>
+                      <Text size='sm'>
+                        N/A - Not available in current interface
+                      </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">Healthy</Badge>
+                      <Badge color='green' variant='light'>
+                        Healthy
+                      </Badge>
                     </Table.Td>
                     <Table.Td>
                       <ActionIcon
-                        variant="subtle"
+                        variant='subtle'
                         onClick={() => {
                           setSelectedMetric({
                             name: 'Disk Usage',
-                            value: formatBytes(systemStats?.diskUsage || 0),
-                            details: 'Total disk space used'
+                            value: 'N/A - Not available in current interface',
+                            details: 'Total disk space used',
                           });
                           setDetailModalOpen(true);
                         }}
@@ -328,7 +365,7 @@ export default function SystemMonitoringPage() {
               <Stack>
                 <Title order={4}>Quick Actions</Title>
                 <Button
-                  variant="light"
+                  variant='light'
                   leftSection={<IconRefresh size={16} />}
                   onClick={handleRefresh}
                   fullWidth
@@ -336,7 +373,7 @@ export default function SystemMonitoringPage() {
                   Refresh Metrics
                 </Button>
                 <Button
-                  variant="light"
+                  variant='light'
                   leftSection={<IconSettings size={16} />}
                   onClick={() => router.push('/admin/settings')}
                   fullWidth
@@ -349,18 +386,22 @@ export default function SystemMonitoringPage() {
             <Card>
               <Stack>
                 <Title order={4}>System Information</Title>
-                <Group justify="space-between">
-                  <Text size="sm">Version</Text>
-                  <Text size="sm" c="dimmed">{systemStats?.version || 'N/A'}</Text>
+                <Group justify='space-between'>
+                  <Text size='sm'>Version</Text>
+                  <Text size='sm' c='dimmed'>
+                    N/A - Not available in current interface
+                  </Text>
                 </Group>
-                <Group justify="space-between">
-                  <Text size="sm">Environment</Text>
-                  <Text size="sm" c="dimmed">{systemStats?.environment || 'N/A'}</Text>
+                <Group justify='space-between'>
+                  <Text size='sm'>Environment</Text>
+                  <Text size='sm' c='dimmed'>
+                    N/A - Not available in current interface
+                  </Text>
                 </Group>
-                <Group justify="space-between">
-                  <Text size="sm">Last Updated</Text>
-                  <Text size="sm" c="dimmed">
-                    {systemStats?.lastUpdated ? new Date(systemStats.lastUpdated).toLocaleString() : 'N/A'}
+                <Group justify='space-between'>
+                  <Text size='sm'>Last Updated</Text>
+                  <Text size='sm' c='dimmed'>
+                    N/A - Not available in current interface
                   </Text>
                 </Group>
               </Stack>
@@ -373,25 +414,37 @@ export default function SystemMonitoringPage() {
       <Modal
         opened={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
-        title="Metric Details"
-        size="lg"
+        title='Metric Details'
+        size='lg'
       >
         {selectedMetric && (
           <Stack>
-            <Text size="sm" fw={500}>Metric: {selectedMetric.name}</Text>
-            <Text size="sm" c="dimmed">Value: {selectedMetric.value}</Text>
-            <Text size="sm" c="dimmed">Details: {selectedMetric.details}</Text>
-            
+            <Text size='sm' fw={500}>
+              Metric: {selectedMetric.name}
+            </Text>
+            <Text size='sm' c='dimmed'>
+              Value: {selectedMetric.value}
+            </Text>
+            <Text size='sm' c='dimmed'>
+              Details: {selectedMetric.details}
+            </Text>
+
             <Divider />
-            
-            <Text size="sm" fw={500}>Historical Data</Text>
+
+            <Text size='sm' fw={500}>
+              Historical Data
+            </Text>
             <Code block>
-              {JSON.stringify({
-                metric: selectedMetric.name,
-                value: selectedMetric.value,
-                timestamp: new Date().toISOString(),
-                details: selectedMetric.details
-              }, null, 2)}
+              {JSON.stringify(
+                {
+                  metric: selectedMetric.name,
+                  value: selectedMetric.value,
+                  timestamp: new Date().toISOString(),
+                  details: selectedMetric.details,
+                },
+                null,
+                2
+              )}
             </Code>
           </Stack>
         )}

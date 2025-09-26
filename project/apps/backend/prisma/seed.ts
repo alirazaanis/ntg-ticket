@@ -463,6 +463,7 @@ async function main() {
         subcategory: {
           connect: { id: subcategory?.id },
         },
+        resolution: ticketData.resolution,
       },
     });
   }
@@ -559,7 +560,7 @@ async function main() {
 
   // Create system settings
   const systemSettings = [
-    { key: 'site_name', value: 'NTG Ticket System' },
+    { key: 'site_name', value: 'NTG Ticket' },
     { key: 'site_description', value: 'IT Support Ticket Management System' },
     { key: 'timezone', value: 'UTC' },
     { key: 'language', value: 'en' },

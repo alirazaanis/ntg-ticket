@@ -63,7 +63,9 @@ export class TicketsResolver {
   }
 
   @Query(() => [Ticket], { name: 'myTickets' })
-  async findMyTickets(@Context() context?: { req: { user?: { id: string; role: string } } }) {
+  async findMyTickets(
+    @Context() context?: { req: { user?: { id: string; role: string } } }
+  ) {
     const userId = context.req.user?.id;
     const userRole = context.req.user?.role;
 
@@ -71,7 +73,9 @@ export class TicketsResolver {
   }
 
   @Query(() => [Ticket], { name: 'assignedTickets' })
-  async findAssignedTickets(@Context() context?: { req: { user?: { id: string; role: string } } }) {
+  async findAssignedTickets(
+    @Context() context?: { req: { user?: { id: string; role: string } } }
+  ) {
     const userId = context.req.user?.id;
     const userRole = context.req.user?.role;
 
@@ -79,7 +83,9 @@ export class TicketsResolver {
   }
 
   @Query(() => [Ticket], { name: 'overdueTickets' })
-  async findOverdueTickets(@Context() context?: { req: { user?: { id: string; role: string } } }) {
+  async findOverdueTickets(
+    @Context() context?: { req: { user?: { id: string; role: string } } }
+  ) {
     const userId = context.req.user?.id;
     const userRole = context.req.user?.role;
 

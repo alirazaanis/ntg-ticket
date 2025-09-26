@@ -72,7 +72,14 @@ export class CategoriesService {
   async findByEnumName(name: string) {
     try {
       const category = await this.prisma.category.findFirst({
-        where: { name: name as 'HARDWARE' | 'SOFTWARE' | 'NETWORK' | 'ACCESS' | 'OTHER' },
+        where: {
+          name: name as
+            | 'HARDWARE'
+            | 'SOFTWARE'
+            | 'NETWORK'
+            | 'ACCESS'
+            | 'OTHER',
+        },
         include: {
           subcategories: {
             where: { isActive: true },
@@ -141,7 +148,14 @@ export class CategoriesService {
   async getSubcategoriesByCategoryName(categoryName: string) {
     try {
       const category = await this.prisma.category.findFirst({
-        where: { name: categoryName as 'HARDWARE' | 'SOFTWARE' | 'NETWORK' | 'ACCESS' | 'OTHER' },
+        where: {
+          name: categoryName as
+            | 'HARDWARE'
+            | 'SOFTWARE'
+            | 'NETWORK'
+            | 'ACCESS'
+            | 'OTHER',
+        },
       });
 
       if (!category) {

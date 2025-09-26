@@ -293,7 +293,9 @@ export class ReportsService {
     }
   }
 
-  private async getTicketsByCategory(where: Prisma.TicketWhereInput): Promise<Record<string, number>> {
+  private async getTicketsByCategory(
+    where: Prisma.TicketWhereInput
+  ): Promise<Record<string, number>> {
     const result = await this.prisma.ticket.groupBy({
       by: ['categoryId'],
       where,
@@ -314,7 +316,9 @@ export class ReportsService {
     );
   }
 
-  private async getTicketsByPriority(where: Prisma.TicketWhereInput): Promise<Record<string, number>> {
+  private async getTicketsByPriority(
+    where: Prisma.TicketWhereInput
+  ): Promise<Record<string, number>> {
     const result = await this.prisma.ticket.groupBy({
       by: ['priority'],
       where,
@@ -330,7 +334,9 @@ export class ReportsService {
     );
   }
 
-  private async getTicketsByStatus(where: Prisma.TicketWhereInput): Promise<Record<string, number>> {
+  private async getTicketsByStatus(
+    where: Prisma.TicketWhereInput
+  ): Promise<Record<string, number>> {
     const result = await this.prisma.ticket.groupBy({
       by: ['status'],
       where,
@@ -346,7 +352,9 @@ export class ReportsService {
     );
   }
 
-  private async calculateAverageResolutionTime(where: Prisma.TicketWhereInput): Promise<number> {
+  private async calculateAverageResolutionTime(
+    where: Prisma.TicketWhereInput
+  ): Promise<number> {
     const resolvedTickets = await this.prisma.ticket.findMany({
       where: {
         ...where,
@@ -370,7 +378,9 @@ export class ReportsService {
     return totalTime / resolvedTickets.length / (1000 * 60 * 60); // Convert to hours
   }
 
-  private async calculateSLACompliance(where: Prisma.TicketWhereInput): Promise<number> {
+  private async calculateSLACompliance(
+    where: Prisma.TicketWhereInput
+  ): Promise<number> {
     const tickets = await this.prisma.ticket.findMany({
       where: {
         ...where,
@@ -393,7 +403,9 @@ export class ReportsService {
     return (compliantTickets / tickets.length) * 100;
   }
 
-  private async getOverdueTicketsCount(where: Prisma.TicketWhereInput): Promise<number> {
+  private async getOverdueTicketsCount(
+    where: Prisma.TicketWhereInput
+  ): Promise<number> {
     return this.prisma.ticket.count({
       where: {
         ...where,
@@ -403,14 +415,16 @@ export class ReportsService {
     });
   }
 
-  private async calculateTeamPerformance(userId?: string): Promise<TeamPerformance[]> {
+  private async calculateTeamPerformance(
+    userId?: string
+  ): Promise<TeamPerformance[]> {
     try {
       const where: Prisma.TicketWhereInput = {};
       if (userId) {
         where.assignedToId = userId;
       }
 
-      const users = await this.prisma.user.findMany({
+      const users = (await this.prisma.user.findMany({
         where: {
           role: { in: ['SUPPORT_STAFF', 'SUPPORT_MANAGER'] },
           isActive: true,
@@ -424,7 +438,7 @@ export class ReportsService {
             },
           },
         },
-      }) as TeamPerformanceUser[];
+      })) as TeamPerformanceUser[];
 
       const teamPerformance = await Promise.all(
         users.map(async user => {
@@ -508,7 +522,9 @@ export class ReportsService {
     }
   }
 
-  private async calculateResolutionTimeTrend(where: Prisma.TicketWhereInput): Promise<ResolutionTimeTrend[]> {
+  private async calculateResolutionTimeTrend(
+    where: Prisma.TicketWhereInput
+  ): Promise<ResolutionTimeTrend[]> {
     try {
       // Get last 6 months of data
       const sixMonthsAgo = new Date();
@@ -574,7 +590,9 @@ export class ReportsService {
     }
   }
 
-  private async calculateTicketTrends(where: Prisma.TicketWhereInput): Promise<TicketTrend[]> {
+  private async calculateTicketTrends(
+    where: Prisma.TicketWhereInput
+  ): Promise<TicketTrend[]> {
     try {
       // Get last 6 months of data
       const sixMonthsAgo = new Date();
@@ -641,7 +659,9 @@ export class ReportsService {
     }
   }
 
-  private async calculateSLAMetrics(where: Prisma.TicketWhereInput): Promise<SLAMetrics> {
+  private async calculateSLAMetrics(
+    where: Prisma.TicketWhereInput
+  ): Promise<SLAMetrics> {
     try {
       const tickets = await this.prisma.ticket.findMany({
         where: {
@@ -696,7 +716,9 @@ export class ReportsService {
     }
   }
 
-  private async calculateUserAvgResolutionTime(userId: string): Promise<number> {
+  private async calculateUserAvgResolutionTime(
+    userId: string
+  ): Promise<number> {
     try {
       const tickets = await this.prisma.ticket.findMany({
         where: {
@@ -756,7 +778,9 @@ export class ReportsService {
     }
   }
 
-  async exportTicketReport(params: ExportTicketReportParams): Promise<ExportResult> {
+  async exportTicketReport(
+    params: ExportTicketReportParams
+  ): Promise<ExportResult> {
     try {
       const { startDate, endDate, userId } = params;
 

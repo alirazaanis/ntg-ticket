@@ -92,7 +92,12 @@ export class EmailService implements OnModuleInit {
     await this.initializeTransporter();
   }
 
-  async sendEmail(to: string, subject: string, template: string, data: EmailData) {
+  async sendEmail(
+    to: string,
+    subject: string,
+    template: string,
+    data: EmailData
+  ) {
     try {
       const compiledTemplate = handlebars.compile(template);
       const html = compiledTemplate(data);

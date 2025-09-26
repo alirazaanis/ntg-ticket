@@ -3,6 +3,37 @@ import { ConfigService } from '@nestjs/config';
 import { Client } from '@elastic/elasticsearch';
 import { Ticket } from '@prisma/client';
 
+interface ElasticsearchSearchBody {
+  query: {
+    bool: {
+      must: Array<Record<string, unknown>>;
+      filter: Array<Record<string, unknown>>;
+    };
+  };
+  from: number;
+  size: number;
+  sort: Array<{ [key: string]: { order: 'asc' | 'desc' } }>;
+  highlight: {
+    fields: Record<
+      string,
+      { fragment_size: number; number_of_fragments: number }
+    >;
+  };
+}
+
+interface ElasticsearchHit {
+  _source: Ticket;
+  _score: number;
+  highlight?: Record<string, string[]>;
+}
+
+interface ElasticsearchResponse {
+  hits: {
+    hits: ElasticsearchHit[];
+    total: number | { value: number };
+  };
+}
+
 @Injectable()
 export class ElasticsearchService {
   private readonly logger = new Logger(ElasticsearchService.name);
@@ -101,7 +132,12 @@ export class ElasticsearchService {
     }
   }
 
-  async indexTicket(ticket: Ticket & { requester?: { id: string; name: string; email: string }; assignedTo?: { id: string; name: string; email: string } }) {
+  async indexTicket(
+    ticket: Ticket & {
+      requester?: { id: string; name: string; email: string };
+      assignedTo?: { id: string; name: string; email: string };
+    }
+  ) {
     try {
       const document = {
         id: ticket.id,
@@ -140,7 +176,12 @@ export class ElasticsearchService {
     }
   }
 
-  async updateTicket(ticket: Ticket & { requester?: { id: string; name: string; email: string }; assignedTo?: { id: string; name: string; email: string } }) {
+  async updateTicket(
+    ticket: Ticket & {
+      requester?: { id: string; name: string; email: string };
+      assignedTo?: { id: string; name: string; email: string };
+    }
+  ) {
     try {
       await this.indexTicket(ticket);
       this.logger.log(`Updated ticket in index: ${ticket.ticketNumber}`);
@@ -164,12 +205,23 @@ export class ElasticsearchService {
     }
   }
 
-  async searchTickets(query: string, filters: { status?: string[]; priority?: string[]; category?: string[]; assignedTo?: string[]; dateFrom?: string; dateTo?: string } = {}, page = 1, limit = 20) {
+  async searchTickets(
+    query: string,
+    filters: {
+      status?: string[];
+      priority?: string[];
+      category?: string[];
+      assignedTo?: string[];
+      dateFrom?: string;
+      dateTo?: string;
+    } = {},
+    page = 1,
+    limit = 20
+  ) {
     try {
       const from = (page - 1) * limit;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const searchBody: any = {
+      const searchBody: ElasticsearchSearchBody = {
         query: {
           bool: {
             must: [],
@@ -244,13 +296,13 @@ export class ElasticsearchService {
         });
       }
 
-      const response = await this.client.search({
+      const response = (await this.client.search({
         index: this.indexName,
         body: searchBody,
-      });
+      })) as ElasticsearchResponse;
 
       return {
-        hits: response.hits.hits.map((hit: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+        hits: response.hits.hits.map((hit: ElasticsearchHit) => ({
           ...hit._source,
           _score: hit._score,
           _highlight: hit.highlight,
@@ -300,7 +352,13 @@ export class ElasticsearchService {
     }
   }
 
-  async getAggregations(filters: { status?: string[]; priority?: string[]; category?: string[] } = {}) {
+  async getAggregations(
+    filters: {
+      status?: string[];
+      priority?: string[];
+      category?: string[];
+    } = {}
+  ) {
     try {
       const searchBody: {
         size: number;
@@ -370,7 +428,10 @@ export class ElasticsearchService {
   }
 
   async reindexAll(
-    tickets: (Ticket & { requester?: { id: string; name: string; email: string }; assignedTo?: { id: string; name: string; email: string } })[]
+    tickets: (Ticket & {
+      requester?: { id: string; name: string; email: string };
+      assignedTo?: { id: string; name: string; email: string };
+    })[]
   ) {
     try {
       this.logger.log('Starting full reindex...');

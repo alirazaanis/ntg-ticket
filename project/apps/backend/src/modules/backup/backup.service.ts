@@ -308,26 +308,47 @@ export class BackupService {
 
         if (backupData.tickets) {
           // Create tickets without relations first
-          const ticketsData = backupData.tickets.map((ticket: { id: string; ticketNumber: string; title: string; description: string; category: string; subcategory: string; priority: string; status: string; requesterId: string; assignedToId?: string; dueDate?: Date; createdAt: Date; updatedAt: Date; impact?: string; urgency?: string; slaLevel?: string; resolution?: string; closedAt?: Date }) => ({
-            id: ticket.id,
-            ticketNumber: ticket.ticketNumber,
-            title: ticket.title,
-            description: ticket.description,
-            category: ticket.category,
-            subcategory: ticket.subcategory,
-            priority: ticket.priority,
-            status: ticket.status,
-            impact: ticket.impact,
-            urgency: ticket.urgency,
-            slaLevel: ticket.slaLevel,
-            requesterId: ticket.requesterId,
-            assignedToId: ticket.assignedToId,
-            dueDate: ticket.dueDate ? new Date(ticket.dueDate) : null,
-            resolution: ticket.resolution,
-            createdAt: new Date(ticket.createdAt),
-            updatedAt: new Date(ticket.updatedAt),
-            closedAt: ticket.closedAt ? new Date(ticket.closedAt) : null,
-          }));
+          const ticketsData = backupData.tickets.map(
+            (ticket: {
+              id: string;
+              ticketNumber: string;
+              title: string;
+              description: string;
+              category: string;
+              subcategory: string;
+              priority: string;
+              status: string;
+              requesterId: string;
+              assignedToId?: string;
+              dueDate?: Date;
+              createdAt: Date;
+              updatedAt: Date;
+              impact?: string;
+              urgency?: string;
+              slaLevel?: string;
+              resolution?: string;
+              closedAt?: Date;
+            }) => ({
+              id: ticket.id,
+              ticketNumber: ticket.ticketNumber,
+              title: ticket.title,
+              description: ticket.description,
+              category: ticket.category,
+              subcategory: ticket.subcategory,
+              priority: ticket.priority,
+              status: ticket.status,
+              impact: ticket.impact,
+              urgency: ticket.urgency,
+              slaLevel: ticket.slaLevel,
+              requesterId: ticket.requesterId,
+              assignedToId: ticket.assignedToId,
+              dueDate: ticket.dueDate ? new Date(ticket.dueDate) : null,
+              resolution: ticket.resolution,
+              createdAt: new Date(ticket.createdAt),
+              updatedAt: new Date(ticket.updatedAt),
+              closedAt: ticket.closedAt ? new Date(ticket.closedAt) : null,
+            })
+          );
 
           await tx.ticket.createMany({ data: ticketsData });
 
@@ -335,29 +356,60 @@ export class BackupService {
           for (const ticket of backupData.tickets) {
             if (ticket.comments) {
               await tx.comment.createMany({
-                data: ticket.comments.map((comment: { id: string; content: string; authorId: string; ticketId: string; createdAt: Date; updatedAt: Date }) => ({
-                  ...comment,
-                  createdAt: new Date(comment.createdAt),
-                  updatedAt: new Date(comment.updatedAt),
-                })),
+                data: ticket.comments.map(
+                  (comment: {
+                    id: string;
+                    content: string;
+                    authorId: string;
+                    ticketId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                  }) => ({
+                    ...comment,
+                    createdAt: new Date(comment.createdAt),
+                    updatedAt: new Date(comment.updatedAt),
+                  })
+                ),
               });
             }
 
             if (ticket.attachments) {
               await tx.attachment.createMany({
-                data: ticket.attachments.map((attachment: { id: string; filename: string; fileUrl: string; fileSize: number; fileType: string; ticketId: string; uploadedBy: string; createdAt: Date }) => ({
-                  ...attachment,
-                  createdAt: new Date(attachment.createdAt),
-                })),
+                data: ticket.attachments.map(
+                  (attachment: {
+                    id: string;
+                    filename: string;
+                    fileUrl: string;
+                    fileSize: number;
+                    fileType: string;
+                    ticketId: string;
+                    uploadedBy: string;
+                    createdAt: Date;
+                  }) => ({
+                    ...attachment,
+                    createdAt: new Date(attachment.createdAt),
+                  })
+                ),
               });
             }
 
             if (ticket.ticketHistory) {
               await tx.ticketHistory.createMany({
-                data: ticket.ticketHistory.map((history: { id: string; ticketId: string; field: string; oldValue: string; newValue: string; changedBy: string; changedAt: Date; createdAt: Date }) => ({
-                  ...history,
-                  createdAt: new Date(history.createdAt),
-                })),
+                data: ticket.ticketHistory.map(
+                  (history: {
+                    id: string;
+                    ticketId: string;
+                    field: string;
+                    oldValue: string;
+                    newValue: string;
+                    changedBy: string;
+                    changedAt: Date;
+                    createdAt: Date;
+                  }) => ({
+                    ...history,
+                    createdAt: new Date(history.createdAt),
+                  })
+                ),
               });
             }
           }
@@ -365,20 +417,41 @@ export class BackupService {
 
         if (backupData.notifications) {
           await tx.notification.createMany({
-            data: backupData.notifications.map((notification: { id: string; userId: string; ticketId?: string; type: string; title: string; message: string; isRead: boolean; createdAt: Date }) => ({
-              ...notification,
-              createdAt: new Date(notification.createdAt),
-            })),
+            data: backupData.notifications.map(
+              (notification: {
+                id: string;
+                userId: string;
+                ticketId?: string;
+                type: string;
+                title: string;
+                message: string;
+                isRead: boolean;
+                createdAt: Date;
+              }) => ({
+                ...notification,
+                createdAt: new Date(notification.createdAt),
+              })
+            ),
           });
         }
 
         if (backupData.savedSearches) {
           await tx.savedSearch.createMany({
-            data: backupData.savedSearches.map((search: { id: string; userId: string; name: string; query: string; filters: string; createdAt: Date; updatedAt: Date }) => ({
-              ...search,
-              createdAt: new Date(search.createdAt),
-              updatedAt: new Date(search.updatedAt),
-            })),
+            data: backupData.savedSearches.map(
+              (search: {
+                id: string;
+                userId: string;
+                name: string;
+                query: string;
+                filters: string;
+                createdAt: Date;
+                updatedAt: Date;
+              }) => ({
+                ...search,
+                createdAt: new Date(search.createdAt),
+                updatedAt: new Date(search.updatedAt),
+              })
+            ),
           });
         }
       });
@@ -459,13 +532,22 @@ export class BackupService {
     });
   }
 
-  /**
-   * Download backup from cloud storage
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async downloadBackup(_backupPath: string): Promise<Buffer> {
-    // This would typically download from cloud storage
-    // For now, return empty buffer
-    return Buffer.alloc(0);
+  private async downloadBackup(backupPath: string): Promise<Buffer> {
+    try {
+      // Read the backup file from the local filesystem
+      const fs = await import('fs/promises');
+      const path = await import('path');
+
+      const fullPath = path.resolve(backupPath);
+      const backupData = await fs.readFile(fullPath);
+
+      this.logger.log(`Downloaded backup from ${backupPath}`);
+      return backupData;
+    } catch (error) {
+      this.logger.error(`Failed to download backup from ${backupPath}:`, error);
+      throw new Error(
+        `Failed to download backup: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }

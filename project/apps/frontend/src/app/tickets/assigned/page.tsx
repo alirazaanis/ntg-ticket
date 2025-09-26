@@ -54,12 +54,13 @@ export default function AssignedTicketsPage() {
   const { user } = useAuthStore();
 
   const { data: tickets, isLoading, error } = useTickets();
-  
-  const assignedTickets = tickets?.filter(ticket => ticket.assignedTo?.id === user?.id) || [];
-  const openTickets = assignedTickets.filter(ticket => 
+
+  const assignedTickets =
+    tickets?.data?.filter(ticket => ticket.assignedTo?.id === user?.id) || [];
+  const openTickets = assignedTickets.filter(ticket =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );
-  const resolvedTickets = assignedTickets.filter(ticket => 
+  const resolvedTickets = assignedTickets.filter(ticket =>
     ['RESOLVED', 'CLOSED'].includes(ticket.status)
   );
 
@@ -70,8 +71,6 @@ export default function AssignedTicketsPage() {
   const handleEditTicket = (ticketId: string) => {
     router.push(`/tickets/${ticketId}/edit`);
   };
-
-
 
   if (isLoading) {
     return (
@@ -100,7 +99,8 @@ export default function AssignedTicketsPage() {
         <div>
           <Title order={1}>Assigned to Me</Title>
           <Text c='dimmed'>
-            {assignedTickets.length} total tickets • {openTickets.length} open • {resolvedTickets.length} resolved
+            {assignedTickets.length} total tickets • {openTickets.length} open •{' '}
+            {resolvedTickets.length} resolved
           </Text>
         </div>
         <Button
@@ -115,22 +115,30 @@ export default function AssignedTicketsPage() {
         <Grid.Col span={3}>
           <Stack gap='md'>
             <Card withBorder p='md'>
-              <Title order={4} mb='md'>Quick Stats</Title>
+              <Title order={4} mb='md'>
+                Quick Stats
+              </Title>
               <Stack gap='sm'>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Total Assigned</Text>
+                  <Text size='sm' fw={500}>
+                    Total Assigned
+                  </Text>
                   <Badge color='blue' variant='light'>
                     {assignedTickets.length}
                   </Badge>
                 </Group>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Open Tickets</Text>
+                  <Text size='sm' fw={500}>
+                    Open Tickets
+                  </Text>
                   <Badge color='green' variant='light'>
                     {openTickets.length}
                   </Badge>
                 </Group>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Resolved Tickets</Text>
+                  <Text size='sm' fw={500}>
+                    Resolved Tickets
+                  </Text>
                   <Badge color='gray' variant='light'>
                     {resolvedTickets.length}
                   </Badge>
@@ -139,7 +147,9 @@ export default function AssignedTicketsPage() {
             </Card>
 
             <Card withBorder p='md'>
-              <Title order={4} mb='md'>Quick Actions</Title>
+              <Title order={4} mb='md'>
+                Quick Actions
+              </Title>
               <Stack gap='sm'>
                 <Button
                   variant='outline'
@@ -175,7 +185,7 @@ export default function AssignedTicketsPage() {
             <Title order={3} mb='md'>
               Assigned Tickets
             </Title>
-            
+
             {assignedTickets.length === 0 ? (
               <Stack align='center' gap='md' py='xl'>
                 <IconTicket size={48} color='var(--mantine-color-dimmed)' />
@@ -183,7 +193,8 @@ export default function AssignedTicketsPage() {
                   No assigned tickets
                 </Text>
                 <Text c='dimmed' ta='center'>
-                  You don't have any tickets assigned to you yet. Check back later or create a new ticket.
+                  You don't have any tickets assigned to you yet. Check back
+                  later or create a new ticket.
                 </Text>
                 <Button onClick={() => router.push('/tickets/create')}>
                   Create New Ticket
@@ -233,13 +244,13 @@ export default function AssignedTicketsPage() {
                         </Badge>
                       </Table.Td>
                       <Table.Td>
-                        <Text size='sm'>
-                          {ticket.requester.name}
-                        </Text>
+                        <Text size='sm'>{ticket.requester.name}</Text>
                       </Table.Td>
                       <Table.Td>
                         <Text size='sm'>
-                          {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(ticket.createdAt), {
+                            addSuffix: true,
+                          })}
                         </Text>
                       </Table.Td>
                       <Table.Td>

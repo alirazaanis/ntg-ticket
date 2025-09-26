@@ -156,7 +156,15 @@ export class WebSocketGateway
   }
 
   // Methods to emit events from other services
-  emitTicketCreated(ticket: { id: string; ticketNumber: string; title: string; priority: string; status: string; requesterId: string; assignedToId?: string }) {
+  emitTicketCreated(ticket: {
+    id: string;
+    ticketNumber: string;
+    title: string;
+    priority: string;
+    status: string;
+    requesterId: string;
+    assignedToId?: string;
+  }) {
     this.server.emit('ticket_created', ticket);
 
     // Notify specific user
@@ -167,7 +175,18 @@ export class WebSocketGateway
     this.server.to('role:SUPPORT_MANAGER').emit('ticket_created', ticket);
   }
 
-  emitTicketUpdated(ticket: { id: string; ticketNumber: string; title: string; priority: string; status: string; requesterId: string; assignedToId?: string }, userId: string) {
+  emitTicketUpdated(
+    ticket: {
+      id: string;
+      ticketNumber: string;
+      title: string;
+      priority: string;
+      status: string;
+      requesterId: string;
+      assignedToId?: string;
+    },
+    userId: string
+  ) {
     // Notify ticket room
     this.server.to(`ticket:${ticket.id}`).emit('ticket_updated', ticket);
 
@@ -182,7 +201,15 @@ export class WebSocketGateway
     }
   }
 
-  emitTicketAssigned(ticket: { id: string; ticketNumber: string; title: string; priority: string; status: string; requesterId: string; assignedToId?: string }) {
+  emitTicketAssigned(ticket: {
+    id: string;
+    ticketNumber: string;
+    title: string;
+    priority: string;
+    status: string;
+    requesterId: string;
+    assignedToId?: string;
+  }) {
     // Notify assignee
     this.server
       .to(`user:${ticket.assignedToId}`)
@@ -197,7 +224,15 @@ export class WebSocketGateway
     this.server.to('role:SUPPORT_MANAGER').emit('ticket_assigned', ticket);
   }
 
-  emitCommentAdded(comment: { id: string; content: string; authorId: string; createdAt: Date }, ticket: { id: string; ticketNumber: string; requesterId: string; assignedToId?: string }) {
+  emitCommentAdded(
+    comment: { id: string; content: string; authorId: string; createdAt: Date },
+    ticket: {
+      id: string;
+      ticketNumber: string;
+      requesterId: string;
+      assignedToId?: string;
+    }
+  ) {
     // Notify ticket room
     this.server
       .to(`ticket:${ticket.id}`)
@@ -218,14 +253,30 @@ export class WebSocketGateway
     }
   }
 
-  emitNotificationCreated(notification: { id: string; userId: string; type: string; title: string; message: string; isRead: boolean }) {
+  emitNotificationCreated(notification: {
+    id: string;
+    userId: string;
+    type: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+  }) {
     // Notify specific user
     this.server
       .to(`user:${notification.userId}`)
       .emit('notification_created', notification);
   }
 
-  emitSLABreach(ticket: { id: string; ticketNumber: string; title: string; priority: string; status: string; requesterId: string; assignedToId?: string; dueDate: Date }) {
+  emitSLABreach(ticket: {
+    id: string;
+    ticketNumber: string;
+    title: string;
+    priority: string;
+    status: string;
+    requesterId: string;
+    assignedToId?: string;
+    dueDate: Date;
+  }) {
     // Notify assignee
     if (ticket.assignedToId) {
       this.server.to(`user:${ticket.assignedToId}`).emit('sla_breach', ticket);
@@ -236,7 +287,16 @@ export class WebSocketGateway
     this.server.to('role:ADMIN').emit('sla_breach', ticket);
   }
 
-  emitSLAWarning(ticket: { id: string; ticketNumber: string; title: string; priority: string; status: string; requesterId: string; assignedToId?: string; dueDate: Date }) {
+  emitSLAWarning(ticket: {
+    id: string;
+    ticketNumber: string;
+    title: string;
+    priority: string;
+    status: string;
+    requesterId: string;
+    assignedToId?: string;
+    dueDate: Date;
+  }) {
     // Notify assignee
     if (ticket.assignedToId) {
       this.server.to(`user:${ticket.assignedToId}`).emit('sla_warning', ticket);

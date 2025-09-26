@@ -30,10 +30,10 @@ import {
 } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { useAuthStore } from '../../../stores/useAuthStore';
-import { useUpdateUser } from '../../../hooks/useUsers';
-import { usePasswordValidation } from '../../../hooks/usePasswordValidation';
-import { UserRole } from '../../../types/unified';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { useUpdateUser } from '../../hooks/useUsers';
+import { usePasswordValidation } from '../../hooks/usePasswordValidation';
+import { UserRole } from '../../types/unified';
 
 const roleColors: Record<UserRole, string> = {
   [UserRole.END_USER]: 'gray',
@@ -56,7 +56,8 @@ export default function ProfilePage() {
     },
     validate: {
       name: (value: string) => (!value ? 'Name is required' : null),
-      email: (value: string) => (!/^\S+@\S+\.\S+$/.test(value) ? 'Invalid email' : null),
+      email: (value: string) =>
+        !/^\S+@\S+\.\S+$/.test(value) ? 'Invalid email' : null,
     },
   });
 
@@ -67,7 +68,8 @@ export default function ProfilePage() {
       confirmPassword: '',
     },
     validate: {
-      currentPassword: value => (!value ? 'Current password is required' : null),
+      currentPassword: value =>
+        !value ? 'Current password is required' : null,
       newPassword: value => {
         if (!value) return 'New password is required';
         return validatePassword(value);
@@ -79,7 +81,10 @@ export default function ProfilePage() {
     },
   });
 
-  const handleProfileUpdate = async (values: { name: string; email: string }) => {
+  const handleProfileUpdate = async (values: {
+    name: string;
+    email: string;
+  }) => {
     if (!user) return;
 
     try {
@@ -104,11 +109,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePasswordChange = async (values: {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  }) => {
+  const handlePasswordChange = async () => {
     // This would need to be implemented in the backend
     notifications.show({
       title: 'Info',
@@ -253,7 +254,7 @@ export default function ProfilePage() {
                         Member Since
                       </Text>
                       <Text size='sm' c='dimmed'>
-                        {new Date(user.createdAt).toLocaleDateString()}
+                        N/A
                       </Text>
                     </Group>
                     <Group justify='space-between'>
@@ -261,7 +262,7 @@ export default function ProfilePage() {
                         Last Updated
                       </Text>
                       <Text size='sm' c='dimmed'>
-                        {new Date(user.updatedAt).toLocaleDateString()}
+                        N/A
                       </Text>
                     </Group>
                   </Stack>

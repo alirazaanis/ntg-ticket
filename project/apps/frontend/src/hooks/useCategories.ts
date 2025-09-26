@@ -41,7 +41,13 @@ export function useUpdateCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Category> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<Category>;
+    }) => {
       const response = await categoriesApi.updateCategory(id, data);
       return response.data.data as Category;
     },
@@ -94,12 +100,20 @@ export function useCreateSubcategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ categoryId, data }: { categoryId: string; data: Partial<Subcategory> }) => {
+    mutationFn: async ({
+      categoryId,
+      data,
+    }: {
+      categoryId: string;
+      data: Partial<Subcategory>;
+    }) => {
       const response = await categoriesApi.createSubcategory(categoryId, data);
       return response.data.data as Subcategory;
     },
     onSuccess: (_, { categoryId }) => {
-      queryClient.invalidateQueries({ queryKey: ['subcategories', categoryId] });
+      queryClient.invalidateQueries({
+        queryKey: ['subcategories', categoryId],
+      });
     },
   });
 }
@@ -108,12 +122,26 @@ export function useUpdateSubcategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ categoryId, subcategoryId, data }: { categoryId: string; subcategoryId: string; data: Partial<Subcategory> }) => {
-      const response = await categoriesApi.updateSubcategory(categoryId, subcategoryId, data);
+    mutationFn: async ({
+      categoryId,
+      subcategoryId,
+      data,
+    }: {
+      categoryId: string;
+      subcategoryId: string;
+      data: Partial<Subcategory>;
+    }) => {
+      const response = await categoriesApi.updateSubcategory(
+        categoryId,
+        subcategoryId,
+        data
+      );
       return response.data.data as Subcategory;
     },
     onSuccess: (_, { categoryId }) => {
-      queryClient.invalidateQueries({ queryKey: ['subcategories', categoryId] });
+      queryClient.invalidateQueries({
+        queryKey: ['subcategories', categoryId],
+      });
     },
   });
 }
@@ -122,11 +150,19 @@ export function useDeleteSubcategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ categoryId, subcategoryId }: { categoryId: string; subcategoryId: string }) => {
+    mutationFn: async ({
+      categoryId,
+      subcategoryId,
+    }: {
+      categoryId: string;
+      subcategoryId: string;
+    }) => {
       await categoriesApi.deleteSubcategory(categoryId, subcategoryId);
     },
     onSuccess: (_, { categoryId }) => {
-      queryClient.invalidateQueries({ queryKey: ['subcategories', categoryId] });
+      queryClient.invalidateQueries({
+        queryKey: ['subcategories', categoryId],
+      });
     },
   });
 }

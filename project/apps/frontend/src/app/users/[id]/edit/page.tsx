@@ -11,14 +11,11 @@ import {
   Alert,
   Loader,
 } from '@mantine/core';
-import {
-  IconArrowLeft,
-  IconAlertCircle,
-} from '@tabler/icons-react';
+import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { UserForm } from '../../../../../components/forms/UserForm';
-import { useUser, useUpdateUser } from '../../../../../hooks/useUsers';
-import { UserFormData } from '../../../../../types/unified';
+import { UserForm } from '../../../../components/forms/UserForm';
+import { useUser, useUpdateUser } from '../../../../hooks/useUsers';
+import { UserFormData, UserRole } from '../../../../types/unified';
 
 export default function EditUserPage() {
   const params = useParams();
@@ -32,7 +29,10 @@ export default function EditUserPage() {
     try {
       await updateUserMutation.mutateAsync({
         id: userId,
-        data,
+        data: {
+          ...data,
+          role: data.role as UserRole,
+        },
       });
       notifications.show({
         title: 'Success',

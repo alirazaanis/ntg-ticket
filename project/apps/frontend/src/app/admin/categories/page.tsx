@@ -31,11 +31,18 @@ import {
 } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../../../../hooks/useCategories';
-import { Category } from '../../../../types/unified';
+import {
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from '../../../hooks/useCategories';
+import { Category } from '../../../types/unified';
 
 export default function CategoriesPage() {
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -305,10 +312,7 @@ export default function CategoriesPage() {
               >
                 Cancel
               </Button>
-              <Button
-                type='submit'
-                loading={createCategoryMutation.isPending}
-              >
+              <Button type='submit' loading={createCategoryMutation.isPending}>
                 Create Category
               </Button>
             </Group>
@@ -342,16 +346,10 @@ export default function CategoriesPage() {
               {...editForm.getInputProps('isActive', { type: 'checkbox' })}
             />
             <Group justify='flex-end'>
-              <Button
-                variant='outline'
-                onClick={() => setEditModalOpen(false)}
-              >
+              <Button variant='outline' onClick={() => setEditModalOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                type='submit'
-                loading={updateCategoryMutation.isPending}
-              >
+              <Button type='submit' loading={updateCategoryMutation.isPending}>
                 Update Category
               </Button>
             </Group>
@@ -372,16 +370,14 @@ export default function CategoriesPage() {
             This action cannot be undone and may affect existing tickets.
           </Text>
           <Group justify='flex-end'>
-            <Button
-              variant='outline'
-              onClick={() => setDeleteModalOpen(false)}
-            >
+            <Button variant='outline' onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button
               color='red'
               onClick={() =>
-                selectedCategory?.id && handleDeleteCategory(selectedCategory.id)
+                selectedCategory?.id &&
+                handleDeleteCategory(selectedCategory.id)
               }
               loading={deleteCategoryMutation.isPending}
             >

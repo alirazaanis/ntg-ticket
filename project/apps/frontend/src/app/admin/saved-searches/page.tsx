@@ -52,7 +52,9 @@ import { SavedSearch, CreateSavedSearchInput } from '../../../types/unified';
 export default function SavedSearchesPage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [selectedSearch, setSelectedSearch] = useState<SavedSearch | null>(null);
+  const [selectedSearch, setSelectedSearch] = useState<SavedSearch | null>(
+    null
+  );
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -73,12 +75,12 @@ export default function SavedSearchesPage() {
     initialValues: {
       name: '',
       description: '',
-      searchCriteria: '',
+      searchCriteria: {} as Record<string, unknown>,
       isPublic: false,
     },
     validate: {
-      name: (value) => (!value ? 'Name is required' : null),
-      searchCriteria: (value) => (!value ? 'Search criteria is required' : null),
+      name: value => (!value ? 'Name is required' : null),
+      searchCriteria: value => (!value ? 'Search criteria is required' : null),
     },
   });
 
@@ -86,15 +88,17 @@ export default function SavedSearchesPage() {
     initialValues: {
       name: '',
       description: '',
-      searchCriteria: '',
+      searchCriteria: {} as Record<string, unknown>,
       isPublic: false,
     },
   });
 
-  const filteredSearches = savedSearches?.filter((searchItem) =>
-    searchItem.name.toLowerCase().includes(search.toLowerCase()) ||
-    searchItem.description?.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  const filteredSearches =
+    savedSearches?.filter(
+      searchItem =>
+        searchItem.name.toLowerCase().includes(search.toLowerCase()) ||
+        searchItem.description?.toLowerCase().includes(search.toLowerCase())
+    ) || [];
 
   const totalPages = Math.ceil(filteredSearches.length / pageSize);
   const paginatedSearches = filteredSearches.slice(
@@ -184,7 +188,9 @@ export default function SavedSearchesPage() {
       });
       setExecuteModalOpen(false);
       // Navigate to search results
-      router.push(`/tickets?search=${encodeURIComponent(selectedSearch.searchCriteria)}`);
+      router.push(
+        `/tickets?search=${encodeURIComponent(selectedSearch.searchCriteria)}`
+      );
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -222,7 +228,10 @@ export default function SavedSearchesPage() {
     editForm.setValues({
       name: search.name,
       description: search.description || '',
-      searchCriteria: search.searchCriteria,
+      searchCriteria: search.searchCriteria as unknown as Record<
+        string,
+        unknown
+      >,
       isPublic: search.isPublic,
     });
     setEditModalOpen(true);
@@ -233,11 +242,11 @@ export default function SavedSearchesPage() {
   };
 
   return (
-    <Container size="xl" py="md">
-      <Group justify="space-between" mb="xl">
+    <Container size='xl' py='md'>
+      <Group justify='space-between' mb='xl'>
         <div>
           <Title order={2}>Saved Searches</Title>
-          <Text c="dimmed" size="sm">
+          <Text c='dimmed' size='sm'>
             Manage saved search queries
           </Text>
         </div>
@@ -249,39 +258,36 @@ export default function SavedSearchesPage() {
         </Button>
       </Group>
 
-      <Tabs value={activeTab} onChange={(value) => setActiveTab(value || 'all')}>
+      <Tabs value={activeTab} onChange={value => setActiveTab(value || 'all')}>
         <Tabs.List>
-          <Tabs.Tab value="all" leftSection={<IconSearch size={16} />}>
+          <Tabs.Tab value='all' leftSection={<IconSearch size={16} />}>
             All Searches
           </Tabs.Tab>
-          <Tabs.Tab value="popular" leftSection={<IconStar size={16} />}>
+          <Tabs.Tab value='popular' leftSection={<IconStar size={16} />}>
             Popular
           </Tabs.Tab>
-          <Tabs.Tab value="public" leftSection={<IconUsers size={16} />}>
+          <Tabs.Tab value='public' leftSection={<IconUsers size={16} />}>
             Public
           </Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="all">
-          <Card mt="md">
-            <Group justify="space-between" mb="md">
+        <Tabs.Panel value='all'>
+          <Card mt='md'>
+            <Group justify='space-between' mb='md'>
               <Group>
                 <TextInput
-                  placeholder="Search saved searches..."
+                  placeholder='Search saved searches...'
                   leftSection={<IconSearch size={16} />}
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={e => setSearch(e.target.value)}
                   style={{ width: 300 }}
                 />
-                <Button
-                  variant="light"
-                  leftSection={<IconFilter size={16} />}
-                >
+                <Button variant='light' leftSection={<IconFilter size={16} />}>
                   Filters
                 </Button>
               </Group>
               <ActionIcon
-                variant="light"
+                variant='light'
                 onClick={() => refetch()}
                 loading={isLoading}
               >
@@ -301,39 +307,45 @@ export default function SavedSearchesPage() {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {paginatedSearches.map((searchItem) => (
+                {paginatedSearches.map(searchItem => (
                   <Table.Tr key={searchItem.id}>
                     <Table.Td>
                       <Text fw={500}>{searchItem.name}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm" c="dimmed" truncate>
+                      <Text size='sm' c='dimmed' truncate>
                         {searchItem.description || 'No description'}
                       </Text>
                     </Table.Td>
                     <Table.Td>
                       <Badge
                         color={searchItem.isPublic ? 'blue' : 'gray'}
-                        variant="light"
-                        leftSection={searchItem.isPublic ? <IconUsers size={14} /> : <IconClock size={14} />}
+                        variant='light'
+                        leftSection={
+                          searchItem.isPublic ? (
+                            <IconUsers size={14} />
+                          ) : (
+                            <IconClock size={14} />
+                          )
+                        }
                       >
                         {searchItem.isPublic ? 'Public' : 'Private'}
                       </Badge>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm" c="dimmed">
+                      <Text size='sm' c='dimmed'>
                         {formatDate(searchItem.createdAt)}
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm" c="dimmed">
+                      <Text size='sm' c='dimmed'>
                         {formatDate(searchItem.updatedAt)}
                       </Text>
                     </Table.Td>
                     <Table.Td>
                       <Menu>
                         <Menu.Target>
-                          <ActionIcon variant="subtle">
+                          <ActionIcon variant='subtle'>
                             <IconDots size={16} />
                           </ActionIcon>
                         </Menu.Target>
@@ -365,7 +377,7 @@ export default function SavedSearchesPage() {
                           <Menu.Divider />
                           <Menu.Item
                             leftSection={<IconTrash size={14} />}
-                            color="red"
+                            color='red'
                             onClick={() => {
                               setSelectedSearch(searchItem);
                               setDeleteModalOpen(true);
@@ -382,7 +394,7 @@ export default function SavedSearchesPage() {
             </Table>
 
             {totalPages > 1 && (
-              <Group justify="center" mt="md">
+              <Group justify='center' mt='md'>
                 <Pagination
                   value={currentPage}
                   onChange={setCurrentPage}
@@ -393,30 +405,30 @@ export default function SavedSearchesPage() {
           </Card>
         </Tabs.Panel>
 
-        <Tabs.Panel value="popular">
-          <Card mt="md">
+        <Tabs.Panel value='popular'>
+          <Card mt='md'>
             <Stack>
               <Title order={4}>Popular Searches</Title>
-              {popularSearches?.map((popularSearch) => (
+              {popularSearches?.map(popularSearch => (
                 <Card key={popularSearch.id} withBorder>
-                  <Group justify="space-between">
+                  <Group justify='space-between'>
                     <div>
                       <Text fw={500}>{popularSearch.name}</Text>
-                      <Text size="sm" c="dimmed">
+                      <Text size='sm' c='dimmed'>
                         {popularSearch.description}
                       </Text>
-                      <Group gap="xs" mt="xs">
-                        <Badge size="sm" color="blue" variant="light">
+                      <Group gap='xs' mt='xs'>
+                        <Badge size='sm' color='blue' variant='light'>
                           {popularSearch.usageCount} uses
                         </Badge>
-                        <Badge size="sm" color="green" variant="light">
+                        <Badge size='sm' color='green' variant='light'>
                           {popularSearch.isPublic ? 'Public' : 'Private'}
                         </Badge>
                       </Group>
                     </div>
                     <Button
-                      variant="light"
-                      size="sm"
+                      variant='light'
+                      size='sm'
                       onClick={() => {
                         setSelectedSearch(popularSearch);
                         setExecuteModalOpen(true);
@@ -431,11 +443,11 @@ export default function SavedSearchesPage() {
           </Card>
         </Tabs.Panel>
 
-        <Tabs.Panel value="public">
-          <Card mt="md">
+        <Tabs.Panel value='public'>
+          <Card mt='md'>
             <Stack>
               <Title order={4}>Public Searches</Title>
-              <Text size="sm" c="dimmed">
+              <Text size='sm' c='dimmed'>
                 Searches shared by other users
               </Text>
               {/* Public searches would be filtered here */}
@@ -448,39 +460,43 @@ export default function SavedSearchesPage() {
       <Modal
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title="Create Saved Search"
-        size="lg"
+        title='Create Saved Search'
+        size='lg'
       >
-        <form onSubmit={createForm.onSubmit(handleCreateSearch)}>
+        <form
+          onSubmit={createForm.onSubmit(values =>
+            handleCreateSearch(values as CreateSavedSearchInput)
+          )}
+        >
           <Stack>
             <TextInput
-              label="Name"
-              placeholder="Search name"
+              label='Name'
+              placeholder='Search name'
               required
               {...createForm.getInputProps('name')}
             />
             <Textarea
-              label="Description"
-              placeholder="Search description"
+              label='Description'
+              placeholder='Search description'
               {...createForm.getInputProps('description')}
             />
             <Textarea
-              label="Search Criteria"
-              placeholder="Enter search criteria (JSON format)"
+              label='Search Criteria'
+              placeholder='Enter search criteria (JSON format)'
               required
               minRows={4}
               {...createForm.getInputProps('searchCriteria')}
             />
             <Switch
-              label="Public Search"
-              description="Make this search available to other users"
+              label='Public Search'
+              description='Make this search available to other users'
               {...createForm.getInputProps('isPublic', { type: 'checkbox' })}
             />
-            <Group justify="flex-end" mt="md">
-              <Button variant="light" onClick={() => setCreateModalOpen(false)}>
+            <Group justify='flex-end' mt='md'>
+              <Button variant='light' onClick={() => setCreateModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" loading={createSavedSearch.isPending}>
+              <Button type='submit' loading={createSavedSearch.isPending}>
                 Create Search
               </Button>
             </Group>
@@ -492,39 +508,43 @@ export default function SavedSearchesPage() {
       <Modal
         opened={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        title="Edit Saved Search"
-        size="lg"
+        title='Edit Saved Search'
+        size='lg'
       >
-        <form onSubmit={editForm.onSubmit(handleEditSearch)}>
+        <form
+          onSubmit={editForm.onSubmit(values =>
+            handleEditSearch(values as CreateSavedSearchInput)
+          )}
+        >
           <Stack>
             <TextInput
-              label="Name"
-              placeholder="Search name"
+              label='Name'
+              placeholder='Search name'
               required
               {...editForm.getInputProps('name')}
             />
             <Textarea
-              label="Description"
-              placeholder="Search description"
+              label='Description'
+              placeholder='Search description'
               {...editForm.getInputProps('description')}
             />
             <Textarea
-              label="Search Criteria"
-              placeholder="Enter search criteria (JSON format)"
+              label='Search Criteria'
+              placeholder='Enter search criteria (JSON format)'
               required
               minRows={4}
               {...editForm.getInputProps('searchCriteria')}
             />
             <Switch
-              label="Public Search"
-              description="Make this search available to other users"
+              label='Public Search'
+              description='Make this search available to other users'
               {...editForm.getInputProps('isPublic', { type: 'checkbox' })}
             />
-            <Group justify="flex-end" mt="md">
-              <Button variant="light" onClick={() => setEditModalOpen(false)}>
+            <Group justify='flex-end' mt='md'>
+              <Button variant='light' onClick={() => setEditModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" loading={updateSavedSearch.isPending}>
+              <Button type='submit' loading={updateSavedSearch.isPending}>
                 Update Search
               </Button>
             </Group>
@@ -536,19 +556,27 @@ export default function SavedSearchesPage() {
       <Modal
         opened={executeModalOpen}
         onClose={() => setExecuteModalOpen(false)}
-        title="Execute Saved Search"
+        title='Execute Saved Search'
       >
         <Stack>
-          <Text size="sm" fw={500}>Search: {selectedSearch?.name}</Text>
-          <Text size="sm" c="dimmed">{selectedSearch?.description}</Text>
-          <Alert color="blue" title="Search Execution">
-            This will execute the saved search and show results in the tickets page.
+          <Text size='sm' fw={500}>
+            Search: {selectedSearch?.name}
+          </Text>
+          <Text size='sm' c='dimmed'>
+            {selectedSearch?.description}
+          </Text>
+          <Alert color='blue' title='Search Execution'>
+            This will execute the saved search and show results in the tickets
+            page.
           </Alert>
-          <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setExecuteModalOpen(false)}>
+          <Group justify='flex-end' mt='md'>
+            <Button variant='light' onClick={() => setExecuteModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleExecuteSearch} loading={executeSavedSearch.isPending}>
+            <Button
+              onClick={handleExecuteSearch}
+              loading={executeSavedSearch.isPending}
+            >
               Execute Search
             </Button>
           </Group>
@@ -559,21 +587,22 @@ export default function SavedSearchesPage() {
       <Modal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Delete Saved Search"
+        title='Delete Saved Search'
       >
         <Stack>
-          <Alert color="red" title="Warning">
-            Are you sure you want to delete this saved search? This action cannot be undone.
+          <Alert color='red' title='Warning'>
+            Are you sure you want to delete this saved search? This action
+            cannot be undone.
           </Alert>
-          <Text size="sm">
+          <Text size='sm'>
             Search: <strong>{selectedSearch?.name}</strong>
           </Text>
-          <Group justify="flex-end" mt="md">
-            <Button variant="light" onClick={() => setDeleteModalOpen(false)}>
+          <Group justify='flex-end' mt='md'>
+            <Button variant='light' onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="red"
+              color='red'
               onClick={handleDeleteSearch}
               loading={deleteSavedSearch.isPending}
             >

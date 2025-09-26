@@ -134,7 +134,7 @@ export default function TicketsPage() {
   };
 
   const filteredTickets =
-    tickets?.filter((ticket: Ticket) => {
+    tickets?.data?.filter((ticket: Ticket) => {
       if (activeTab === 'my' && ticket.requester.id !== user?.id) return false;
       if (activeTab === 'assigned' && ticket.assignedTo?.id !== user?.id)
         return false;
@@ -378,7 +378,7 @@ export default function TicketsPage() {
           <Pagination
             value={currentPage}
             onChange={setCurrentPage}
-            total={Math.ceil((tickets?.length || 0) / 10)}
+            total={Math.ceil((tickets?.data?.length || 0) / 10)}
           />
         </Group>
       )}

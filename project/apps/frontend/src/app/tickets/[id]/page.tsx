@@ -49,8 +49,8 @@ import {
   useTicket,
   useUpdateTicketStatus,
   useAssignTicket,
-  useAddComment,
 } from '../../../hooks/useTickets';
+import { useCreateComment } from '../../../hooks/useComments';
 import { useAuthStore } from '../../../stores/useAuthStore';
 import {
   TicketStatus,
@@ -98,7 +98,7 @@ export default function TicketDetailPage() {
   const { data: ticket, isLoading, error } = useTicket(ticketId);
   const updateStatusMutation = useUpdateTicketStatus();
   const assignTicketMutation = useAssignTicket();
-  const addCommentMutation = useAddComment();
+  const addCommentMutation = useCreateComment();
 
   const canEdit =
     user?.role === 'ADMIN' ||
@@ -112,7 +112,7 @@ export default function TicketDetailPage() {
       await updateStatusMutation.mutateAsync({
         id: ticketId,
         status: newStatus,
-        resolution: resolution || undefined,
+        note: resolution || undefined,
       });
       notifications.show({
         title: 'Success',

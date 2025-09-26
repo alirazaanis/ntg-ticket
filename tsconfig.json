@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
+    "target": "ES2020",
     "module": "commonjs",
+    "lib": ["ES2020"],
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2020",
     "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -20,21 +19,23 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "paths": {
-      "@/*": ["src/*"],
-      "@/modules/*": ["src/modules/*"],
-      "@/common/*": ["src/common/*"],
-      "@/database/*": ["src/database/*"],
-      "@/config/*": ["src/config/*"]
-    }
+    "noEmit": true
   },
+  "references": [
+    {
+      "path": "./project/apps/backend"
+    },
+    {
+      "path": "./project/apps/frontend"
+    }
+  ],
   "include": [
-    "src/**/*",
-    "prisma/**/*"
+    "project/apps/backend/prisma/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
+    "build",
     "**/*.spec.ts",
     "**/*.test.ts"
   ]

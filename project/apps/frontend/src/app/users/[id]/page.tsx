@@ -32,9 +32,9 @@ import {
   IconShield,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useUser, useDeleteUser } from '../../../../hooks/useUsers';
-import { useTickets } from '../../../../hooks/useTickets';
-import { UserRole } from '../../../../types/unified';
+import { useUser, useDeleteUser } from '../../../hooks/useUsers';
+import { useTickets } from '../../../hooks/useTickets';
+import { UserRole, Ticket } from '../../../types/unified';
 import { formatDistanceToNow } from 'date-fns';
 
 const roleColors: Record<UserRole, string> = {
@@ -50,16 +50,26 @@ export default function UserDetailPage() {
   const userId = params.id as string;
   const [activeTab, setActiveTab] = useState<string | null>('overview');
 
-  const { data: user, isLoading: userLoading, error: userError } = useUser(userId);
+  const {
+    data: user,
+    isLoading: userLoading,
+    error: userError,
+  } = useUser(userId);
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const deleteUserMutation = useDeleteUser();
 
-  const userTickets = tickets?.filter((ticket: any) => 
-    ticket.requester.id === userId || ticket.assignedTo?.id === userId
-  ) || [];
+  const userTickets =
+    tickets?.data?.filter(
+      (ticket: Ticket) =>
+        ticket.requester.id === userId || ticket.assignedTo?.id === userId
+    ) || [];
 
-  const createdTickets = userTickets.filter((ticket: any) => ticket.requester.id === userId);
-  const assignedTickets = userTickets.filter((ticket: any) => ticket.assignedTo?.id === userId);
+  const createdTickets = userTickets.filter(
+    (ticket: Ticket) => ticket.requester.id === userId
+  );
+  const assignedTickets = userTickets.filter(
+    (ticket: Ticket) => ticket.assignedTo?.id === userId
+  );
 
   const handleEdit = () => {
     router.push(`/users/${userId}/edit`);
@@ -67,8 +77,12 @@ export default function UserDetailPage() {
 
   const handleDelete = async () => {
     if (!user) return;
-    
-    if (confirm(`Are you sure you want to delete user "${user.name}"? This action cannot be undone.`)) {
+
+    if (
+      confirm(
+        `Are you sure you want to delete user "${user.name}"? This action cannot be undone.`
+      )
+    ) {
       try {
         await deleteUserMutation.mutateAsync(userId);
         notifications.show({
@@ -134,10 +148,7 @@ export default function UserDetailPage() {
           </div>
         </Group>
         <Group>
-          <Button
-            leftSection={<IconEdit size={16} />}
-            onClick={handleEdit}
-          >
+          <Button leftSection={<IconEdit size={16} />} onClick={handleEdit}>
             Edit User
           </Button>
           <Menu shadow='md' width={200}>
@@ -164,7 +175,9 @@ export default function UserDetailPage() {
           <Tabs value={activeTab} onChange={setActiveTab}>
             <Tabs.List>
               <Tabs.Tab value='overview'>Overview</Tabs.Tab>
-              <Tabs.Tab value='tickets'>Tickets ({userTickets.length})</Tabs.Tab>
+              <Tabs.Tab value='tickets'>
+                Tickets ({userTickets.length})
+              </Tabs.Tab>
               <Tabs.Tab value='activity'>Activity</Tabs.Tab>
             </Tabs.List>
 
@@ -178,21 +191,31 @@ export default function UserDetailPage() {
                     <Group gap='sm'>
                       <IconUser size={16} />
                       <div>
-                        <Text size='sm' fw={500}>Full Name</Text>
-                        <Text size='sm' c='dimmed'>{user.name}</Text>
+                        <Text size='sm' fw={500}>
+                          Full Name
+                        </Text>
+                        <Text size='sm' c='dimmed'>
+                          {user.name}
+                        </Text>
                       </div>
                     </Group>
                     <Group gap='sm'>
                       <IconMail size={16} />
                       <div>
-                        <Text size='sm' fw={500}>Email</Text>
-                        <Text size='sm' c='dimmed'>{user.email}</Text>
+                        <Text size='sm' fw={500}>
+                          Email
+                        </Text>
+                        <Text size='sm' c='dimmed'>
+                          {user.email}
+                        </Text>
                       </div>
                     </Group>
                     <Group gap='sm'>
                       <IconShield size={16} />
                       <div>
-                        <Text size='sm' fw={500}>Role</Text>
+                        <Text size='sm' fw={500}>
+                          Role
+                        </Text>
                         <Badge color={roleColors[user.role]} variant='light'>
                           {user.role.replace('_', ' ')}
                         </Badge>
@@ -201,7 +224,9 @@ export default function UserDetailPage() {
                     <Group gap='sm'>
                       <IconCalendar size={16} />
                       <div>
-                        <Text size='sm' fw={500}>Member Since</Text>
+                        <Text size='sm' fw={500}>
+                          Member Since
+                        </Text>
                         <Text size='sm' c='dimmed'>
                           {new Date(user.createdAt).toLocaleDateString()}
                         </Text>
@@ -238,7 +263,11 @@ export default function UserDetailPage() {
                     <Grid.Col span={4}>
                       <Stack align='center' gap='xs'>
                         <Text size='xl' fw={700} c='orange'>
-                          {assignedTickets.filter((t: any) => t.status === 'RESOLVED').length}
+                          {
+                            assignedTickets.filter(
+                              (t: Ticket) => t.status === 'RESOLVED'
+                            ).length
+                          }
                         </Text>
                         <Text size='sm' c='dimmed' ta='center'>
                           Tickets Resolved
@@ -276,7 +305,7 @@ export default function UserDetailPage() {
                       </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>
-                      {userTickets.map((ticket: any) => (
+                      {userTickets.map((ticket: Ticket) => (
                         <Table.Tr key={ticket.id}>
                           <Table.Td>
                             <div>
@@ -291,10 +320,13 @@ export default function UserDetailPage() {
                           <Table.Td>
                             <Badge
                               color={
-                                ticket.status === 'RESOLVED' ? 'green' :
-                                ticket.status === 'CLOSED' ? 'gray' :
-                                ticket.status === 'IN_PROGRESS' ? 'blue' :
-                                'orange'
+                                ticket.status === 'RESOLVED'
+                                  ? 'green'
+                                  : ticket.status === 'CLOSED'
+                                    ? 'gray'
+                                    : ticket.status === 'IN_PROGRESS'
+                                      ? 'blue'
+                                      : 'orange'
                               }
                               variant='light'
                               size='sm'
@@ -305,10 +337,13 @@ export default function UserDetailPage() {
                           <Table.Td>
                             <Badge
                               color={
-                                ticket.priority === 'CRITICAL' ? 'red' :
-                                ticket.priority === 'HIGH' ? 'orange' :
-                                ticket.priority === 'MEDIUM' ? 'yellow' :
-                                'green'
+                                ticket.priority === 'CRITICAL'
+                                  ? 'red'
+                                  : ticket.priority === 'HIGH'
+                                    ? 'orange'
+                                    : ticket.priority === 'MEDIUM'
+                                      ? 'yellow'
+                                      : 'green'
                               }
                               variant='outline'
                               size='sm'
@@ -318,16 +353,24 @@ export default function UserDetailPage() {
                           </Table.Td>
                           <Table.Td>
                             <Text size='sm'>
-                              {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                              {formatDistanceToNow(new Date(ticket.createdAt), {
+                                addSuffix: true,
+                              })}
                             </Text>
                           </Table.Td>
                           <Table.Td>
                             <Badge
-                              color={ticket.requester.id === userId ? 'blue' : 'green'}
+                              color={
+                                ticket.requester.id === userId
+                                  ? 'blue'
+                                  : 'green'
+                              }
                               variant='light'
                               size='sm'
                             >
-                              {ticket.requester.id === userId ? 'Requester' : 'Assignee'}
+                              {ticket.requester.id === userId
+                                ? 'Requester'
+                                : 'Assignee'}
                             </Badge>
                           </Table.Td>
                         </Table.Tr>
@@ -359,7 +402,9 @@ export default function UserDetailPage() {
               </Title>
               <Stack gap='sm'>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Status</Text>
+                  <Text size='sm' fw={500}>
+                    Status
+                  </Text>
                   <Badge
                     color={user.isActive ? 'green' : 'red'}
                     variant='light'
@@ -368,9 +413,13 @@ export default function UserDetailPage() {
                   </Badge>
                 </Group>
                 <Group justify='space-between'>
-                  <Text size='sm' fw={500}>Last Updated</Text>
+                  <Text size='sm' fw={500}>
+                    Last Updated
+                  </Text>
                   <Text size='sm' c='dimmed'>
-                    {formatDistanceToNow(new Date(user.updatedAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(user.updatedAt), {
+                      addSuffix: true,
+                    })}
                   </Text>
                 </Group>
               </Stack>

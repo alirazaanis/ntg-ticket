@@ -82,7 +82,11 @@ export class EmailNotificationService {
     }
   }
 
-  async sendTicketAssignedEmail(ticket: TicketWithRelations, assignee: User, requester: User) {
+  async sendTicketAssignedEmail(
+    ticket: TicketWithRelations,
+    assignee: User,
+    requester: User
+  ) {
     try {
       const template = await this.getEmailTemplate('TICKET_ASSIGNED');
       if (!template) {
@@ -346,7 +350,10 @@ export class EmailNotificationService {
     return templates[type] || null;
   }
 
-  private replaceTemplateVariables(template: string, variables: TemplateVariables): string {
+  private replaceTemplateVariables(
+    template: string,
+    variables: TemplateVariables
+  ): string {
     let result = template;
 
     // Replace simple variables like {{ticket.title}}
@@ -360,8 +367,11 @@ export class EmailNotificationService {
 
   private getNestedValue(obj: TemplateVariables, path: string): string {
     const result = path.split('.').reduce((current: unknown, key: string) => {
-      return current && typeof current === 'object' && current !== null && key in current 
-        ? (current as Record<string, unknown>)[key] 
+      return current &&
+        typeof current === 'object' &&
+        current !== null &&
+        key in current
+        ? (current as Record<string, unknown>)[key]
         : undefined;
     }, obj);
     return result ? String(result) : '';

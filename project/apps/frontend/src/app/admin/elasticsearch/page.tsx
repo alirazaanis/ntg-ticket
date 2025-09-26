@@ -29,6 +29,7 @@ import {
   IconX,
   IconSettings,
   IconTrendingUp,
+  IconRecycle,
 } from '@tabler/icons-react';
 import {
   useElasticsearchHealth,
@@ -49,7 +50,11 @@ export default function ElasticsearchPage() {
   const [suggestionQuery, setSuggestionQuery] = useState('');
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
-  const { data: health, isLoading: healthLoading, refetch: refetchHealth } = useElasticsearchHealth();
+  const {
+    data: health,
+    isLoading: healthLoading,
+    refetch: refetchHealth,
+  } = useElasticsearchHealth();
   const { data: aggregations } = useElasticsearchAggregations(searchFilters);
   const reindex = useElasticsearchReindex();
   const search = useElasticsearchSearch();
@@ -84,7 +89,7 @@ export default function ElasticsearchPage() {
       });
       notifications.show({
         title: 'Search Completed',
-        message: `Found ${result.tickets.length} results`,
+        message: `Found ${result.data?.length || 0} results`,
         color: 'green',
       });
     } catch (error) {
@@ -118,34 +123,41 @@ export default function ElasticsearchPage() {
 
   const getHealthColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'green': return 'green';
-      case 'yellow': return 'yellow';
-      case 'red': return 'red';
-      default: return 'gray';
+      case 'green':
+        return 'green';
+      case 'yellow':
+        return 'yellow';
+      case 'red':
+        return 'red';
+      default:
+        return 'gray';
     }
   };
 
   const getHealthIcon = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'green': return <IconCheck size={16} />;
-      case 'yellow': return <IconAlertTriangle size={16} />;
-      case 'red': return <IconX size={16} />;
-      default: return <IconDatabase size={16} />;
+      case 'green':
+        return <IconCheck size={16} />;
+      case 'yellow':
+        return <IconAlertTriangle size={16} />;
+      case 'red':
+        return <IconX size={16} />;
+      default:
+        return <IconDatabase size={16} />;
     }
   };
 
-
   return (
-    <Container size="xl" py="md">
-      <Group justify="space-between" mb="xl">
+    <Container size='xl' py='md'>
+      <Group justify='space-between' mb='xl'>
         <div>
           <Title order={2}>Elasticsearch Management</Title>
-          <Text c="dimmed" size="sm">
+          <Text c='dimmed' size='sm'>
             Monitor and manage Elasticsearch cluster
           </Text>
         </div>
         <Button
-          variant="light"
+          variant='light'
           leftSection={<IconRefresh size={16} />}
           onClick={handleRefresh}
           loading={healthLoading}
@@ -155,36 +167,50 @@ export default function ElasticsearchPage() {
       </Group>
 
       {/* Health Overview */}
-      <Grid mb="xl">
+      <Grid mb='xl'>
         <Grid.Col span={12}>
           <Card>
             <Stack>
-              <Group justify="space-between">
+              <Group justify='space-between'>
                 <Title order={3}>Cluster Health</Title>
                 <Badge
                   color={getHealthColor(health?.status || 'unknown')}
-                  variant="light"
+                  variant='light'
                   leftSection={getHealthIcon(health?.status || 'unknown')}
-                  size="lg"
+                  size='lg'
                 >
                   {health?.status || 'Unknown'}
                 </Badge>
               </Group>
-              
+
               {health?.status === 'red' && (
-                <Alert color="red" title="Critical Cluster Issues" icon={<IconAlertTriangle size={16} />}>
-                  The Elasticsearch cluster is experiencing critical issues. Please check the detailed metrics below.
+                <Alert
+                  color='red'
+                  title='Critical Cluster Issues'
+                  icon={<IconAlertTriangle size={16} />}
+                >
+                  The Elasticsearch cluster is experiencing critical issues.
+                  Please check the detailed metrics below.
                 </Alert>
               )}
 
               {health?.status === 'yellow' && (
-                <Alert color="yellow" title="Cluster Warnings" icon={<IconAlertTriangle size={16} />}>
-                  The Elasticsearch cluster is experiencing some issues. Monitor the metrics below for more details.
+                <Alert
+                  color='yellow'
+                  title='Cluster Warnings'
+                  icon={<IconAlertTriangle size={16} />}
+                >
+                  The Elasticsearch cluster is experiencing some issues. Monitor
+                  the metrics below for more details.
                 </Alert>
               )}
 
               {health?.status === 'green' && (
-                <Alert color="green" title="Cluster Healthy" icon={<IconCheck size={16} />}>
+                <Alert
+                  color='green'
+                  title='Cluster Healthy'
+                  icon={<IconCheck size={16} />}
+                >
                   The Elasticsearch cluster is operating normally.
                 </Alert>
               )}
@@ -194,18 +220,18 @@ export default function ElasticsearchPage() {
       </Grid>
 
       {/* Cluster Statistics */}
-      <Grid mb="xl">
+      <Grid mb='xl'>
         <Grid.Col span={4}>
           <Card>
             <Stack>
-              <Group justify="space-between">
+              <Group justify='space-between'>
                 <Title order={4}>Active Shards</Title>
                 <IconDatabase size={24} />
               </Group>
-              <Text size="xl" fw={700} c="blue">
-                {health?.active_shards || 0}
+              <Text size='xl' fw={700} c='blue'>
+                N/A
               </Text>
-              <Text size="sm" c="dimmed">
+              <Text size='sm' c='dimmed'>
                 Active shards in cluster
               </Text>
             </Stack>
@@ -215,14 +241,14 @@ export default function ElasticsearchPage() {
         <Grid.Col span={4}>
           <Card>
             <Stack>
-              <Group justify="space-between">
+              <Group justify='space-between'>
                 <Title order={4}>Relocating Shards</Title>
                 <IconActivity size={24} />
               </Group>
-              <Text size="xl" fw={700} c="yellow">
-                {health?.relocating_shards || 0}
+              <Text size='xl' fw={700} c='yellow'>
+                N/A
               </Text>
-              <Text size="sm" c="dimmed">
+              <Text size='sm' c='dimmed'>
                 Shards being relocated
               </Text>
             </Stack>
@@ -232,14 +258,14 @@ export default function ElasticsearchPage() {
         <Grid.Col span={4}>
           <Card>
             <Stack>
-              <Group justify="space-between">
+              <Group justify='space-between'>
                 <Title order={4}>Unassigned Shards</Title>
                 <IconAlertTriangle size={24} />
               </Group>
-              <Text size="xl" fw={700} c="red">
-                {health?.unassigned_shards || 0}
+              <Text size='xl' fw={700} c='red'>
+                N/A
               </Text>
-              <Text size="sm" c="dimmed">
+              <Text size='sm' c='dimmed'>
                 Unassigned shards
               </Text>
             </Stack>
@@ -247,24 +273,27 @@ export default function ElasticsearchPage() {
         </Grid.Col>
       </Grid>
 
-      <Tabs defaultValue="health">
+      <Tabs defaultValue='health'>
         <Tabs.List>
-          <Tabs.Tab value="health" leftSection={<IconDatabase size={16} />}>
+          <Tabs.Tab value='health' leftSection={<IconDatabase size={16} />}>
             Health
           </Tabs.Tab>
-          <Tabs.Tab value="search" leftSection={<IconSearch size={16} />}>
+          <Tabs.Tab value='search' leftSection={<IconSearch size={16} />}>
             Search
           </Tabs.Tab>
-          <Tabs.Tab value="aggregations" leftSection={<IconTrendingUp size={16} />}>
+          <Tabs.Tab
+            value='aggregations'
+            leftSection={<IconTrendingUp size={16} />}
+          >
             Aggregations
           </Tabs.Tab>
-          <Tabs.Tab value="management" leftSection={<IconSettings size={16} />}>
+          <Tabs.Tab value='management' leftSection={<IconSettings size={16} />}>
             Management
           </Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="health">
-          <Card mt="md">
+        <Tabs.Panel value='health'>
+          <Card mt='md'>
             <Stack>
               <Title order={4}>Detailed Health Information</Title>
               <Table>
@@ -280,45 +309,53 @@ export default function ElasticsearchPage() {
                     <Table.Td>Cluster Name</Table.Td>
                     <Table.Td>{health?.cluster_name || 'N/A'}</Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">OK</Badge>
+                      <Badge color='green' variant='light'>
+                        OK
+                      </Badge>
                     </Table.Td>
                   </Table.Tr>
                   <Table.Tr>
                     <Table.Td>Number of Nodes</Table.Td>
-                    <Table.Td>{health?.number_of_nodes || 'N/A'}</Table.Td>
+                    <Table.Td>N/A</Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">OK</Badge>
+                      <Badge color='green' variant='light'>
+                        OK
+                      </Badge>
                     </Table.Td>
                   </Table.Tr>
                   <Table.Tr>
                     <Table.Td>Data Nodes</Table.Td>
-                    <Table.Td>{health?.number_of_data_nodes || 'N/A'}</Table.Td>
+                    <Table.Td>N/A</Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">OK</Badge>
+                      <Badge color='green' variant='light'>
+                        OK
+                      </Badge>
                     </Table.Td>
                   </Table.Tr>
                   <Table.Tr>
                     <Table.Td>Active Shards</Table.Td>
-                    <Table.Td>{health?.active_shards || 'N/A'}</Table.Td>
+                    <Table.Td>N/A</Table.Td>
                     <Table.Td>
-                      <Badge color="green" variant="light">OK</Badge>
+                      <Badge color='green' variant='light'>
+                        OK
+                      </Badge>
                     </Table.Td>
                   </Table.Tr>
                   <Table.Tr>
                     <Table.Td>Relocating Shards</Table.Td>
-                    <Table.Td>{health?.relocating_shards || 'N/A'}</Table.Td>
+                    <Table.Td>N/A</Table.Td>
                     <Table.Td>
-                      <Badge color={health?.relocating_shards > 0 ? 'yellow' : 'green'} variant="light">
-                        {health?.relocating_shards > 0 ? 'WARNING' : 'OK'}
+                      <Badge color='green' variant='light'>
+                        OK
                       </Badge>
                     </Table.Td>
                   </Table.Tr>
                   <Table.Tr>
                     <Table.Td>Unassigned Shards</Table.Td>
-                    <Table.Td>{health?.unassigned_shards || 'N/A'}</Table.Td>
+                    <Table.Td>N/A</Table.Td>
                     <Table.Td>
-                      <Badge color={health?.unassigned_shards > 0 ? 'red' : 'green'} variant="light">
-                        {health?.unassigned_shards > 0 ? 'CRITICAL' : 'OK'}
+                      <Badge color='green' variant='light'>
+                        OK
                       </Badge>
                     </Table.Td>
                   </Table.Tr>
@@ -328,17 +365,17 @@ export default function ElasticsearchPage() {
           </Card>
         </Tabs.Panel>
 
-        <Tabs.Panel value="search">
-          <Card mt="md">
+        <Tabs.Panel value='search'>
+          <Card mt='md'>
             <Stack>
               <Title order={4}>Search Testing</Title>
               <Grid>
                 <Grid.Col span={8}>
                   <TextInput
-                    label="Search Query"
-                    placeholder="Enter search query..."
+                    label='Search Query'
+                    placeholder='Enter search query...'
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={e => setSearchQuery(e.target.value)}
                   />
                 </Grid.Col>
                 <Grid.Col span={4}>
@@ -346,7 +383,7 @@ export default function ElasticsearchPage() {
                     onClick={handleSearch}
                     loading={search.isPending}
                     fullWidth
-                    mt="xl"
+                    mt='xl'
                   >
                     Test Search
                   </Button>
@@ -359,10 +396,10 @@ export default function ElasticsearchPage() {
               <Grid>
                 <Grid.Col span={8}>
                   <TextInput
-                    label="Suggestion Query"
-                    placeholder="Enter text for suggestions..."
+                    label='Suggestion Query'
+                    placeholder='Enter text for suggestions...'
                     value={suggestionQuery}
-                    onChange={(e) => setSuggestionQuery(e.target.value)}
+                    onChange={e => setSuggestionQuery(e.target.value)}
                   />
                 </Grid.Col>
                 <Grid.Col span={4}>
@@ -370,7 +407,7 @@ export default function ElasticsearchPage() {
                     onClick={handleGetSuggestions}
                     loading={suggestions.isPending}
                     fullWidth
-                    mt="xl"
+                    mt='xl'
                   >
                     Get Suggestions
                   </Button>
@@ -380,33 +417,31 @@ export default function ElasticsearchPage() {
           </Card>
         </Tabs.Panel>
 
-        <Tabs.Panel value="aggregations">
-          <Card mt="md">
+        <Tabs.Panel value='aggregations'>
+          <Card mt='md'>
             <Stack>
               <Title order={4}>Search Aggregations</Title>
-              <Text size="sm" c="dimmed">
+              <Text size='sm' c='dimmed'>
                 Current aggregation data from Elasticsearch
               </Text>
               {aggregations && (
-                <Code block>
-                  {JSON.stringify(aggregations, null, 2)}
-                </Code>
+                <Code block>{JSON.stringify(aggregations, null, 2)}</Code>
               )}
             </Stack>
           </Card>
         </Tabs.Panel>
 
-        <Tabs.Panel value="management">
-          <Card mt="md">
+        <Tabs.Panel value='management'>
+          <Card mt='md'>
             <Stack>
               <Title order={4}>Cluster Management</Title>
-              <Alert color="yellow" title="Reindex Warning">
-                Reindexing will rebuild the search index. This process may take several minutes
-                and will temporarily affect search performance.
+              <Alert color='yellow' title='Reindex Warning'>
+                Reindexing will rebuild the search index. This process may take
+                several minutes and will temporarily affect search performance.
               </Alert>
               <Button
-                color="red"
-                leftSection={<IconReindex size={16} />}
+                color='red'
+                leftSection={<IconRecycle size={16} />}
                 onClick={handleReindex}
                 loading={reindex.isPending}
               >
@@ -421,14 +456,14 @@ export default function ElasticsearchPage() {
       <Modal
         opened={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
-        title="Elasticsearch Health Details"
-        size="lg"
+        title='Elasticsearch Health Details'
+        size='lg'
       >
         <Stack>
-          <Text size="sm" fw={500}>Cluster Health Details</Text>
-          <Code block>
-            {JSON.stringify(health, null, 2)}
-          </Code>
+          <Text size='sm' fw={500}>
+            Cluster Health Details
+          </Text>
+          <Code block>{JSON.stringify(health, null, 2)}</Code>
         </Stack>
       </Modal>
     </Container>

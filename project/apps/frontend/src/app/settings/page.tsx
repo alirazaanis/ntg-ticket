@@ -27,8 +27,8 @@ import {
 } from '@tabler/icons-react';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { useAuthStore } from '../../../stores/useAuthStore';
-import { useTheme } from '../../../hooks/useTheme';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { useTheme } from '../../hooks/useTheme';
 
 interface UserSettings {
   // Appearance
@@ -262,17 +262,23 @@ export default function SettingsPage() {
                 <Switch
                   label='Email Notifications'
                   description='Receive notifications via email'
-                  {...form.getInputProps('emailNotifications', { type: 'checkbox' })}
+                  {...form.getInputProps('emailNotifications', {
+                    type: 'checkbox',
+                  })}
                 />
                 <Switch
                   label='Push Notifications'
                   description='Receive push notifications in browser'
-                  {...form.getInputProps('pushNotifications', { type: 'checkbox' })}
+                  {...form.getInputProps('pushNotifications', {
+                    type: 'checkbox',
+                  })}
                 />
                 <Switch
                   label='SMS Notifications'
                   description='Receive notifications via SMS'
-                  {...form.getInputProps('smsNotifications', { type: 'checkbox' })}
+                  {...form.getInputProps('smsNotifications', {
+                    type: 'checkbox',
+                  })}
                 />
 
                 <Divider />
@@ -330,12 +336,16 @@ export default function SettingsPage() {
                 <Switch
                   label='Show Online Status'
                   description='Let others see when you are online'
-                  {...form.getInputProps('showOnlineStatus', { type: 'checkbox' })}
+                  {...form.getInputProps('showOnlineStatus', {
+                    type: 'checkbox',
+                  })}
                 />
                 <Switch
                   label='Allow Direct Messages'
                   description='Allow other users to send you direct messages'
-                  {...form.getInputProps('allowDirectMessages', { type: 'checkbox' })}
+                  {...form.getInputProps('allowDirectMessages', {
+                    type: 'checkbox',
+                  })}
                 />
 
                 <Select
@@ -351,8 +361,8 @@ export default function SettingsPage() {
 
                 <Alert icon={<IconAlertCircle size={16} />} color='blue'>
                   <Text size='sm'>
-                    These settings control how your information is displayed to other users.
-                    Changes may take a few minutes to take effect.
+                    These settings control how your information is displayed to
+                    other users. Changes may take a few minutes to take effect.
                   </Text>
                 </Alert>
               </Stack>

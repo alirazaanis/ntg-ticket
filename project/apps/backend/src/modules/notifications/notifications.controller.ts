@@ -29,7 +29,10 @@ export class NotificationsController {
     status: 200,
     description: 'Notifications retrieved successfully',
   })
-  async findAll(@Request() req, @Query() params: { page?: number; limit?: number; unreadOnly?: boolean }) {
+  async findAll(
+    @Request() req,
+    @Query() params: { page?: number; limit?: number; unreadOnly?: boolean }
+  ) {
     const result = await this.notificationsService.findAll(req.user.id, params);
     return {
       data: result.data,

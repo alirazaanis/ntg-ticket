@@ -79,7 +79,17 @@ export class PrismaService
     };
 
     // Type assertion for dynamic model access
-    const modelInstance = (this as unknown as Record<string, { update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<unknown> }>)[model];
+    const modelInstance = (
+      this as unknown as Record<
+        string,
+        {
+          update: (args: {
+            where: Record<string, unknown>;
+            data: Record<string, unknown>;
+          }) => Promise<unknown>;
+        }
+      >
+    )[model];
     return modelInstance.update({
       where,
       data: updateData,
@@ -87,15 +97,28 @@ export class PrismaService
   }
 
   // Helper method for pagination
-  async paginate(model: string, args: { page?: number; limit?: number; [key: string]: unknown }) {
+  async paginate(
+    model: string,
+    args: { page?: number; limit?: number; [key: string]: unknown }
+  ) {
     const { page = 1, limit = 20, ...where } = args;
     const skip = (page - 1) * limit;
 
     // Type assertion for dynamic model access
-    const modelInstance = (this as unknown as Record<string, { 
-      findMany: (args: { where: Record<string, unknown>; skip: number; take: number; orderBy: Record<string, string> }) => Promise<unknown[]>;
-      count: (args: { where: Record<string, unknown> }) => Promise<number>;
-    }>)[model];
+    const modelInstance = (
+      this as unknown as Record<
+        string,
+        {
+          findMany: (args: {
+            where: Record<string, unknown>;
+            skip: number;
+            take: number;
+            orderBy: Record<string, string>;
+          }) => Promise<unknown[]>;
+          count: (args: { where: Record<string, unknown> }) => Promise<number>;
+        }
+      >
+    )[model];
 
     const [data, total] = await Promise.all([
       modelInstance.findMany({

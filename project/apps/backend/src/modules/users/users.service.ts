@@ -87,7 +87,14 @@ export class UsersService {
       const validLimit = isNaN(Number(limit)) ? 20 : Math.max(1, Number(limit));
       const skip = (validPage - 1) * validLimit;
 
-      const where: { OR?: Array<{ name: { contains: string; mode: 'insensitive' } } | { email: { contains: string; mode: 'insensitive' } }>; role?: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'; isActive?: boolean } = {};
+      const where: {
+        OR?: Array<
+          | { name: { contains: string; mode: 'insensitive' } }
+          | { email: { contains: string; mode: 'insensitive' } }
+        >;
+        role?: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
+        isActive?: boolean;
+      } = {};
 
       if (search) {
         where.OR = [

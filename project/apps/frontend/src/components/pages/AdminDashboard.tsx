@@ -59,18 +59,18 @@ export function AdminDashboard() {
   const { data: systemMetrics } = useSystemMetrics();
   const { data: userDistribution } = useUserDistribution();
 
-  const allTickets = tickets || [];
+  const allTickets = tickets?.data || [];
 
   const stats = [
     {
       title: 'Total Tickets',
-      value: allTickets.length,
+      value: allTickets?.length || 0,
       icon: IconTicket,
       color: 'blue',
     },
     {
       title: 'Active Users',
-      value: usersData?.data?.data?.filter((u: User) => u.isActive).length || 0,
+      value: usersData?.data?.filter((u: User) => u.isActive).length || 0,
       icon: IconUsers,
       color: 'green',
     },
@@ -349,7 +349,7 @@ export function AdminDashboard() {
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {usersData?.data?.data?.slice(0, 10).map((user: User) => (
+                    {usersData?.data?.slice(0, 10).map((user: User) => (
                       <Table.Tr key={user.id}>
                         <Table.Td>
                           <Group>
@@ -421,7 +421,7 @@ export function AdminDashboard() {
               </Group>
 
               <Grid>
-                {allTickets.map((ticket: Ticket) => (
+                {allTickets?.map((ticket: Ticket) => (
                   <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
                     <TicketCard ticket={ticket} showActions />
                   </Grid.Col>

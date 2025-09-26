@@ -73,7 +73,13 @@ export function useUserDistribution() {
 
 export function useExportReport() {
   return useMutation({
-    mutationFn: async ({ type, filters }: { type: string; filters?: ReportFilters }) => {
+    mutationFn: async ({
+      type,
+      filters,
+    }: {
+      type: string;
+      filters?: ReportFilters;
+    }) => {
       const response = await reportsApi.exportReport(type, filters);
       return response.data as Blob;
     },
