@@ -1,17 +1,15 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   reportsApi,
-  SystemMetrics,
-  UserDistribution,
   ReportFilters,
   ReportData,
-  User,
-  SlaMetrics,
+  SystemMetrics,
+  UserDistribution,
 } from '../lib/apiClient';
 
 export function useTicketReport(filters?: ReportFilters) {
   return useQuery({
-    queryKey: ['reports', 'tickets', filters],
+    queryKey: ['ticket-report', filters],
     queryFn: async () => {
       const response = await reportsApi.getTicketReport(filters);
       return response.data.data as ReportData;
@@ -22,13 +20,10 @@ export function useTicketReport(filters?: ReportFilters) {
 
 export function useUserReport(filters?: ReportFilters) {
   return useQuery({
-    queryKey: ['reports', 'users', filters],
+    queryKey: ['user-report', filters],
     queryFn: async () => {
       const response = await reportsApi.getUserReport(filters);
-      return response.data.data as {
-        users: User[];
-        stats: { total: number; active: number; inactive: number };
-      };
+      return response.data.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -36,14 +31,10 @@ export function useUserReport(filters?: ReportFilters) {
 
 export function useSlaReport(filters?: ReportFilters) {
   return useQuery({
-    queryKey: ['reports', 'sla', filters],
+    queryKey: ['sla-report', filters],
     queryFn: async () => {
       const response = await reportsApi.getSlaReport(filters);
-      return response.data.data as {
-        slaMetrics: SlaMetrics;
-        compliance: number;
-        violations: number;
-      };
+      return response.data.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -51,18 +42,18 @@ export function useSlaReport(filters?: ReportFilters) {
 
 export function useSystemMetrics() {
   return useQuery({
-    queryKey: ['reports', 'system-metrics'],
+    queryKey: ['system-metrics'],
     queryFn: async () => {
       const response = await reportsApi.getSystemMetrics();
       return response.data.data as SystemMetrics;
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
 export function useUserDistribution() {
   return useQuery({
-    queryKey: ['reports', 'user-distribution'],
+    queryKey: ['user-distribution'],
     queryFn: async () => {
       const response = await reportsApi.getUserDistribution();
       return response.data.data as UserDistribution[];

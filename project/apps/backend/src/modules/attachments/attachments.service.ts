@@ -88,15 +88,38 @@ export class AttachmentsService {
       throw new NotFoundException('Ticket not found');
     }
 
-    // Scan file for viruses
+    // Enhanced virus scanning with file metadata
     try {
-      const scanResult = await this.virusScan.scanFile(file.buffer);
+      const scanResult = await this.virusScan.scanFile(
+        file.buffer,
+        file.originalname,
+        file.mimetype
+      );
+      
       if (!scanResult.clean) {
-        throw new BadRequestException('File failed virus scan');
+        this.logger.warn('File upload blocked by virus scan', {
+          fileName: file.originalname,
+          threats: scanResult.threats,
+          scanEngine: scanResult.scanEngine,
+          scanTime: scanResult.scanTime,
+        });
+        
+        throw new BadRequestException(
+          `File failed security scan: ${scanResult.threats?.join(', ')}`
+        );
       }
+
+      this.logger.log('File passed virus scan', {
+        fileName: file.originalname,
+        scanEngine: scanResult.scanEngine,
+        scanTime: scanResult.scanTime,
+      });
     } catch (error) {
-      this.logger.warn('Virus scan failed, proceeding without scan', error);
-      // In production, you might want to be more strict about this
+      if (error instanceof BadRequestException) {
+        throw error; // Re-throw security-related errors
+      }
+      this.logger.error('Virus scan failed', error);
+      throw new BadRequestException('File security scan failed - upload rejected');
     }
 
     // Upload file to storage

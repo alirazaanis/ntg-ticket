@@ -8,7 +8,7 @@ export function useBackups() {
       const response = await backupApi.listBackups();
       return response.data.data as Backup[];
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -36,8 +36,19 @@ export function useRestoreBackup() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backups'] });
-      // Invalidate all queries since we're restoring from backup
-      queryClient.invalidateQueries();
+    },
+  });
+}
+
+export function useDeleteBackup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (backupId: string) => {
+      await backupApi.delete(backupId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backups'] });
     },
   });
 }

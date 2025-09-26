@@ -11,7 +11,7 @@ export function useEmailTemplates() {
     queryKey: ['email-templates'],
     queryFn: async () => {
       const response = await emailTemplatesApi.getEmailTemplates();
-      return response.data.data as EmailTemplate[];
+      return response.data.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -70,21 +70,6 @@ export function useDeleteEmailTemplate() {
     mutationFn: async (id: string) => {
       await emailTemplatesApi.deleteEmailTemplate(id);
     },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
-      queryClient.invalidateQueries({ queryKey: ['email-template', id] });
-    },
-  });
-}
-
-export function useCreateDefaultTemplates() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      const response = await emailTemplatesApi.createDefaultTemplates();
-      return response.data.data;
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['email-templates'] });
     },
@@ -104,7 +89,20 @@ export function usePreviewEmailTemplate() {
         id,
         variables
       );
-      return response.data.data as { subject: string; html: string };
+      return response.data.data;
+    },
+  });
+}
+
+export function useCreateDefaultTemplates() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await emailTemplatesApi.createDefaultTemplates();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
     },
   });
 }

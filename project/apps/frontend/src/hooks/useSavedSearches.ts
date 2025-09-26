@@ -12,7 +12,7 @@ export function useSavedSearches(includePublic?: boolean) {
     queryKey: ['saved-searches', includePublic],
     queryFn: async () => {
       const response = await savedSearchesApi.getSavedSearches(includePublic);
-      return response.data.data as SavedSearch[];
+      return response.data.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -114,7 +114,7 @@ export function useDuplicateSavedSearch() {
 
 export function usePopularSearches(limit?: number) {
   return useQuery({
-    queryKey: ['saved-searches', 'popular', limit],
+    queryKey: ['popular-searches', limit],
     queryFn: async () => {
       const response = await savedSearchesApi.getPopularSearches(limit);
       return response.data.data as PopularSavedSearch[];

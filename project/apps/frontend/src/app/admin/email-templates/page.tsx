@@ -4,112 +4,136 @@ import { useState } from 'react';
 import {
   Container,
   Title,
-  Text,
-  Group,
   Button,
-  Grid,
   Card,
+  Group,
+  Text,
   Badge,
   Stack,
-  Loader,
-  Alert,
+  Grid,
   Table,
-  ActionIcon,
-  Menu,
   Modal,
   TextInput,
-  Switch,
+  Textarea,
   Select,
+  Switch,
+  ActionIcon,
   Tabs,
+  Code,
+  Divider,
 } from '@mantine/core';
-import { RichTextEditorComponent } from '../../../components/ui/RichTextEditor';
 import {
   IconPlus,
-  IconDots,
   IconEdit,
   IconTrash,
   IconEye,
-  IconMail,
-  IconAlertCircle,
-  IconDeviceFloppy,
+  IconRefresh,
+  IconSettings,
+  IconTemplate,
+  IconCode,
 } from '@tabler/icons-react';
-import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
 import {
   useEmailTemplates,
   useCreateEmailTemplate,
   useUpdateEmailTemplate,
   useDeleteEmailTemplate,
   usePreviewEmailTemplate,
+  useCreateDefaultTemplates,
 } from '../../../hooks/useEmailTemplates';
-import { EmailTemplate, EmailTemplateType } from '../../../types/unified';
+import { notifications } from '@mantine/notifications';
+import { EmailTemplateType } from '../../../types/unified';
 
-const templateTypeColors: Record<EmailTemplateType, string> = {
-  [EmailTemplateType.TICKET_CREATED]: 'blue',
-  [EmailTemplateType.TICKET_ASSIGNED]: 'green',
-  [EmailTemplateType.STATUS_CHANGED]: 'orange',
-  [EmailTemplateType.COMMENT_ADDED]: 'purple',
-  [EmailTemplateType.SLA_WARNING]: 'red',
-  [EmailTemplateType.AUTO_CLOSE_WARNING]: 'yellow',
-};
+interface EmailTemplateFormData {
+  name: string;
+  subject: string;
+  htmlContent: string;
+  textContent: string;
+  type: string;
+  isActive: boolean;
+  variables: string[];
+}
+
+const TEMPLATE_TYPES = [
+  { value: 'ticket_created', label: 'Ticket Created' },
+  { value: 'ticket_updated', label: 'Ticket Updated' },
+  { value: 'ticket_assigned', label: 'Ticket Assigned' },
+  { value: 'ticket_resolved', label: 'Ticket Resolved' },
+  { value: 'ticket_closed', label: 'Ticket Closed' },
+  { value: 'comment_added', label: 'Comment Added' },
+  { value: 'sla_warning', label: 'SLA Warning' },
+  { value: 'sla_breach', label: 'SLA Breach' },
+  { value: 'welcome', label: 'Welcome Email' },
+  { value: 'password_reset', label: 'Password Reset' },
+];
+
+const AVAILABLE_VARIABLES = [
+  { value: '{{user.name}}', label: 'User Name' },
+  { value: '{{user.email}}', label: 'User Email' },
+  { value: '{{ticket.title}}', label: 'Ticket Title' },
+  { value: '{{ticket.number}}', label: 'Ticket Number' },
+  { value: '{{ticket.status}}', label: 'Ticket Status' },
+  { value: '{{ticket.priority}}', label: 'Ticket Priority' },
+  { value: '{{ticket.category}}', label: 'Ticket Category' },
+  { value: '{{ticket.description}}', label: 'Ticket Description' },
+  { value: '{{ticket.url}}', label: 'Ticket URL' },
+  { value: '{{assignedTo.name}}', label: 'Assigned To Name' },
+  { value: '{{assignedTo.email}}', label: 'Assigned To Email' },
+  { value: '{{comment.content}}', label: 'Comment Content' },
+  { value: '{{comment.author}}', label: 'Comment Author' },
+  { value: '{{system.name}}', label: 'System Name' },
+  { value: '{{system.url}}', label: 'System URL' },
+];
 
 export default function EmailTemplatesPage() {
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<EmailTemplate | null>(null);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<{
+    id: string;
+    name: string;
+    subject: string;
+    htmlContent: string;
+    textContent: string;
+    type: string;
+    isActive: boolean;
+    preview?: { subject: string; html: string };
+  } | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<string | null>('list');
-
-  const { data: templates, isLoading, error } = useEmailTemplates();
-  const createTemplateMutation = useCreateEmailTemplate();
-  const updateTemplateMutation = useUpdateEmailTemplate();
-  const deleteTemplateMutation = useDeleteEmailTemplate();
-  const previewTemplateMutation = usePreviewEmailTemplate();
-
-  const createForm = useForm({
-    initialValues: {
-      name: '',
-      subject: '',
-      html: '',
-      type: EmailTemplateType.TICKET_CREATED,
-      isActive: true,
-      variables: [] as string[],
-    },
-    validate: {
-      name: value => (!value ? 'Name is required' : null),
-      subject: value => (!value ? 'Subject is required' : null),
-      html: value => (!value ? 'HTML content is required' : null),
-    },
+  const [activeTab, setActiveTab] = useState('html');
+  const [formData, setFormData] = useState<EmailTemplateFormData>({
+    name: '',
+    subject: '',
+    htmlContent: '',
+    textContent: '',
+    type: '',
+    isActive: true,
+    variables: [],
   });
+  const [previewData] = useState<Record<string, unknown>>({});
 
-  const editForm = useForm({
-    initialValues: {
-      name: '',
-      subject: '',
-      html: '',
-      type: EmailTemplateType.TICKET_CREATED,
-      isActive: true,
-      variables: [] as string[],
-    },
-    validate: {
-      name: value => (!value ? 'Name is required' : null),
-      subject: value => (!value ? 'Subject is required' : null),
-      html: value => (!value ? 'HTML content is required' : null),
-    },
-  });
+  const { data: templates, isLoading, refetch } = useEmailTemplates();
+  const createTemplate = useCreateEmailTemplate();
+  const updateTemplate = useUpdateEmailTemplate();
+  const deleteTemplate = useDeleteEmailTemplate();
+  const previewTemplate = usePreviewEmailTemplate();
+  const createDefaults = useCreateDefaultTemplates();
 
-  const handleCreateTemplate = async (values: typeof createForm.values) => {
+  const handleCreateTemplate = async () => {
     try {
-      await createTemplateMutation.mutateAsync(values);
+      await createTemplate.mutateAsync({
+        ...formData,
+        html: formData.htmlContent,
+        type: formData.type as EmailTemplateType,
+      });
       notifications.show({
         title: 'Success',
         message: 'Email template created successfully',
         color: 'green',
       });
       setCreateModalOpen(false);
-      createForm.reset();
+      resetForm();
+      refetch();
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -119,13 +143,15 @@ export default function EmailTemplatesPage() {
     }
   };
 
-  const handleUpdateTemplate = async (values: typeof editForm.values) => {
+  const handleUpdateTemplate = async () => {
     if (!selectedTemplate) return;
-
     try {
-      await updateTemplateMutation.mutateAsync({
+      await updateTemplate.mutateAsync({
         id: selectedTemplate.id,
-        data: values,
+        data: {
+          ...formData,
+          type: formData.type as EmailTemplateType,
+        },
       });
       notifications.show({
         title: 'Success',
@@ -133,8 +159,7 @@ export default function EmailTemplatesPage() {
         color: 'green',
       });
       setEditModalOpen(false);
-      setSelectedTemplate(null);
-      editForm.reset();
+      refetch();
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -144,16 +169,17 @@ export default function EmailTemplatesPage() {
     }
   };
 
-  const handleDeleteTemplate = async (templateId: string) => {
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate) return;
     try {
-      await deleteTemplateMutation.mutateAsync(templateId);
+      await deleteTemplate.mutateAsync(selectedTemplate.id);
       notifications.show({
         title: 'Success',
         message: 'Email template deleted successfully',
         color: 'green',
       });
       setDeleteModalOpen(false);
-      setSelectedTemplate(null);
+      refetch();
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -163,432 +189,625 @@ export default function EmailTemplatesPage() {
     }
   };
 
-  const handlePreviewTemplate = async (template: EmailTemplate) => {
+  const handlePreviewTemplate = async (template: {
+    id: string;
+    name: string;
+    subject: string;
+    htmlContent: string;
+    textContent: string;
+    type: string;
+    isActive: boolean;
+  }) => {
     try {
-      const previewData = {
-        user: { name: 'John Doe', email: 'john@example.com' },
-        ticket: {
-          ticketNumber: 'TKT-001',
-          title: 'Sample Ticket',
-          priority: 'HIGH',
-          status: 'OPEN',
-          category: 'SOFTWARE',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          url: 'https://example.com/tickets/TKT-001',
-        },
-        assignee: { name: 'Jane Smith', email: 'jane@example.com' },
-        requester: { name: 'John Doe', email: 'john@example.com' },
-      };
-
-      await previewTemplateMutation.mutateAsync({
+      const result = await previewTemplate.mutateAsync({
         id: template.id,
         variables: previewData,
       });
-      setSelectedTemplate(template);
+      setSelectedTemplate({ ...template, preview: result });
       setPreviewModalOpen(true);
     } catch (error) {
       notifications.show({
         title: 'Error',
-        message: 'Failed to preview email template',
+        message: 'Failed to preview template',
         color: 'red',
       });
     }
   };
 
-  const openEditModal = (template: EmailTemplate) => {
+  const handleCreateDefaults = async () => {
+    try {
+      await createDefaults.mutateAsync();
+      notifications.show({
+        title: 'Success',
+        message: 'Default templates created successfully',
+        color: 'green',
+      });
+      refetch();
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to create default templates',
+        color: 'red',
+      });
+    }
+  };
+
+  const openEditModal = (template: {
+    id: string;
+    name: string;
+    subject: string;
+    htmlContent: string;
+    textContent: string;
+    type: string;
+    isActive: boolean;
+  }) => {
     setSelectedTemplate(template);
-    editForm.setValues({
+    setFormData({
       name: template.name,
       subject: template.subject,
-      html: template.html,
+      htmlContent: template.htmlContent,
+      textContent: '',
       type: template.type,
       isActive: template.isActive,
-      variables: template.variables,
+      variables: [],
     });
     setEditModalOpen(true);
   };
 
-  if (isLoading) {
-    return (
-      <Container size='xl' py='md'>
-        <Group justify='center' mt='xl'>
-          <Loader size='lg' />
-          <Text>Loading email templates...</Text>
-        </Group>
-      </Container>
-    );
-  }
+  const openDeleteModal = (template: {
+    id: string;
+    name: string;
+    subject: string;
+    htmlContent: string;
+    textContent: string;
+    type: string;
+    isActive: boolean;
+  }) => {
+    setSelectedTemplate(template);
+    setDeleteModalOpen(true);
+  };
 
-  if (error) {
-    return (
-      <Container size='xl' py='md'>
-        <Alert icon={<IconAlertCircle size={16} />} title='Error' color='red'>
-          Failed to load email templates: {String(error)}
-        </Alert>
-      </Container>
-    );
-  }
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      subject: '',
+      htmlContent: '',
+      textContent: '',
+      type: '',
+      isActive: true,
+      variables: [],
+    });
+  };
+
+  const insertVariable = (variable: string) => {
+    const textarea = document.getElementById(
+      'htmlContent'
+    ) as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end, text.length);
+      const newText = before + variable + after;
+
+      setFormData({ ...formData, htmlContent: newText });
+
+      // Set cursor position after the inserted variable
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(
+          start + variable.length,
+          start + variable.length
+        );
+      }, 0);
+    }
+  };
 
   return (
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={1}>Email Templates</Title>
-          <Text c='dimmed'>Manage email notification templates</Text>
+          <Title order={2}>Email Templates</Title>
+          <Text c='dimmed' size='sm'>
+            Manage email templates for automated notifications
+          </Text>
         </div>
-        <Button
-          leftSection={<IconPlus size={16} />}
-          onClick={() => setCreateModalOpen(true)}
-        >
-          Add Template
-        </Button>
+        <Group>
+          <Button
+            variant='light'
+            leftSection={<IconRefresh size={16} />}
+            onClick={() => refetch()}
+            loading={isLoading}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant='light'
+            leftSection={<IconTemplate size={16} />}
+            onClick={handleCreateDefaults}
+            loading={createDefaults.isPending}
+          >
+            Create Defaults
+          </Button>
+          <Button
+            leftSection={<IconPlus size={16} />}
+            onClick={() => setCreateModalOpen(true)}
+          >
+            Create Template
+          </Button>
+        </Group>
       </Group>
 
-      <Tabs value={activeTab} onChange={setActiveTab}>
-        <Tabs.List>
-          <Tabs.Tab value='list'>Templates</Tabs.Tab>
-          <Tabs.Tab value='preview'>Preview</Tabs.Tab>
-        </Tabs.List>
+      <Card>
+        <Stack>
+          <Group justify='space-between'>
+            <Title order={4}>Email Templates</Title>
+            <TextInput
+              placeholder='Search templates...'
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: 300 }}
+            />
+          </Group>
 
-        <Tabs.Panel value='list' pt='md'>
-          <Card shadow='sm' padding='lg' radius='md' withBorder>
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Type</Table.Th>
-                  <Table.Th>Subject</Table.Th>
-                  <Table.Th>Status</Table.Th>
-                  <Table.Th>Created</Table.Th>
-                  <Table.Th>Actions</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {templates?.map((template: EmailTemplate) => (
-                  <Table.Tr key={template.id}>
-                    <Table.Td>
-                      <Group gap='sm'>
-                        <IconMail size={16} />
-                        <Text fw={500}>{template.name}</Text>
-                      </Group>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        color={templateTypeColors[template.type]}
-                        variant='light'
-                      >
-                        {template.type.replace('_', ' ')}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size='sm' c='dimmed'>
-                        {template.subject}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        color={template.isActive ? 'green' : 'red'}
-                        variant='light'
-                      >
-                        {template.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size='sm'>
-                        {new Date(template.createdAt).toLocaleDateString()}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Menu shadow='md' width={200}>
-                        <Menu.Target>
-                          <ActionIcon variant='subtle'>
-                            <IconDots size={16} />
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Name</Table.Th>
+                <Table.Th>Type</Table.Th>
+                <Table.Th>Subject</Table.Th>
+                <Table.Th>Status</Table.Th>
+                <Table.Th>Updated</Table.Th>
+                <Table.Th>Actions</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {templates
+                ?.filter(
+                  (template: {
+                    id: string;
+                    name: string;
+                    subject: string;
+                    type: string;
+                    isActive: boolean;
+                    updatedAt: string;
+                    isDefault?: boolean;
+                  }) =>
+                    template.name
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()) ||
+                    template.type
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase())
+                )
+                .map(
+                  (template: {
+                    id: string;
+                    name: string;
+                    subject: string;
+                    type: string;
+                    isActive: boolean;
+                    updatedAt: string;
+                    isDefault?: boolean;
+                  }) => (
+                    <Table.Tr key={template.id}>
+                      <Table.Td>
+                        <Group>
+                          <Text fw={500}>{template.name}</Text>
+                          {template.isDefault && (
+                            <Badge color='blue' variant='light' size='xs'>
+                              Default
+                            </Badge>
+                          )}
+                        </Group>
+                      </Table.Td>
+                      <Table.Td>
+                        <Badge color='purple' variant='light' size='sm'>
+                          {template.type}
+                        </Badge>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size='sm' c='dimmed'>
+                          {template.subject}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Badge
+                          color={template.isActive ? 'green' : 'gray'}
+                          variant='light'
+                          size='sm'
+                        >
+                          {template.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size='sm' c='dimmed'>
+                          {new Date(template.updatedAt).toLocaleDateString()}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Group gap='xs'>
+                          <ActionIcon
+                            variant='light'
+                            size='sm'
+                            color='blue'
+                            onClick={() =>
+                              handlePreviewTemplate({
+                                id: template.id,
+                                name: template.name,
+                                subject: template.subject,
+                                htmlContent: '',
+                                textContent: '',
+                                type: template.type,
+                                isActive: template.isActive,
+                              })
+                            }
+                          >
+                            <IconEye size={14} />
                           </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          <Menu.Item
-                            leftSection={<IconEye size={14} />}
-                            onClick={() => handlePreviewTemplate(template)}
+                          <ActionIcon
+                            variant='light'
+                            size='sm'
+                            onClick={() =>
+                              openEditModal({
+                                id: template.id,
+                                name: template.name,
+                                subject: template.subject,
+                                htmlContent: '',
+                                textContent: '',
+                                type: template.type,
+                                isActive: template.isActive,
+                              })
+                            }
                           >
-                            Preview
-                          </Menu.Item>
-                          <Menu.Item
-                            leftSection={<IconEdit size={14} />}
-                            onClick={() => openEditModal(template)}
-                          >
-                            Edit
-                          </Menu.Item>
-                          <Menu.Divider />
-                          <Menu.Item
-                            leftSection={<IconTrash size={14} />}
+                            <IconEdit size={14} />
+                          </ActionIcon>
+                          <ActionIcon
+                            variant='light'
+                            size='sm'
                             color='red'
-                            onClick={() => {
-                              setSelectedTemplate(template);
-                              setDeleteModalOpen(true);
-                            }}
+                            onClick={() =>
+                              openDeleteModal({
+                                id: template.id,
+                                name: template.name,
+                                subject: template.subject,
+                                htmlContent: '',
+                                textContent: '',
+                                type: template.type,
+                                isActive: template.isActive,
+                              })
+                            }
                           >
-                            Delete
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Card>
+                            <IconTrash size={14} />
+                          </ActionIcon>
+                        </Group>
+                      </Table.Td>
+                    </Table.Tr>
+                  )
+                )}
+            </Table.Tbody>
+          </Table>
+        </Stack>
+      </Card>
 
-          {templates && templates.length === 0 && (
-            <Card shadow='sm' padding='xl' radius='md' withBorder mt='md'>
-              <Stack align='center' gap='md'>
-                <IconMail size={48} color='var(--mantine-color-dimmed)' />
-                <Text size='lg' fw={500}>
-                  No email templates found
-                </Text>
-                <Text c='dimmed' ta='center'>
-                  Create your first email template to customize notifications.
-                </Text>
-                <Button onClick={() => setCreateModalOpen(true)}>
-                  Create Template
-                </Button>
-              </Stack>
-            </Card>
-          )}
-        </Tabs.Panel>
-
-        <Tabs.Panel value='preview' pt='md'>
-          <Card shadow='sm' padding='lg' radius='md' withBorder>
-            <Title order={3} mb='md'>
-              Template Preview
-            </Title>
-            <Text c='dimmed'>
-              Select a template from the list to preview it here.
-            </Text>
-          </Card>
-        </Tabs.Panel>
-      </Tabs>
-
-      {/* Create Template Modal */}
+      {/* Create Modal */}
       <Modal
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title='Create Email Template'
-        size='lg'
-        centered
+        size='xl'
       >
-        <form onSubmit={createForm.onSubmit(handleCreateTemplate)}>
-          <Stack gap='md'>
-            <Grid>
-              <Grid.Col span={6}>
-                <TextInput
-                  label='Template Name'
-                  placeholder='Enter template name'
-                  required
-                  {...createForm.getInputProps('name')}
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <Select
-                  label='Template Type'
-                  placeholder='Select type'
-                  required
-                  data={Object.values(EmailTemplateType).map(type => ({
-                    value: type as string,
-                    label: (type as string).replace('_', ' '),
-                  }))}
-                  {...createForm.getInputProps('type')}
-                />
-              </Grid.Col>
-            </Grid>
-            <TextInput
-              label='Subject'
-              placeholder='Enter email subject'
-              required
-              {...createForm.getInputProps('subject')}
-            />
-            <RichTextEditorComponent
-              label='HTML Content'
-              placeholder='Enter HTML content with variables like {{user.name}}'
-              required
-              minHeight={300}
-              maxHeight={500}
-              value={createForm.values.html}
-              onChange={(value: string) =>
-                createForm.setFieldValue('html', value)
-              }
-              error={createForm.errors.html}
-              allowImageUpload={false}
-              allowTableInsertion={true}
-              allowCodeBlocks={true}
-              allowHeadings={true}
-              allowLists={true}
-              allowTextFormatting={true}
-              allowTextAlignment={true}
-              allowTextColor={true}
-              allowHighlight={true}
-              allowLinks={true}
-              allowUndoRedo={true}
-              allowClearFormatting={true}
-              showToolbar={true}
-              toolbarPosition='top'
-            />
-            <Switch
-              label='Active'
-              description='Template is available for use'
-              {...createForm.getInputProps('isActive', { type: 'checkbox' })}
-            />
-            <Group justify='flex-end'>
-              <Button
-                variant='outline'
-                onClick={() => setCreateModalOpen(false)}
+        <Stack>
+          <Grid>
+            <Grid.Col span={6}>
+              <TextInput
+                label='Template Name'
+                placeholder='Enter template name'
+                value={formData.name}
+                onChange={e =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <Select
+                label='Template Type'
+                placeholder='Select template type'
+                data={TEMPLATE_TYPES}
+                value={formData.type}
+                onChange={value =>
+                  setFormData({ ...formData, type: value || '' })
+                }
+                required
+              />
+            </Grid.Col>
+          </Grid>
+
+          <TextInput
+            label='Email Subject'
+            placeholder='Enter email subject'
+            value={formData.subject}
+            onChange={e =>
+              setFormData({ ...formData, subject: e.target.value })
+            }
+            required
+          />
+
+          <Tabs
+            value={activeTab}
+            onChange={value => setActiveTab(value || 'html')}
+          >
+            <Tabs.List>
+              <Tabs.Tab value='html' leftSection={<IconCode size={16} />}>
+                HTML Content
+              </Tabs.Tab>
+              <Tabs.Tab value='text' leftSection={<IconTemplate size={16} />}>
+                Text Content
+              </Tabs.Tab>
+              <Tabs.Tab
+                value='variables'
+                leftSection={<IconSettings size={16} />}
               >
-                Cancel
-              </Button>
-              <Button
-                type='submit'
-                loading={createTemplateMutation.isPending}
-                leftSection={<IconDeviceFloppy size={16} />}
-              >
-                Create Template
-              </Button>
-            </Group>
-          </Stack>
-        </form>
+                Variables
+              </Tabs.Tab>
+            </Tabs.List>
+
+            <Tabs.Panel value='html'>
+              <Stack>
+                <Group justify='space-between'>
+                  <Text size='sm' fw={500}>
+                    HTML Content
+                  </Text>
+                  <Text size='xs' c='dimmed'>
+                    Use variables like {`{{user.name}}`} for dynamic content
+                  </Text>
+                </Group>
+                <Textarea
+                  id='htmlContent'
+                  placeholder='Enter HTML content...'
+                  value={formData.htmlContent}
+                  onChange={e =>
+                    setFormData({ ...formData, htmlContent: e.target.value })
+                  }
+                  minRows={10}
+                  autosize
+                />
+              </Stack>
+            </Tabs.Panel>
+
+            <Tabs.Panel value='text'>
+              <Stack>
+                <Text size='sm' fw={500}>
+                  Text Content
+                </Text>
+                <Textarea
+                  placeholder='Enter plain text content...'
+                  value={formData.textContent}
+                  onChange={e =>
+                    setFormData({ ...formData, textContent: e.target.value })
+                  }
+                  minRows={10}
+                  autosize
+                />
+              </Stack>
+            </Tabs.Panel>
+
+            <Tabs.Panel value='variables'>
+              <Stack>
+                <Text size='sm' fw={500}>
+                  Available Variables
+                </Text>
+                <Text size='xs' c='dimmed' mb='md'>
+                  Click on a variable to insert it into your template
+                </Text>
+                <Grid>
+                  {AVAILABLE_VARIABLES.map(variable => (
+                    <Grid.Col span={6} key={variable.value}>
+                      <Card
+                        padding='sm'
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => insertVariable(variable.value)}
+                      >
+                        <Group>
+                          <Code>{variable.value}</Code>
+                          <Text size='sm'>{variable.label}</Text>
+                        </Group>
+                      </Card>
+                    </Grid.Col>
+                  ))}
+                </Grid>
+              </Stack>
+            </Tabs.Panel>
+          </Tabs>
+
+          <Switch
+            label='Active Template'
+            description='Enable this template for use'
+            checked={formData.isActive}
+            onChange={e =>
+              setFormData({ ...formData, isActive: e.currentTarget.checked })
+            }
+          />
+
+          <Group justify='flex-end'>
+            <Button variant='light' onClick={() => setCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateTemplate}
+              loading={createTemplate.isPending}
+            >
+              Create Template
+            </Button>
+          </Group>
+        </Stack>
       </Modal>
 
-      {/* Edit Template Modal */}
+      {/* Edit Modal */}
       <Modal
         opened={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         title='Edit Email Template'
-        size='lg'
-        centered
+        size='xl'
       >
-        <form onSubmit={editForm.onSubmit(handleUpdateTemplate)}>
-          <Stack gap='md'>
-            <Grid>
-              <Grid.Col span={6}>
-                <TextInput
-                  label='Template Name'
-                  placeholder='Enter template name'
-                  required
-                  {...editForm.getInputProps('name')}
+        <Stack>
+          <Grid>
+            <Grid.Col span={6}>
+              <TextInput
+                label='Template Name'
+                placeholder='Enter template name'
+                value={formData.name}
+                onChange={e =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <Select
+                label='Template Type'
+                placeholder='Select template type'
+                data={TEMPLATE_TYPES}
+                value={formData.type}
+                onChange={value =>
+                  setFormData({ ...formData, type: value || '' })
+                }
+                required
+              />
+            </Grid.Col>
+          </Grid>
+
+          <TextInput
+            label='Email Subject'
+            placeholder='Enter email subject'
+            value={formData.subject}
+            onChange={e =>
+              setFormData({ ...formData, subject: e.target.value })
+            }
+            required
+          />
+
+          <Tabs
+            value={activeTab}
+            onChange={value => setActiveTab(value || 'html')}
+          >
+            <Tabs.List>
+              <Tabs.Tab value='html' leftSection={<IconCode size={16} />}>
+                HTML Content
+              </Tabs.Tab>
+              <Tabs.Tab value='text' leftSection={<IconTemplate size={16} />}>
+                Text Content
+              </Tabs.Tab>
+            </Tabs.List>
+
+            <Tabs.Panel value='html'>
+              <Stack>
+                <Text size='sm' fw={500}>
+                  HTML Content
+                </Text>
+                <Textarea
+                  placeholder='Enter HTML content...'
+                  value={formData.htmlContent}
+                  onChange={e =>
+                    setFormData({ ...formData, htmlContent: e.target.value })
+                  }
+                  minRows={10}
+                  autosize
                 />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <Select
-                  label='Template Type'
-                  placeholder='Select type'
-                  required
-                  data={Object.values(EmailTemplateType).map(type => ({
-                    value: type as string,
-                    label: (type as string).replace('_', ' '),
-                  }))}
-                  {...editForm.getInputProps('type')}
+              </Stack>
+            </Tabs.Panel>
+
+            <Tabs.Panel value='text'>
+              <Stack>
+                <Text size='sm' fw={500}>
+                  Text Content
+                </Text>
+                <Textarea
+                  placeholder='Enter plain text content...'
+                  value={formData.textContent}
+                  onChange={e =>
+                    setFormData({ ...formData, textContent: e.target.value })
+                  }
+                  minRows={10}
+                  autosize
                 />
-              </Grid.Col>
-            </Grid>
-            <TextInput
-              label='Subject'
-              placeholder='Enter email subject'
-              required
-              {...editForm.getInputProps('subject')}
-            />
-            <RichTextEditorComponent
-              label='HTML Content'
-              placeholder='Enter HTML content with variables like {{user.name}}'
-              required
-              minHeight={300}
-              maxHeight={500}
-              value={editForm.values.html}
-              onChange={(value: string) =>
-                editForm.setFieldValue('html', value)
-              }
-              error={editForm.errors.html}
-              allowImageUpload={false}
-              allowTableInsertion={true}
-              allowCodeBlocks={true}
-              allowHeadings={true}
-              allowLists={true}
-              allowTextFormatting={true}
-              allowTextAlignment={true}
-              allowTextColor={true}
-              allowHighlight={true}
-              allowLinks={true}
-              allowUndoRedo={true}
-              allowClearFormatting={true}
-              showToolbar={true}
-              toolbarPosition='top'
-            />
-            <Switch
-              label='Active'
-              description='Template is available for use'
-              {...editForm.getInputProps('isActive', { type: 'checkbox' })}
-            />
-            <Group justify='flex-end'>
-              <Button variant='outline' onClick={() => setEditModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                type='submit'
-                loading={updateTemplateMutation.isPending}
-                leftSection={<IconDeviceFloppy size={16} />}
-              >
-                Update Template
-              </Button>
-            </Group>
-          </Stack>
-        </form>
+              </Stack>
+            </Tabs.Panel>
+          </Tabs>
+
+          <Switch
+            label='Active Template'
+            description='Enable this template for use'
+            checked={formData.isActive}
+            onChange={e =>
+              setFormData({ ...formData, isActive: e.currentTarget.checked })
+            }
+          />
+
+          <Group justify='flex-end'>
+            <Button variant='light' onClick={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateTemplate}
+              loading={updateTemplate.isPending}
+            >
+              Update Template
+            </Button>
+          </Group>
+        </Stack>
       </Modal>
 
-      {/* Preview Template Modal */}
+      {/* Preview Modal */}
       <Modal
         opened={previewModalOpen}
         onClose={() => setPreviewModalOpen(false)}
         title='Email Template Preview'
-        size='lg'
-        centered
+        size='xl'
       >
-        {selectedTemplate && (
-          <Stack gap='md'>
-            <Text fw={500}>Subject: {selectedTemplate.subject}</Text>
-            <div
-              style={{
-                border: '1px solid var(--mantine-color-gray-3)',
-                borderRadius: 'var(--mantine-radius-md)',
-                padding: 'var(--mantine-spacing-md)',
-                backgroundColor: 'var(--mantine-color-gray-0)',
-              }}
-              dangerouslySetInnerHTML={{ __html: selectedTemplate.html }}
-            />
-          </Stack>
-        )}
+        <Stack>
+          <Text size='sm' fw={500}>
+            Subject: {selectedTemplate?.subject}
+          </Text>
+          <Divider />
+          <div
+            dangerouslySetInnerHTML={{
+              __html:
+                selectedTemplate?.preview?.html ||
+                selectedTemplate?.htmlContent ||
+                '',
+            }}
+            style={{
+              border: '1px solid #e9ecef',
+              borderRadius: '4px',
+              padding: '16px',
+              backgroundColor: '#f8f9fa',
+            }}
+          />
+        </Stack>
       </Modal>
 
-      {/* Delete Template Modal */}
+      {/* Delete Modal */}
       <Modal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         title='Delete Email Template'
-        centered
       >
-        <Stack gap='md'>
+        <Stack>
           <Text>
-            Are you sure you want to delete template "{selectedTemplate?.name}"?
-            This action cannot be undone.
+            Are you sure you want to delete "{selectedTemplate?.name}"? This
+            action cannot be undone.
           </Text>
           <Group justify='flex-end'>
-            <Button variant='outline' onClick={() => setDeleteModalOpen(false)}>
+            <Button variant='light' onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button
               color='red'
-              onClick={() =>
-                selectedTemplate?.id &&
-                handleDeleteTemplate(selectedTemplate.id)
-              }
-              loading={deleteTemplateMutation.isPending}
+              onClick={handleDeleteTemplate}
+              loading={deleteTemplate.isPending}
             >
               Delete
             </Button>

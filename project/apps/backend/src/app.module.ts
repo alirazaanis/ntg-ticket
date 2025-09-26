@@ -2,9 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bull';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { join } from 'path';
 
 // Core modules
 import { DatabaseModule } from './database/database.module';
@@ -23,7 +20,6 @@ import { VirusScanModule } from './modules/virus-scan/virus-scan.module';
 import { SavedSearchesModule } from './modules/saved-searches/saved-searches.module';
 import { EmailTemplatesModule } from './modules/email-templates/email-templates.module';
 import { BackgroundJobsModule } from './modules/background-jobs/background-jobs.module';
-import { GraphQLModuleCustom } from './graphql/graphql.module';
 
 // Common modules
 import { LoggerModule } from './common/logger/logger.module';
@@ -57,23 +53,6 @@ import { SystemConfigModule } from './common/config/system-config.module';
       },
     }),
 
-    // GraphQL
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      sortSchema: true,
-      playground: process.env.NODE_ENV !== 'production',
-      introspection: process.env.NODE_ENV !== 'production',
-      context: ({ req }) => ({ req }),
-      formatError: error => {
-        // console.error('GraphQL Error:', error);
-        return {
-          message: error.message,
-          code: error.extensions?.code,
-          path: error.path,
-        };
-      },
-    }),
 
     // Core modules
     DatabaseModule,
@@ -99,7 +78,6 @@ import { SystemConfigModule } from './common/config/system-config.module';
     SavedSearchesModule,
     EmailTemplatesModule,
     BackgroundJobsModule,
-    GraphQLModuleCustom,
   ],
 })
 export class AppModule {}

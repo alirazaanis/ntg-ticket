@@ -121,6 +121,12 @@ export function AppNavbar() {
       href: '/tickets/create',
       show: true,
     },
+    {
+      label: 'Reports',
+      icon: IconChartBar,
+      href: '/reports',
+      show: true,
+    },
   ];
 
   const managementItems: Array<{
@@ -195,12 +201,6 @@ export function AppNavbar() {
       icon: IconShield,
       href: '/admin/panel',
       show: hasRole('ADMIN'),
-    },
-    {
-      label: 'Reports',
-      icon: IconChartBar,
-      href: '/admin/reports',
-      show: hasAnyRole(['SUPPORT_MANAGER', 'ADMIN']),
     },
     {
       label: 'System Settings',

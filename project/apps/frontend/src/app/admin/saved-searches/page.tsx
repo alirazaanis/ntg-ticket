@@ -5,117 +5,109 @@ import {
   Container,
   Title,
   Button,
-  Table,
+  Card,
   Group,
   Text,
   Badge,
-  ActionIcon,
-  Menu,
+  Stack,
+  Grid,
+  Table,
   Modal,
   TextInput,
   Textarea,
+  MultiSelect,
   Switch,
-  Card,
-  Stack,
-  Pagination,
-  Tabs,
+  ActionIcon,
   Alert,
+  Tabs,
 } from '@mantine/core';
 import {
   IconPlus,
+  IconSearch,
   IconEdit,
   IconTrash,
-  IconDots,
-  IconSearch,
-  IconRefresh,
-  IconEye,
   IconCopy,
   IconStar,
   IconUsers,
-  IconClock,
-  IconFilter,
+  IconRefresh,
 } from '@tabler/icons-react';
 import {
   useSavedSearches,
   useCreateSavedSearch,
   useUpdateSavedSearch,
   useDeleteSavedSearch,
-  useExecuteSavedSearch,
   useDuplicateSavedSearch,
   usePopularSearches,
 } from '../../../hooks/useSavedSearches';
-import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { useRouter } from 'next/navigation';
-import { SavedSearch, CreateSavedSearchInput } from '../../../types/unified';
+import { SavedSearch, PopularSavedSearch } from '../../../types/unified';
+
+interface SavedSearchFormData {
+  name: string;
+  description: string;
+  searchCriteria: Record<string, unknown>;
+  filters: {
+    status?: string[];
+    priority?: string[];
+    category?: string[];
+    assignedTo?: string[];
+    dateFrom?: string;
+    dateTo?: string;
+    search?: string;
+  };
+  isPublic: boolean;
+  isDefault: boolean;
+}
 
 export default function SavedSearchesPage() {
-  const router = useRouter();
-  const [search, setSearch] = useState('');
-  const [selectedSearch, setSelectedSearch] = useState<SavedSearch | null>(
-    null
-  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSearch, setSelectedSearch] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    filters: Record<string, unknown>;
+    isPublic: boolean;
+    isDefault: boolean;
+    createdAt: string;
+    createdBy?: { name: string };
+  } | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [executeModalOpen, setExecuteModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('my-searches');
+  const [formData, setFormData] = useState<SavedSearchFormData>({
+    name: '',
+    description: '',
+    searchCriteria: {},
+    filters: {},
+    isPublic: false,
+    isDefault: false,
+  });
 
   const { data: savedSearches, isLoading, refetch } = useSavedSearches();
   const { data: popularSearches } = usePopularSearches(10);
-  const createSavedSearch = useCreateSavedSearch();
-  const updateSavedSearch = useUpdateSavedSearch();
-  const deleteSavedSearch = useDeleteSavedSearch();
-  const executeSavedSearch = useExecuteSavedSearch();
-  const duplicateSavedSearch = useDuplicateSavedSearch();
+  const createSearch = useCreateSavedSearch();
+  const updateSearch = useUpdateSavedSearch();
+  const deleteSearch = useDeleteSavedSearch();
+  const duplicateSearch = useDuplicateSavedSearch();
 
-  const createForm = useForm<CreateSavedSearchInput>({
-    initialValues: {
-      name: '',
-      description: '',
-      searchCriteria: {} as Record<string, unknown>,
-      isPublic: false,
-    },
-    validate: {
-      name: value => (!value ? 'Name is required' : null),
-      searchCriteria: value => (!value ? 'Search criteria is required' : null),
-    },
-  });
-
-  const editForm = useForm<CreateSavedSearchInput>({
-    initialValues: {
-      name: '',
-      description: '',
-      searchCriteria: {} as Record<string, unknown>,
-      isPublic: false,
-    },
-  });
-
-  const filteredSearches =
-    savedSearches?.filter(
-      searchItem =>
-        searchItem.name.toLowerCase().includes(search.toLowerCase()) ||
-        searchItem.description?.toLowerCase().includes(search.toLowerCase())
-    ) || [];
-
-  const totalPages = Math.ceil(filteredSearches.length / pageSize);
-  const paginatedSearches = filteredSearches.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const handleCreateSearch = async (values: CreateSavedSearchInput) => {
+  const handleCreateSearch = async () => {
     try {
-      await createSavedSearch.mutateAsync(values);
+      await createSearch.mutateAsync(formData);
       notifications.show({
-        title: 'Saved Search Created',
-        message: 'Saved search has been created successfully',
+        title: 'Success',
+        message: 'Saved search created successfully',
         color: 'green',
       });
       setCreateModalOpen(false);
-      createForm.reset();
+      setFormData({
+        name: '',
+        description: '',
+        searchCriteria: {},
+        filters: {},
+        isPublic: false,
+        isDefault: false,
+      });
       refetch();
     } catch (error) {
       notifications.show({
@@ -126,21 +118,19 @@ export default function SavedSearchesPage() {
     }
   };
 
-  const handleEditSearch = async (values: CreateSavedSearchInput) => {
+  const handleUpdateSearch = async () => {
     if (!selectedSearch) return;
-
     try {
-      await updateSavedSearch.mutateAsync({
+      await updateSearch.mutateAsync({
         id: selectedSearch.id,
-        data: values,
+        data: formData,
       });
       notifications.show({
-        title: 'Saved Search Updated',
-        message: 'Saved search has been updated successfully',
+        title: 'Success',
+        message: 'Saved search updated successfully',
         color: 'green',
       });
       setEditModalOpen(false);
-      setSelectedSearch(null);
       refetch();
     } catch (error) {
       notifications.show({
@@ -153,16 +143,15 @@ export default function SavedSearchesPage() {
 
   const handleDeleteSearch = async () => {
     if (!selectedSearch) return;
-
     try {
-      await deleteSavedSearch.mutateAsync(selectedSearch.id);
+      await deleteSearch.mutateAsync(selectedSearch.id);
       notifications.show({
-        title: 'Saved Search Deleted',
-        message: 'Saved search has been deleted successfully',
+        title: 'Success',
+        message: 'Saved search deleted successfully',
         color: 'green',
       });
       setDeleteModalOpen(false);
-      setSelectedSearch(null);
+      refetch();
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -172,45 +161,27 @@ export default function SavedSearchesPage() {
     }
   };
 
-  const handleExecuteSearch = async () => {
-    if (!selectedSearch) return;
-
+  const handleDuplicateSearch = async (
+    search:
+      | {
+          id: string;
+          name: string;
+          description: string;
+          filters: Record<string, unknown>;
+          isPublic: boolean;
+          isDefault: boolean;
+          createdAt: string;
+        }
+      | PopularSavedSearch
+  ) => {
     try {
-      const result = await executeSavedSearch.mutateAsync({
-        id: selectedSearch.id,
-        page: 1,
-        limit: 20,
+      await duplicateSearch.mutateAsync({
+        id: search.id,
+        name: `${search.name} (Copy)`,
       });
       notifications.show({
-        title: 'Search Executed',
-        message: `Found ${result.data.length} results`,
-        color: 'green',
-      });
-      setExecuteModalOpen(false);
-      // Navigate to search results
-      router.push(
-        `/tickets?search=${encodeURIComponent(selectedSearch.searchCriteria)}`
-      );
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to execute saved search',
-        color: 'red',
-      });
-    }
-  };
-
-  const handleDuplicateSearch = async () => {
-    if (!selectedSearch) return;
-
-    try {
-      await duplicateSavedSearch.mutateAsync({
-        id: selectedSearch.id,
-        name: `${selectedSearch.name} (Copy)`,
-      });
-      notifications.show({
-        title: 'Search Duplicated',
-        message: 'Saved search has been duplicated successfully',
+        title: 'Success',
+        message: 'Saved search duplicated successfully',
         color: 'green',
       });
       refetch();
@@ -223,22 +194,45 @@ export default function SavedSearchesPage() {
     }
   };
 
-  const openEditModal = (search: SavedSearch) => {
+  const openEditModal = (search: {
+    id: string;
+    name: string;
+    description: string;
+    filters: Record<string, unknown>;
+    isPublic: boolean;
+    isDefault: boolean;
+    createdAt: string;
+  }) => {
     setSelectedSearch(search);
-    editForm.setValues({
+    setFormData({
       name: search.name,
       description: search.description || '',
-      searchCriteria: search.searchCriteria as unknown as Record<
-        string,
-        unknown
-      >,
-      isPublic: search.isPublic,
+      searchCriteria: {},
+      filters: {
+        status: [],
+        priority: [],
+        category: [],
+        assignedTo: [],
+        dateFrom: '',
+        dateTo: '',
+      },
+      isPublic: search.isPublic || false,
+      isDefault: false,
     });
     setEditModalOpen(true);
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString();
+  const openDeleteModal = (search: {
+    id: string;
+    name: string;
+    description: string;
+    filters: Record<string, unknown>;
+    isPublic: boolean;
+    isDefault: boolean;
+    createdAt: string;
+  }) => {
+    setSelectedSearch(search);
+    setDeleteModalOpen(true);
   };
 
   return (
@@ -247,198 +241,174 @@ export default function SavedSearchesPage() {
         <div>
           <Title order={2}>Saved Searches</Title>
           <Text c='dimmed' size='sm'>
-            Manage saved search queries
+            Manage your saved search queries and filters
           </Text>
         </div>
-        <Button
-          leftSection={<IconPlus size={16} />}
-          onClick={() => setCreateModalOpen(true)}
-        >
-          Create Saved Search
-        </Button>
+        <Group>
+          <Button
+            variant='light'
+            leftSection={<IconRefresh size={16} />}
+            onClick={() => refetch()}
+            loading={isLoading}
+          >
+            Refresh
+          </Button>
+          <Button
+            leftSection={<IconPlus size={16} />}
+            onClick={() => setCreateModalOpen(true)}
+          >
+            Create Search
+          </Button>
+        </Group>
       </Group>
 
-      <Tabs value={activeTab} onChange={value => setActiveTab(value || 'all')}>
+      <Tabs
+        value={activeTab}
+        onChange={value => setActiveTab(value || 'my-searches')}
+      >
         <Tabs.List>
-          <Tabs.Tab value='all' leftSection={<IconSearch size={16} />}>
-            All Searches
+          <Tabs.Tab value='my-searches' leftSection={<IconSearch size={16} />}>
+            My Searches
+          </Tabs.Tab>
+          <Tabs.Tab value='public' leftSection={<IconUsers size={16} />}>
+            Public Searches
           </Tabs.Tab>
           <Tabs.Tab value='popular' leftSection={<IconStar size={16} />}>
             Popular
           </Tabs.Tab>
-          <Tabs.Tab value='public' leftSection={<IconUsers size={16} />}>
-            Public
-          </Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value='all'>
-          <Card mt='md'>
-            <Group justify='space-between' mb='md'>
-              <Group>
-                <TextInput
-                  placeholder='Search saved searches...'
-                  leftSection={<IconSearch size={16} />}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  style={{ width: 300 }}
-                />
-                <Button variant='light' leftSection={<IconFilter size={16} />}>
-                  Filters
-                </Button>
-              </Group>
-              <ActionIcon
-                variant='light'
-                onClick={() => refetch()}
-                loading={isLoading}
-              >
-                <IconRefresh size={16} />
-              </ActionIcon>
-            </Group>
-
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Description</Table.Th>
-                  <Table.Th>Visibility</Table.Th>
-                  <Table.Th>Created</Table.Th>
-                  <Table.Th>Updated</Table.Th>
-                  <Table.Th>Actions</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {paginatedSearches.map(searchItem => (
-                  <Table.Tr key={searchItem.id}>
-                    <Table.Td>
-                      <Text fw={500}>{searchItem.name}</Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size='sm' c='dimmed' truncate>
-                        {searchItem.description || 'No description'}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        color={searchItem.isPublic ? 'blue' : 'gray'}
-                        variant='light'
-                        leftSection={
-                          searchItem.isPublic ? (
-                            <IconUsers size={14} />
-                          ) : (
-                            <IconClock size={14} />
-                          )
-                        }
-                      >
-                        {searchItem.isPublic ? 'Public' : 'Private'}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size='sm' c='dimmed'>
-                        {formatDate(searchItem.createdAt)}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size='sm' c='dimmed'>
-                        {formatDate(searchItem.updatedAt)}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Menu>
-                        <Menu.Target>
-                          <ActionIcon variant='subtle'>
-                            <IconDots size={16} />
-                          </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          <Menu.Item
-                            leftSection={<IconEye size={14} />}
-                            onClick={() => {
-                              setSelectedSearch(searchItem);
-                              setExecuteModalOpen(true);
-                            }}
-                          >
-                            Execute
-                          </Menu.Item>
-                          <Menu.Item
-                            leftSection={<IconEdit size={14} />}
-                            onClick={() => openEditModal(searchItem)}
-                          >
-                            Edit
-                          </Menu.Item>
-                          <Menu.Item
-                            leftSection={<IconCopy size={14} />}
-                            onClick={() => {
-                              setSelectedSearch(searchItem);
-                              handleDuplicateSearch();
-                            }}
-                          >
-                            Duplicate
-                          </Menu.Item>
-                          <Menu.Divider />
-                          <Menu.Item
-                            leftSection={<IconTrash size={14} />}
-                            color='red'
-                            onClick={() => {
-                              setSelectedSearch(searchItem);
-                              setDeleteModalOpen(true);
-                            }}
-                          >
-                            Delete
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-
-            {totalPages > 1 && (
-              <Group justify='center' mt='md'>
-                <Pagination
-                  value={currentPage}
-                  onChange={setCurrentPage}
-                  total={totalPages}
-                />
-              </Group>
-            )}
-          </Card>
-        </Tabs.Panel>
-
-        <Tabs.Panel value='popular'>
+        <Tabs.Panel value='my-searches'>
           <Card mt='md'>
             <Stack>
-              <Title order={4}>Popular Searches</Title>
-              {popularSearches?.map(popularSearch => (
-                <Card key={popularSearch.id} withBorder>
-                  <Group justify='space-between'>
-                    <div>
-                      <Text fw={500}>{popularSearch.name}</Text>
-                      <Text size='sm' c='dimmed'>
-                        {popularSearch.description}
-                      </Text>
-                      <Group gap='xs' mt='xs'>
-                        <Badge size='sm' color='blue' variant='light'>
-                          {popularSearch.usageCount} uses
-                        </Badge>
-                        <Badge size='sm' color='green' variant='light'>
-                          {popularSearch.isPublic ? 'Public' : 'Private'}
-                        </Badge>
-                      </Group>
-                    </div>
-                    <Button
-                      variant='light'
-                      size='sm'
-                      onClick={() => {
-                        setSelectedSearch(popularSearch);
-                        setExecuteModalOpen(true);
-                      }}
-                    >
-                      Execute
-                    </Button>
-                  </Group>
-                </Card>
-              ))}
+              <Group justify='space-between'>
+                <Title order={4}>My Saved Searches</Title>
+                <TextInput
+                  placeholder='Search saved searches...'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  leftSection={<IconSearch size={16} />}
+                  style={{ width: 300 }}
+                />
+              </Group>
+
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Name</Table.Th>
+                    <Table.Th>Description</Table.Th>
+                    <Table.Th>Filters</Table.Th>
+                    <Table.Th>Visibility</Table.Th>
+                    <Table.Th>Created</Table.Th>
+                    <Table.Th>Actions</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {savedSearches
+                    ?.filter((search: SavedSearch) =>
+                      search.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase())
+                    )
+                    .map((search: SavedSearch) => (
+                      <Table.Tr key={search.id}>
+                        <Table.Td>
+                          <Group>
+                            <Text fw={500}>{search.name}</Text>
+                            {false && (
+                              <Badge color='blue' variant='light' size='xs'>
+                                Default
+                              </Badge>
+                            )}
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size='sm' c='dimmed'>
+                            {search.description || 'No description'}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap='xs'>
+                            <Badge variant='light' size='sm'>
+                              Saved Search
+                            </Badge>
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
+                            color={search.isPublic ? 'green' : 'gray'}
+                            variant='light'
+                            size='sm'
+                          >
+                            {search.isPublic ? 'Public' : 'Private'}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size='sm' c='dimmed'>
+                            {new Date(search.createdAt).toLocaleDateString()}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap='xs'>
+                            <ActionIcon
+                              variant='light'
+                              size='sm'
+                              onClick={() =>
+                                openEditModal({
+                                  id: search.id,
+                                  name: search.name,
+                                  description: search.description || '',
+                                  filters: {},
+                                  isPublic: search.isPublic,
+                                  isDefault: false,
+                                  createdAt: search.createdAt,
+                                })
+                              }
+                            >
+                              <IconEdit size={14} />
+                            </ActionIcon>
+                            <ActionIcon
+                              variant='light'
+                              size='sm'
+                              color='blue'
+                              onClick={() =>
+                                handleDuplicateSearch({
+                                  id: search.id,
+                                  name: search.name,
+                                  description: search.description || '',
+                                  filters: {},
+                                  isPublic: search.isPublic,
+                                  isDefault: false,
+                                  createdAt: search.createdAt,
+                                })
+                              }
+                            >
+                              <IconCopy size={14} />
+                            </ActionIcon>
+                            <ActionIcon
+                              variant='light'
+                              size='sm'
+                              color='red'
+                              onClick={() =>
+                                openDeleteModal({
+                                  id: search.id,
+                                  name: search.name,
+                                  description: search.description || '',
+                                  filters: {},
+                                  isPublic: search.isPublic,
+                                  isDefault: false,
+                                  createdAt: search.createdAt,
+                                })
+                              }
+                            >
+                              <IconTrash size={14} />
+                            </ActionIcon>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                </Table.Tbody>
+              </Table>
             </Stack>
           </Card>
         </Tabs.Panel>
@@ -446,11 +416,114 @@ export default function SavedSearchesPage() {
         <Tabs.Panel value='public'>
           <Card mt='md'>
             <Stack>
-              <Title order={4}>Public Searches</Title>
+              <Title order={4}>Public Saved Searches</Title>
+              <Alert color='blue' title='Public Searches'>
+                These searches are shared with all users and can be used by
+                anyone.
+              </Alert>
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Name</Table.Th>
+                    <Table.Th>Description</Table.Th>
+                    <Table.Th>Created By</Table.Th>
+                    <Table.Th>Actions</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {savedSearches
+                    ?.filter((search: SavedSearch) => search.isPublic)
+                    .map((search: SavedSearch) => (
+                      <Table.Tr key={search.id}>
+                        <Table.Td>
+                          <Text fw={500}>{search.name}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size='sm' c='dimmed'>
+                            {search.description || 'No description'}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size='sm'>Unknown</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap='xs'>
+                            <ActionIcon
+                              variant='light'
+                              size='sm'
+                              color='blue'
+                              onClick={() =>
+                                handleDuplicateSearch({
+                                  id: search.id,
+                                  name: search.name,
+                                  description: search.description || '',
+                                  filters: {},
+                                  isPublic: search.isPublic,
+                                  isDefault: false,
+                                  createdAt: search.createdAt,
+                                })
+                              }
+                            >
+                              <IconCopy size={14} />
+                            </ActionIcon>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                </Table.Tbody>
+              </Table>
+            </Stack>
+          </Card>
+        </Tabs.Panel>
+
+        <Tabs.Panel value='popular'>
+          <Card mt='md'>
+            <Stack>
+              <Title order={4}>Popular Searches</Title>
               <Text size='sm' c='dimmed'>
-                Searches shared by other users
+                Most used saved searches across the system
               </Text>
-              {/* Public searches would be filtered here */}
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Name</Table.Th>
+                    <Table.Th>Usage Count</Table.Th>
+                    <Table.Th>Last Used</Table.Th>
+                    <Table.Th>Actions</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {popularSearches?.map((search: PopularSavedSearch) => (
+                    <Table.Tr key={search.id}>
+                      <Table.Td>
+                        <Text fw={500}>{search.name}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Badge color='blue' variant='light'>
+                          {search.usageCount} uses
+                        </Badge>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size='sm' c='dimmed'>
+                          {new Date(search.updatedAt).toLocaleDateString()}
+                        </Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Group gap='xs'>
+                          <ActionIcon
+                            variant='light'
+                            size='sm'
+                            color='blue'
+                            onClick={() => handleDuplicateSearch(search)}
+                          >
+                            <IconCopy size={14} />
+                          </ActionIcon>
+                        </Group>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
             </Stack>
           </Card>
         </Tabs.Panel>
@@ -463,45 +536,95 @@ export default function SavedSearchesPage() {
         title='Create Saved Search'
         size='lg'
       >
-        <form
-          onSubmit={createForm.onSubmit(values =>
-            handleCreateSearch(values as CreateSavedSearchInput)
-          )}
-        >
-          <Stack>
-            <TextInput
-              label='Name'
-              placeholder='Search name'
-              required
-              {...createForm.getInputProps('name')}
-            />
-            <Textarea
-              label='Description'
-              placeholder='Search description'
-              {...createForm.getInputProps('description')}
-            />
-            <Textarea
-              label='Search Criteria'
-              placeholder='Enter search criteria (JSON format)'
-              required
-              minRows={4}
-              {...createForm.getInputProps('searchCriteria')}
-            />
+        <Stack>
+          <TextInput
+            label='Name'
+            placeholder='Enter search name'
+            value={formData.name}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+          <Textarea
+            label='Description'
+            placeholder='Enter search description'
+            value={formData.description}
+            onChange={e =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+          />
+          <Grid>
+            <Grid.Col span={6}>
+              <MultiSelect
+                label='Status'
+                placeholder='Select status'
+                data={[
+                  { value: 'open', label: 'Open' },
+                  { value: 'in_progress', label: 'In Progress' },
+                  { value: 'resolved', label: 'Resolved' },
+                  { value: 'closed', label: 'Closed' },
+                ]}
+                value={formData.filters.status || []}
+                onChange={value =>
+                  setFormData({
+                    ...formData,
+                    filters: { ...formData.filters, status: value },
+                  })
+                }
+              />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <MultiSelect
+                label='Priority'
+                placeholder='Select priority'
+                data={[
+                  { value: 'low', label: 'Low' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'high', label: 'High' },
+                  { value: 'critical', label: 'Critical' },
+                ]}
+                value={formData.filters.priority || []}
+                onChange={value =>
+                  setFormData({
+                    ...formData,
+                    filters: {
+                      ...formData.filters,
+                      priority: value,
+                    },
+                  })
+                }
+              />
+            </Grid.Col>
+          </Grid>
+          <Group>
             <Switch
               label='Public Search'
-              description='Make this search available to other users'
-              {...createForm.getInputProps('isPublic', { type: 'checkbox' })}
+              description='Make this search available to all users'
+              checked={formData.isPublic}
+              onChange={e =>
+                setFormData({ ...formData, isPublic: e.currentTarget.checked })
+              }
             />
-            <Group justify='flex-end' mt='md'>
-              <Button variant='light' onClick={() => setCreateModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type='submit' loading={createSavedSearch.isPending}>
-                Create Search
-              </Button>
-            </Group>
-          </Stack>
-        </form>
+            <Switch
+              label='Default Search'
+              description='Set as your default search'
+              checked={formData.isDefault}
+              onChange={e =>
+                setFormData({ ...formData, isDefault: e.currentTarget.checked })
+              }
+            />
+          </Group>
+          <Group justify='flex-end'>
+            <Button variant='light' onClick={() => setCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateSearch}
+              loading={createSearch.isPending}
+            >
+              Create Search
+            </Button>
+          </Group>
+        </Stack>
       </Modal>
 
       {/* Edit Modal */}
@@ -511,73 +634,92 @@ export default function SavedSearchesPage() {
         title='Edit Saved Search'
         size='lg'
       >
-        <form
-          onSubmit={editForm.onSubmit(values =>
-            handleEditSearch(values as CreateSavedSearchInput)
-          )}
-        >
-          <Stack>
-            <TextInput
-              label='Name'
-              placeholder='Search name'
-              required
-              {...editForm.getInputProps('name')}
-            />
-            <Textarea
-              label='Description'
-              placeholder='Search description'
-              {...editForm.getInputProps('description')}
-            />
-            <Textarea
-              label='Search Criteria'
-              placeholder='Enter search criteria (JSON format)'
-              required
-              minRows={4}
-              {...editForm.getInputProps('searchCriteria')}
-            />
+        <Stack>
+          <TextInput
+            label='Name'
+            placeholder='Enter search name'
+            value={formData.name}
+            onChange={e => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+          <Textarea
+            label='Description'
+            placeholder='Enter search description'
+            value={formData.description}
+            onChange={e =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+          />
+          <Grid>
+            <Grid.Col span={6}>
+              <MultiSelect
+                label='Status'
+                placeholder='Select status'
+                data={[
+                  { value: 'open', label: 'Open' },
+                  { value: 'in_progress', label: 'In Progress' },
+                  { value: 'resolved', label: 'Resolved' },
+                  { value: 'closed', label: 'Closed' },
+                ]}
+                value={formData.filters.status || []}
+                onChange={value =>
+                  setFormData({
+                    ...formData,
+                    filters: { ...formData.filters, status: value },
+                  })
+                }
+              />
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <MultiSelect
+                label='Priority'
+                placeholder='Select priority'
+                data={[
+                  { value: 'low', label: 'Low' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'high', label: 'High' },
+                  { value: 'critical', label: 'Critical' },
+                ]}
+                value={formData.filters.priority || []}
+                onChange={value =>
+                  setFormData({
+                    ...formData,
+                    filters: {
+                      ...formData.filters,
+                      priority: value,
+                    },
+                  })
+                }
+              />
+            </Grid.Col>
+          </Grid>
+          <Group>
             <Switch
               label='Public Search'
-              description='Make this search available to other users'
-              {...editForm.getInputProps('isPublic', { type: 'checkbox' })}
+              description='Make this search available to all users'
+              checked={formData.isPublic}
+              onChange={e =>
+                setFormData({ ...formData, isPublic: e.currentTarget.checked })
+              }
             />
-            <Group justify='flex-end' mt='md'>
-              <Button variant='light' onClick={() => setEditModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type='submit' loading={updateSavedSearch.isPending}>
-                Update Search
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
-
-      {/* Execute Modal */}
-      <Modal
-        opened={executeModalOpen}
-        onClose={() => setExecuteModalOpen(false)}
-        title='Execute Saved Search'
-      >
-        <Stack>
-          <Text size='sm' fw={500}>
-            Search: {selectedSearch?.name}
-          </Text>
-          <Text size='sm' c='dimmed'>
-            {selectedSearch?.description}
-          </Text>
-          <Alert color='blue' title='Search Execution'>
-            This will execute the saved search and show results in the tickets
-            page.
-          </Alert>
-          <Group justify='flex-end' mt='md'>
-            <Button variant='light' onClick={() => setExecuteModalOpen(false)}>
+            <Switch
+              label='Default Search'
+              description='Set as your default search'
+              checked={formData.isDefault}
+              onChange={e =>
+                setFormData({ ...formData, isDefault: e.currentTarget.checked })
+              }
+            />
+          </Group>
+          <Group justify='flex-end'>
+            <Button variant='light' onClick={() => setEditModalOpen(false)}>
               Cancel
             </Button>
             <Button
-              onClick={handleExecuteSearch}
-              loading={executeSavedSearch.isPending}
+              onClick={handleUpdateSearch}
+              loading={updateSearch.isPending}
             >
-              Execute Search
+              Update Search
             </Button>
           </Group>
         </Stack>
@@ -590,21 +732,18 @@ export default function SavedSearchesPage() {
         title='Delete Saved Search'
       >
         <Stack>
-          <Alert color='red' title='Warning'>
-            Are you sure you want to delete this saved search? This action
-            cannot be undone.
-          </Alert>
-          <Text size='sm'>
-            Search: <strong>{selectedSearch?.name}</strong>
+          <Text>
+            Are you sure you want to delete "{selectedSearch?.name}"? This
+            action cannot be undone.
           </Text>
-          <Group justify='flex-end' mt='md'>
+          <Group justify='flex-end'>
             <Button variant='light' onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button
               color='red'
               onClick={handleDeleteSearch}
-              loading={deleteSavedSearch.isPending}
+              loading={deleteSearch.isPending}
             >
               Delete
             </Button>

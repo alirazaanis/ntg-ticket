@@ -529,6 +529,11 @@ export const backupApi = {
     apiClient.post<ApiResponse<{ message: string }>>('/backup/restore', null, {
       params: { backupId },
     }),
+
+  delete: (backupId: string) =>
+    apiClient.delete<ApiResponse<{ message: string }>>('/backup/delete', {
+      params: { backupId },
+    }),
 };
 
 // ===== AUDIT LOGS API =====
