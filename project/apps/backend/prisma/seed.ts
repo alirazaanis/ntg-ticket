@@ -22,7 +22,7 @@ async function main() {
     update: {},
     create: {
       email: 'admin@ntg-ticket.com',
-      name: 'أحمد محمد علي',
+      name: 'Ahmad Muhammad Ali',
       password: await bcrypt.hash('admin123', 12),
       role: UserRole.ADMIN,
       isActive: true,
@@ -34,7 +34,7 @@ async function main() {
     update: {},
     create: {
       email: 'manager@ntg-ticket.com',
-      name: 'فاطمة عبد الرحمن',
+      name: 'Fatima Abd al-Rahman',
       password: await bcrypt.hash('manager123', 12),
       role: UserRole.SUPPORT_MANAGER,
       isActive: true,
@@ -46,7 +46,7 @@ async function main() {
     update: {},
     create: {
       email: 'support1@ntg-ticket.com',
-      name: 'محمد حسن إبراهيم',
+      name: 'Muhammad Hassan Ibrahim',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -58,7 +58,7 @@ async function main() {
     update: {},
     create: {
       email: 'support2@ntg-ticket.com',
-      name: 'عائشة أحمد محمود',
+      name: 'Aisha Ahmad Mahmoud',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -70,7 +70,7 @@ async function main() {
     update: {},
     create: {
       email: 'support3@ntg-ticket.com',
-      name: 'خالد عبد الله السعيد',
+      name: 'Khalid Abd Allah al-Saeed',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -82,7 +82,7 @@ async function main() {
     update: {},
     create: {
       email: 'support4@ntg-ticket.com',
-      name: 'نور الدين محمد',
+      name: 'Nur al-Din Muhammad',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -94,7 +94,7 @@ async function main() {
     update: {},
     create: {
       email: 'user1@company.com',
-      name: 'مريم علي حسن',
+      name: 'Maryam Ali Hassan',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -106,7 +106,7 @@ async function main() {
     update: {},
     create: {
       email: 'user2@company.com',
-      name: 'يوسف عبد العزيز',
+      name: 'Yusuf Abd al-Aziz',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -118,7 +118,7 @@ async function main() {
     update: {},
     create: {
       email: 'user3@company.com',
-      name: 'زينب محمد عبد الرحمن',
+      name: 'Zaynab Muhammad Abd al-Rahman',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -130,7 +130,7 @@ async function main() {
     update: {},
     create: {
       email: 'user4@company.com',
-      name: 'عمر أحمد الشريف',
+      name: 'Umar Ahmad al-Sharif',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -142,7 +142,7 @@ async function main() {
     update: {},
     create: {
       email: 'user5@company.com',
-      name: 'سارة محمود إبراهيم',
+      name: 'Sara Mahmoud Ibrahim',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -154,7 +154,7 @@ async function main() {
     update: {},
     create: {
       email: 'user6@company.com',
-      name: 'طارق محمد علي',
+      name: 'Tariq Muhammad Ali',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
