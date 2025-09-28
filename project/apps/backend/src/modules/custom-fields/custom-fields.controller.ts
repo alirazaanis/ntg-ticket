@@ -2,13 +2,13 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
-  Param,
+  Put,
   Delete,
+  Body,
+  Param,
   UseGuards,
   Request,
-  ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,9 +17,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CustomFieldsService } from './custom-fields.service';
-import { CreateCustomFieldDto } from './dto/create-custom-field.dto';
-import { UpdateCustomFieldDto } from './dto/update-custom-field.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  CreateCustomFieldDto,
+  UpdateCustomFieldDto,
+} from './dto/custom-field.dto';
 
 @ApiTags('Custom Fields')
 @Controller('custom-fields')
@@ -28,44 +30,21 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class CustomFieldsController {
   constructor(private readonly customFieldsService: CustomFieldsService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new custom field (Admin only)' })
-  @ApiResponse({
-    status: 201,
-    description: 'Custom field created successfully',
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Admin access required',
-  })
-  async create(
-    @Body() createCustomFieldDto: CreateCustomFieldDto,
-    @Request() req
-  ) {
-    // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
-      throw new Error('Forbidden - Admin access required');
-    }
-
-    const customField =
-      await this.customFieldsService.create(createCustomFieldDto);
-    return {
-      data: customField,
-      message: 'Custom field created successfully',
-    };
-  }
-
   @Get()
   @ApiOperation({ summary: 'Get all custom fields' })
   @ApiResponse({
     status: 200,
     description: 'Custom fields retrieved successfully',
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll() {
-    const customFields = await this.customFieldsService.findAll();
+  async getAllCustomFields(
+    @Query('category') category?: string,
+    @Query('isActive') isActive?: boolean
+  ) {
+    const customFields = await this.customFieldsService.findAll({
+      category,
+      isActive,
+    });
+
     return {
       data: customFields,
       message: 'Custom fields retrieved successfully',
@@ -78,42 +57,49 @@ export class CustomFieldsController {
     status: 200,
     description: 'Custom field retrieved successfully',
   })
-  @ApiResponse({ status: 404, description: 'Custom field not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  async getCustomField(@Param('id') id: string) {
     const customField = await this.customFieldsService.findOne(id);
+
     return {
       data: customField,
       message: 'Custom field retrieved successfully',
     };
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update custom field (Admin only)' })
+  @Post()
+  @ApiOperation({ summary: 'Create new custom field' })
+  @ApiResponse({
+    status: 201,
+    description: 'Custom field created successfully',
+  })
+  async createCustomField(
+    @Request() req,
+    @Body() createCustomFieldDto: CreateCustomFieldDto
+  ) {
+    const customField =
+      await this.customFieldsService.create(createCustomFieldDto);
+
+    return {
+      data: customField,
+      message: 'Custom field created successfully',
+    };
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update custom field' })
   @ApiResponse({
     status: 200,
     description: 'Custom field updated successfully',
   })
-  @ApiResponse({ status: 404, description: 'Custom field not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Admin access required',
-  })
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateCustomFieldDto: UpdateCustomFieldDto,
-    @Request() req
+  async updateCustomField(
+    @Param('id') id: string,
+    @Body() updateCustomFieldDto: UpdateCustomFieldDto
   ) {
-    // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
-      throw new Error('Forbidden - Admin access required');
-    }
-
     const customField = await this.customFieldsService.update(
       id,
       updateCustomFieldDto
     );
+
     return {
       data: customField,
       message: 'Custom field updated successfully',
@@ -121,67 +107,16 @@ export class CustomFieldsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete custom field (Admin only)' })
+  @ApiOperation({ summary: 'Delete custom field' })
   @ApiResponse({
     status: 200,
     description: 'Custom field deleted successfully',
   })
-  @ApiResponse({ status: 404, description: 'Custom field not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Admin access required',
-  })
-  async remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
-      throw new Error('Forbidden - Admin access required');
-    }
+  async deleteCustomField(@Param('id') id: string) {
+    await this.customFieldsService.remove(id);
 
-    const result = await this.customFieldsService.remove(id);
-    return result;
-  }
-
-  @Get('ticket/:ticketId')
-  @ApiOperation({ summary: 'Get custom field values for a ticket' })
-  @ApiResponse({
-    status: 200,
-    description: 'Ticket custom fields retrieved successfully',
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getTicketCustomFields(
-    @Param('ticketId', ParseUUIDPipe) ticketId: string
-  ) {
-    const ticketCustomFields =
-      await this.customFieldsService.getTicketCustomFields(ticketId);
     return {
-      data: ticketCustomFields,
-      message: 'Ticket custom fields retrieved successfully',
-    };
-  }
-
-  @Post('ticket/:ticketId/:customFieldId')
-  @ApiOperation({ summary: 'Set custom field value for a ticket' })
-  @ApiResponse({
-    status: 200,
-    description: 'Custom field value set successfully',
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async setTicketCustomField(
-    @Param('ticketId', ParseUUIDPipe) ticketId: string,
-    @Param('customFieldId', ParseUUIDPipe) customFieldId: string,
-    @Body() body: { value: string }
-  ) {
-    const ticketCustomField =
-      await this.customFieldsService.setTicketCustomField(
-        ticketId,
-        customFieldId,
-        body.value
-      );
-    return {
-      data: ticketCustomField,
-      message: 'Custom field value set successfully',
+      message: 'Custom field deleted successfully',
     };
   }
 }

@@ -41,59 +41,51 @@ import {
   IconMail,
   IconServer,
   IconCpu,
+  IconPlug,
+  IconShield,
+  IconChartBar,
 } from '@tabler/icons-react';
 import { useTickets } from '../../hooks/useTickets';
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../../hooks/useUsers';
+import {
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+} from '../../hooks/useUsers';
 import { useSystemMetrics, useUserDistribution } from '../../hooks/useReports';
 import { TicketCard } from '../ui/TicketCard';
 import { User, CreateUserInput, UpdateUserInput } from '../../lib/apiClient';
 import { Ticket, UserRole } from '../../types/unified';
 import { notifications } from '@mantine/notifications';
+import { IntegrationsManagement } from '../admin/IntegrationsManagement';
+import { PermissionsManagement } from '../admin/PermissionsManagement';
+import { AuditTrail } from '../compliance/AuditTrail';
+import { AuditLogStats } from '../compliance/AuditLogStats';
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [userModalOpened, setUserModalOpened] = useState(false);
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
+  const [integrationsModalOpened, setIntegrationsModalOpened] = useState(false);
+  const [permissionsModalOpened, setPermissionsModalOpened] = useState(false);
+  const [auditTrailModalOpened, setAuditTrailModalOpened] = useState(false);
+  const [auditStatsModalOpened, setAuditStatsModalOpened] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [userFormData, setUserFormData] = useState<Partial<CreateUserInput>>({});
-  
+  const [userFormData, setUserFormData] = useState<Partial<CreateUserInput>>(
+    {}
+  );
+
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: users, isLoading: usersLoading } = useUsers({ limit: 100 });
   const { data: systemMetrics } = useSystemMetrics();
   const { data: userDistribution } = useUserDistribution();
-  
+
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
-  
-  // Handler functions
-  const handleDatabaseBackup = async () => {
-    try {
-      notifications.show({
-        title: 'Database Backup',
-        message: 'Database backup initiated successfully',
-        color: 'green',
-      });
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to initiate database backup',
-        color: 'red',
-      });
-    }
-  };
-  
-  const handleViewLogs = () => {
-    // In a real app, this would open a logs modal or navigate to logs page
-    notifications.show({
-      title: 'View Logs',
-      message: 'Logs viewer would open here',
-      color: 'blue',
-    });
-  };
-  
+
   const validatePassword = (password: string): string | null => {
     if (password.length < 8) {
       return 'Password must be at least 8 characters long';
@@ -116,7 +108,12 @@ export function AdminDashboard() {
   const handleCreateUser = async () => {
     try {
       // Validate required fields
-      if (!userFormData.name || !userFormData.email || !userFormData.password || !userFormData.role) {
+      if (
+        !userFormData.name ||
+        !userFormData.email ||
+        !userFormData.password ||
+        !userFormData.role
+      ) {
         notifications.show({
           title: 'Validation Error',
           message: 'Please fill in all required fields',
@@ -145,7 +142,7 @@ export function AdminDashboard() {
         color: 'green',
       });
     } catch (error) {
-      console.error('Create user error:', error);
+      // Handle create user error
       notifications.show({
         title: 'Error',
         message: 'Failed to create user',
@@ -153,7 +150,7 @@ export function AdminDashboard() {
       });
     }
   };
-  
+
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
     try {
@@ -173,8 +170,11 @@ export function AdminDashboard() {
         delete updateData.password;
       }
 
-      console.log('Update user data:', { id: selectedUser.id, data: updateData });
-      await updateUser.mutateAsync({ id: selectedUser.id, data: updateData as UpdateUserInput });
+      // Update user data
+      await updateUser.mutateAsync({
+        id: selectedUser.id,
+        data: updateData as UpdateUserInput,
+      });
       setUserModalOpened(false);
       setSelectedUser(null);
       setUserFormData({});
@@ -184,7 +184,7 @@ export function AdminDashboard() {
         color: 'green',
       });
     } catch (error) {
-      console.error('Update user error:', error);
+      // Handle update user error
       notifications.show({
         title: 'Error',
         message: 'Failed to update user',
@@ -192,7 +192,7 @@ export function AdminDashboard() {
       });
     }
   };
-  
+
   const handleDeleteUser = async (userId: string) => {
     try {
       await deleteUser.mutateAsync(userId);
@@ -209,7 +209,7 @@ export function AdminDashboard() {
       });
     }
   };
-  
+
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setUserFormData({
@@ -220,7 +220,7 @@ export function AdminDashboard() {
     });
     setUserModalOpened(true);
   };
-  
+
   const handleAddUser = () => {
     setSelectedUser(null);
     setUserFormData({});
@@ -228,18 +228,21 @@ export function AdminDashboard() {
   };
 
   const allTickets = tickets || [];
-  
+
   // Filter users based on search query
   // Now users is directly User[] array, like tickets
-  const filteredUsers = users?.filter(user => 
-    user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
-  ) || [];
-  
+  const filteredUsers =
+    users?.filter(
+      user =>
+        user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+    ) || [];
+
   // Filter tickets based on search query
-  const filteredTickets = allTickets.filter(ticket =>
-    ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ticket.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTickets = allTickets.filter(
+    ticket =>
+      ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const stats = [
@@ -307,24 +310,6 @@ export function AdminDashboard() {
               Manage system settings, users, and monitor performance
             </Text>
           </div>
-          <Group>
-            <TextInput
-              placeholder='Search tickets...'
-              leftSection={<IconSearch size={16} />}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: 300 }}
-            />
-            <Button variant='outline' leftSection={<IconFilter size={16} />}>
-              Filter
-            </Button>
-            <Button
-              leftSection={<IconSettings size={16} />}
-              onClick={() => setSettingsModalOpened(true)}
-            >
-              Settings
-            </Button>
-          </Group>
         </Group>
 
         {/* Stats Cards */}
@@ -413,6 +398,15 @@ export function AdminDashboard() {
             <Tabs.Tab value='settings' leftSection={<IconSettings size={16} />}>
               Settings
             </Tabs.Tab>
+            <Tabs.Tab value='integrations' leftSection={<IconPlug size={16} />}>
+              Integrations
+            </Tabs.Tab>
+            <Tabs.Tab
+              value='permissions'
+              leftSection={<IconShield size={16} />}
+            >
+              Permissions
+            </Tabs.Tab>
             <Tabs.Tab value='logs' leftSection={<IconFileText size={16} />}>
               Audit Logs
             </Tabs.Tab>
@@ -420,89 +414,211 @@ export function AdminDashboard() {
 
           <Tabs.Panel value='overview' pt='md'>
             <Grid>
-              <Grid.Col span={{ base: 12, md: 8 }}>
+              <Grid.Col span={{ base: 12, md: 6 }}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
-                    System Health
+                    Ticket Status Overview
                   </Title>
                   <Grid>
-                    <Grid.Col span={4}>
+                    <Grid.Col span={6}>
                       <div>
                         <Text size='sm' c='dimmed' mb={4}>
-                          Database Status
+                          Open Tickets
                         </Text>
-                        <Group>
-                          <IconDatabase color='green' size={20} />
-                          <Text size='sm' c='green'>
-                            Online
-                          </Text>
-                        </Group>
+                        <Text size='xl' fw={600} c='blue'>
+                          {allTickets?.filter(
+                            t =>
+                              t.status === 'OPEN' || t.status === 'IN_PROGRESS'
+                          ).length || 0}
+                        </Text>
                       </div>
                     </Grid.Col>
-                    <Grid.Col span={4}>
+                    <Grid.Col span={6}>
                       <div>
                         <Text size='sm' c='dimmed' mb={4}>
-                          Redis Cache
+                          Resolved Today
                         </Text>
-                        <Group>
-                          <IconCpu color='green' size={20} />
-                          <Text size='sm' c='green'>
-                            Online
-                          </Text>
-                        </Group>
+                        <Text size='xl' fw={600} c='green'>
+                          {allTickets?.filter(
+                            t =>
+                              t.status === 'RESOLVED' &&
+                              new Date(t.updatedAt).toDateString() ===
+                                new Date().toDateString()
+                          ).length || 0}
+                        </Text>
                       </div>
                     </Grid.Col>
-                    <Grid.Col span={4}>
+                    <Grid.Col span={6}>
                       <div>
                         <Text size='sm' c='dimmed' mb={4}>
-                          Email Service
+                          High Priority
                         </Text>
-                        <Group>
-                          <IconMail color='green' size={20} />
-                          <Text size='sm' c='green'>
-                            Online
-                          </Text>
-                        </Group>
+                        <Text size='xl' fw={600} c='red'>
+                          {allTickets?.filter(
+                            t =>
+                              t.priority === 'HIGH' || t.priority === 'CRITICAL'
+                          ).length || 0}
+                        </Text>
+                      </div>
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                      <div>
+                        <Text size='sm' c='dimmed' mb={4}>
+                          Overdue
+                        </Text>
+                        <Text size='xl' fw={600} c='orange'>
+                          {allTickets?.filter(
+                            t =>
+                              t.dueDate &&
+                              new Date(t.dueDate) < new Date() &&
+                              (t.status === 'OPEN' ||
+                                t.status === 'IN_PROGRESS')
+                          ).length || 0}
+                        </Text>
                       </div>
                     </Grid.Col>
                   </Grid>
                 </Paper>
               </Grid.Col>
 
-              <Grid.Col span={{ base: 12, md: 4 }}>
+              <Grid.Col span={{ base: 12, md: 6 }}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
-                    Quick Actions
+                    Recent Tickets
                   </Title>
                   <Stack gap='sm'>
-                    <Button
-                      variant='light'
-                      leftSection={<IconPlus size={16} />}
-                      onClick={handleAddUser}
-                    >
-                      Add User
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconSettings size={16} />}
-                      onClick={() => setSettingsModalOpened(true)}
-                    >
-                      System Settings
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconDatabase size={16} />}
-                      onClick={handleDatabaseBackup}
-                    >
-                      Database Backup
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconFileText size={16} />}
-                      onClick={handleViewLogs}
-                    >
-                      View Logs
-                    </Button>
+                    {allTickets?.slice(0, 5).map((ticket: Ticket) => (
+                      <Group key={ticket.id} justify='space-between'>
+                        <div>
+                          <Text size='sm' fw={500}>
+                            {ticket.ticketNumber}
+                          </Text>
+                          <Text size='xs' c='dimmed' lineClamp={1}>
+                            {ticket.title}
+                          </Text>
+                        </div>
+                        <Badge
+                          color={
+                            ticket.status === 'OPEN'
+                              ? 'blue'
+                              : ticket.status === 'IN_PROGRESS'
+                                ? 'yellow'
+                                : ticket.status === 'RESOLVED'
+                                  ? 'green'
+                                  : ticket.status === 'CLOSED'
+                                    ? 'gray'
+                                    : 'orange'
+                          }
+                          size='sm'
+                        >
+                          {ticket.status.replace('_', ' ')}
+                        </Badge>
+                      </Group>
+                    ))}
+                    {(!allTickets || allTickets.length === 0) && (
+                      <Text size='sm' c='dimmed' ta='center' py='md'>
+                        No tickets found
+                      </Text>
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder p='md'>
+                  <Title order={3} mb='md'>
+                    Tickets by Priority
+                  </Title>
+                  <Stack gap='sm'>
+                    {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(priority => {
+                      const count =
+                        allTickets?.filter(t => t.priority === priority)
+                          .length || 0;
+                      const percentage = allTickets?.length
+                        ? (count / allTickets.length) * 100
+                        : 0;
+                      return (
+                        <div key={priority}>
+                          <Group justify='space-between' mb={4}>
+                            <Text size='sm' c='dimmed'>
+                              {priority}
+                            </Text>
+                            <Text size='sm' fw={500}>
+                              {count}
+                            </Text>
+                          </Group>
+                          <Progress
+                            value={percentage}
+                            color={
+                              priority === 'CRITICAL'
+                                ? 'red'
+                                : priority === 'HIGH'
+                                  ? 'orange'
+                                  : priority === 'MEDIUM'
+                                    ? 'blue'
+                                    : 'green'
+                            }
+                            size='sm'
+                          />
+                        </div>
+                      );
+                    })}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder p='md'>
+                  <Title order={3} mb='md'>
+                    Tickets by Category
+                  </Title>
+                  <Stack gap='sm'>
+                    {allTickets?.reduce(
+                      (acc: Record<string, number>, ticket: Ticket) => {
+                        const category = ticket.category.name;
+                        acc[category] = (acc[category] || 0) + 1;
+                        return acc;
+                      },
+                      {}
+                    ) &&
+                      Object.entries(
+                        allTickets?.reduce(
+                          (acc: Record<string, number>, ticket: Ticket) => {
+                            const category = ticket.category.name;
+                            acc[category] = (acc[category] || 0) + 1;
+                            return acc;
+                          },
+                          {}
+                        ) || {}
+                      )
+                        .slice(0, 4)
+                        .map(([category, count]) => {
+                          const percentage = allTickets?.length
+                            ? (count / allTickets.length) * 100
+                            : 0;
+                          return (
+                            <div key={category}>
+                              <Group justify='space-between' mb={4}>
+                                <Text size='sm' c='dimmed'>
+                                  {category}
+                                </Text>
+                                <Text size='sm' fw={500}>
+                                  {count}
+                                </Text>
+                              </Group>
+                              <Progress
+                                value={percentage}
+                                color='blue'
+                                size='sm'
+                              />
+                            </div>
+                          );
+                        })}
+                    {(!allTickets || allTickets.length === 0) && (
+                      <Text size='sm' c='dimmed' ta='center' py='md'>
+                        No tickets found
+                      </Text>
+                    )}
                   </Stack>
                 </Paper>
               </Grid.Col>
@@ -518,7 +634,7 @@ export function AdminDashboard() {
                     placeholder='Search users...'
                     leftSection={<IconSearch size={16} />}
                     value={userSearchQuery}
-                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    onChange={e => setUserSearchQuery(e.target.value)}
                     style={{ width: 300 }}
                   />
                   <Button
@@ -562,51 +678,66 @@ export function AdminDashboard() {
                       </Table.Tr>
                     ) : (
                       filteredUsers.slice(0, 10).map((user: User) => (
-                      <Table.Tr key={user.id}>
-                        <Table.Td>
-                          <Group>
-                            <Avatar size='sm' />
-                            <div>
-                              <Text size='sm' fw={500}>
-                                {user.name}
-                              </Text>
-                              <Text size='xs' c='dimmed'>
-                                ID: {user.id}
-                              </Text>
-                            </div>
-                          </Group>
-                        </Table.Td>
-                        <Table.Td>{user.email}</Table.Td>
-                        <Table.Td>
-                          <Badge color='blue'>
-                            {user.role.replace('_', ' ')}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge color={user.isActive ? 'green' : 'red'}>
-                            {user.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          {user.createdAt
-                            ? new Date(user.createdAt).toLocaleDateString()
-                            : 'Never'}
-                        </Table.Td>
-                        <Table.Td>
-                          <Group gap='xs'>
-                            <ActionIcon size='sm' variant='light' onClick={() => console.log('View user:', user.id)}>
-                              <IconEye size={14} />
-                            </ActionIcon>
-                            <ActionIcon size='sm' variant='light' onClick={() => handleEditUser(user)}>
-                              <IconEdit size={14} />
-                            </ActionIcon>
-                            <ActionIcon size='sm' variant='light' color='red' onClick={() => handleDeleteUser(user.id)}>
-                              <IconTrash size={14} />
-                            </ActionIcon>
-                          </Group>
-                        </Table.Td>
-                      </Table.Tr>
-                    ))
+                        <Table.Tr key={user.id}>
+                          <Table.Td>
+                            <Group>
+                              <Avatar size='sm' />
+                              <div>
+                                <Text size='sm' fw={500}>
+                                  {user.name}
+                                </Text>
+                                <Text size='xs' c='dimmed'>
+                                  ID: {user.id}
+                                </Text>
+                              </div>
+                            </Group>
+                          </Table.Td>
+                          <Table.Td>{user.email}</Table.Td>
+                          <Table.Td>
+                            <Badge color='blue'>
+                              {user.role.replace('_', ' ')}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge color={user.isActive ? 'green' : 'red'}>
+                              {user.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            {user.createdAt
+                              ? new Date(user.createdAt).toLocaleDateString()
+                              : 'Never'}
+                          </Table.Td>
+                          <Table.Td>
+                            <Group gap='xs'>
+                              <ActionIcon
+                                size='sm'
+                                variant='light'
+                                onClick={() => {
+                                  // View user functionality
+                                }}
+                              >
+                                <IconEye size={14} />
+                              </ActionIcon>
+                              <ActionIcon
+                                size='sm'
+                                variant='light'
+                                onClick={() => handleEditUser(user)}
+                              >
+                                <IconEdit size={14} />
+                              </ActionIcon>
+                              <ActionIcon
+                                size='sm'
+                                variant='light'
+                                color='red'
+                                onClick={() => handleDeleteUser(user.id)}
+                              >
+                                <IconTrash size={14} />
+                              </ActionIcon>
+                            </Group>
+                          </Table.Td>
+                        </Table.Tr>
+                      ))
                     )}
                   </Table.Tbody>
                 </Table>
@@ -624,7 +755,7 @@ export function AdminDashboard() {
                     leftSection={<IconSearch size={16} />}
                     style={{ width: 300 }}
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={e => setSearchQuery(e.target.value)}
                   />
                   <Button
                     variant='outline'
@@ -647,7 +778,56 @@ export function AdminDashboard() {
 
           <Tabs.Panel value='system' pt='md'>
             <Grid>
-              <Grid.Col span={{ base: 12, md: 6 }}>
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Paper withBorder p='md'>
+                  <Title order={3} mb='md'>
+                    System Health
+                  </Title>
+                  <Grid>
+                    <Grid.Col span={12}>
+                      <div>
+                        <Text size='sm' c='dimmed' mb={4}>
+                          Database Status
+                        </Text>
+                        <Group>
+                          <IconDatabase color='green' size={20} />
+                          <Text size='sm' c='green'>
+                            Online
+                          </Text>
+                        </Group>
+                      </div>
+                    </Grid.Col>
+                    <Grid.Col span={12}>
+                      <div>
+                        <Text size='sm' c='dimmed' mb={4}>
+                          Redis Cache
+                        </Text>
+                        <Group>
+                          <IconCpu color='green' size={20} />
+                          <Text size='sm' c='green'>
+                            Online
+                          </Text>
+                        </Group>
+                      </div>
+                    </Grid.Col>
+                    <Grid.Col span={12}>
+                      <div>
+                        <Text size='sm' c='dimmed' mb={4}>
+                          Email Service
+                        </Text>
+                        <Group>
+                          <IconMail color='green' size={20} />
+                          <Text size='sm' c='green'>
+                            Online
+                          </Text>
+                        </Group>
+                      </div>
+                    </Grid.Col>
+                  </Grid>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 4 }}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
                     Server Resources
@@ -693,7 +873,7 @@ export function AdminDashboard() {
                 </Paper>
               </Grid.Col>
 
-              <Grid.Col span={{ base: 12, md: 6 }}>
+              <Grid.Col span={{ base: 12, md: 4 }}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
                     Database Status
@@ -798,44 +978,72 @@ export function AdminDashboard() {
             </Stack>
           </Tabs.Panel>
 
+          <Tabs.Panel value='integrations' pt='md'>
+            <Stack gap='md'>
+              <Group justify='space-between'>
+                <Title order={3}>Integrations Management</Title>
+                <Button
+                  leftSection={<IconPlug size={16} />}
+                  onClick={() => setIntegrationsModalOpened(true)}
+                >
+                  Manage Integrations
+                </Button>
+              </Group>
+              <Paper withBorder p='md'>
+                <Text c='dimmed'>
+                  Configure external integrations and API connections. Click
+                  "Manage Integrations" to get started.
+                </Text>
+              </Paper>
+            </Stack>
+          </Tabs.Panel>
+
+          <Tabs.Panel value='permissions' pt='md'>
+            <Stack gap='md'>
+              <Group justify='space-between'>
+                <Title order={3}>Permissions Management</Title>
+                <Button
+                  leftSection={<IconShield size={16} />}
+                  onClick={() => setPermissionsModalOpened(true)}
+                >
+                  Manage Permissions
+                </Button>
+              </Group>
+              <Paper withBorder p='md'>
+                <Text c='dimmed'>
+                  Configure role-based permissions and access control. Click
+                  "Manage Permissions" to get started.
+                </Text>
+              </Paper>
+            </Stack>
+          </Tabs.Panel>
+
           <Tabs.Panel value='logs' pt='md'>
             <Stack gap='md'>
-              <Title order={3}>Audit Logs</Title>
+              <Group justify='space-between'>
+                <Title order={3}>Audit Logs</Title>
+                <Group>
+                  <Button
+                    leftSection={<IconFileText size={16} />}
+                    onClick={() => setAuditTrailModalOpened(true)}
+                  >
+                    View Audit Trail
+                  </Button>
+                  <Button
+                    variant='outline'
+                    leftSection={<IconChartBar size={16} />}
+                    onClick={() => setAuditStatsModalOpened(true)}
+                  >
+                    View Statistics
+                  </Button>
+                </Group>
+              </Group>
               <Paper withBorder p='md'>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Timestamp</Table.Th>
-                      <Table.Th>User</Table.Th>
-                      <Table.Th>Action</Table.Th>
-                      <Table.Th>Resource</Table.Th>
-                      <Table.Th>IP Address</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    <Table.Tr>
-                      <Table.Td>2024-01-15 14:30:25</Table.Td>
-                      <Table.Td>john.doe@company.com</Table.Td>
-                      <Table.Td>Created Ticket</Table.Td>
-                      <Table.Td>TKT-2024-000123</Table.Td>
-                      <Table.Td>192.168.1.100</Table.Td>
-                    </Table.Tr>
-                    <Table.Tr>
-                      <Table.Td>2024-01-15 14:25:10</Table.Td>
-                      <Table.Td>jane.smith@company.com</Table.Td>
-                      <Table.Td>Updated Ticket</Table.Td>
-                      <Table.Td>TKT-2024-000122</Table.Td>
-                      <Table.Td>192.168.1.101</Table.Td>
-                    </Table.Tr>
-                    <Table.Tr>
-                      <Table.Td>2024-01-15 14:20:45</Table.Td>
-                      <Table.Td>admin@company.com</Table.Td>
-                      <Table.Td>User Role Changed</Table.Td>
-                      <Table.Td>user-456</Table.Td>
-                      <Table.Td>192.168.1.102</Table.Td>
-                    </Table.Tr>
-                  </Table.Tbody>
-                </Table>
+                <Text c='dimmed'>
+                  View detailed audit logs and system activity. Use "View Audit
+                  Trail" for detailed logs or "View Statistics" for analytics
+                  and insights.
+                </Text>
               </Paper>
             </Stack>
           </Tabs.Panel>
@@ -853,21 +1061,34 @@ export function AdminDashboard() {
         title={selectedUser ? 'Edit User' : 'Add New User'}
         size='md'
       >
-        <form onSubmit={(e) => { e.preventDefault(); selectedUser ? handleUpdateUser() : handleCreateUser(); }}>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            if (selectedUser) {
+              handleUpdateUser();
+            } else {
+              handleCreateUser();
+            }
+          }}
+        >
           <Stack gap='md'>
-            <TextInput 
-              label='Full Name' 
-              placeholder='Enter full name' 
+            <TextInput
+              label='Full Name'
+              placeholder='Enter full name'
               value={userFormData.name || ''}
-              onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
-              required 
+              onChange={e =>
+                setUserFormData({ ...userFormData, name: e.target.value })
+              }
+              required
             />
             <TextInput
               label='Email'
               placeholder='Enter email address'
               type='email'
               value={userFormData.email || ''}
-              onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+              onChange={e =>
+                setUserFormData({ ...userFormData, email: e.target.value })
+              }
               required
             />
             {!selectedUser && (
@@ -876,45 +1097,57 @@ export function AdminDashboard() {
                 placeholder='Enter password'
                 type='password'
                 value={userFormData.password || ''}
-                onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                onChange={e =>
+                  setUserFormData({ ...userFormData, password: e.target.value })
+                }
                 required
                 description='Password must be at least 8 characters long, contain uppercase, lowercase, number, and special character'
               />
             )}
-          <Select
-            label='Role'
-            placeholder='Select role'
-            value={userFormData.role || ''}
-            onChange={(value) => setUserFormData({ ...userFormData, role: value as UserRole })}
-            data={[
-              { value: 'END_USER', label: 'End User' },
-              { value: 'SUPPORT_STAFF', label: 'Support Staff' },
-              { value: 'SUPPORT_MANAGER', label: 'Support Manager' },
-              { value: 'ADMIN', label: 'Administrator' },
-            ]}
-            required
-          />
-          <Switch
-            label='Active'
-            description='User account is active'
-            checked={userFormData.isActive ?? true}
-            onChange={(e) => setUserFormData({ ...userFormData, isActive: e.currentTarget.checked })}
-          />
-          <Group justify='flex-end'>
-            <Button variant='outline' onClick={() => {
-              setUserModalOpened(false);
-              setSelectedUser(null);
-              setUserFormData({});
-            }}>
-              Cancel
-            </Button>
-            <Button 
-              type='submit'
-              loading={createUser.isPending || updateUser.isPending}
-            >
-              {selectedUser ? 'Update User' : 'Add User'}
-            </Button>
-          </Group>
+            <Select
+              label='Role'
+              placeholder='Select role'
+              value={userFormData.role || ''}
+              onChange={value =>
+                setUserFormData({ ...userFormData, role: value as UserRole })
+              }
+              data={[
+                { value: 'END_USER', label: 'End User' },
+                { value: 'SUPPORT_STAFF', label: 'Support Staff' },
+                { value: 'SUPPORT_MANAGER', label: 'Support Manager' },
+                { value: 'ADMIN', label: 'Administrator' },
+              ]}
+              required
+            />
+            <Switch
+              label='Active'
+              description='User account is active'
+              checked={userFormData.isActive ?? true}
+              onChange={e =>
+                setUserFormData({
+                  ...userFormData,
+                  isActive: e.currentTarget.checked,
+                })
+              }
+            />
+            <Group justify='flex-end'>
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setUserModalOpened(false);
+                  setSelectedUser(null);
+                  setUserFormData({});
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type='submit'
+                loading={createUser.isPending || updateUser.isPending}
+              >
+                {selectedUser ? 'Update User' : 'Add User'}
+              </Button>
+            </Group>
           </Stack>
         </form>
       </Modal>
@@ -962,6 +1195,30 @@ export function AdminDashboard() {
           </Group>
         </Stack>
       </Modal>
+
+      {/* Integrations Management Modal */}
+      <IntegrationsManagement
+        opened={integrationsModalOpened}
+        onClose={() => setIntegrationsModalOpened(false)}
+      />
+
+      {/* Permissions Management Modal */}
+      <PermissionsManagement
+        opened={permissionsModalOpened}
+        onClose={() => setPermissionsModalOpened(false)}
+      />
+
+      {/* Audit Trail Modal */}
+      <AuditTrail
+        opened={auditTrailModalOpened}
+        onClose={() => setAuditTrailModalOpened(false)}
+      />
+
+      {/* Audit Log Statistics Modal */}
+      <AuditLogStats
+        opened={auditStatsModalOpened}
+        onClose={() => setAuditStatsModalOpened(false)}
+      />
     </Container>
   );
 }

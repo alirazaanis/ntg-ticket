@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Title,
@@ -43,6 +44,7 @@ const roleColors: Record<UserRole, string> = {
 };
 
 export default function ProfilePage() {
+  const t = useTranslations('profile');
   const { user } = useAuthStore();
   const updateUserMutation = useUpdateUser();
   const { validatePassword } = usePasswordValidation();
@@ -133,7 +135,7 @@ export default function ProfilePage() {
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={1}>Profile</Title>
+          <Title order={1}>{t('title')}</Title>
           <Text c='dimmed'>Manage your account settings and preferences</Text>
         </div>
         <Group>
@@ -163,13 +165,13 @@ export default function ProfilePage() {
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Tab value='profile' leftSection={<IconUser size={16} />}>
-            Profile
+            {t('personalInfo')}
           </Tabs.Tab>
           <Tabs.Tab value='security' leftSection={<IconShield size={16} />}>
-            Security
+            {t('security')}
           </Tabs.Tab>
           <Tabs.Tab value='notifications' leftSection={<IconBell size={16} />}>
-            Notifications
+            {t('notifications')}
           </Tabs.Tab>
         </Tabs.List>
 

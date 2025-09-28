@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Title,
@@ -55,6 +56,7 @@ interface UserSettings {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
   const { user } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<string | null>('appearance');
@@ -131,7 +133,7 @@ export default function SettingsPage() {
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={1}>Settings</Title>
+          <Title order={1}>{t('title')}</Title>
           <Text c='dimmed'>Customize your experience and preferences</Text>
         </div>
         <Group>
@@ -142,7 +144,7 @@ export default function SettingsPage() {
             loading={isLoading}
             onClick={() => form.onSubmit(handleSave)()}
           >
-            {saved ? 'Saved!' : 'Save Changes'}
+            {saved ? 'Saved!' : t('saveChanges')}
           </Button>
         </Group>
       </Group>
@@ -161,13 +163,13 @@ export default function SettingsPage() {
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Tab value='appearance' leftSection={<IconPalette size={16} />}>
-            Appearance
+            {t('appearance')}
           </Tabs.Tab>
           <Tabs.Tab value='notifications' leftSection={<IconBell size={16} />}>
-            Notifications
+            {t('notifications')}
           </Tabs.Tab>
           <Tabs.Tab value='privacy' leftSection={<IconShield size={16} />}>
-            Privacy
+            {t('privacy')}
           </Tabs.Tab>
         </Tabs.List>
 
@@ -197,9 +199,7 @@ export default function SettingsPage() {
                       placeholder='Select language'
                       data={[
                         { value: 'en', label: 'English' },
-                        { value: 'es', label: 'Spanish' },
-                        { value: 'fr', label: 'French' },
-                        { value: 'de', label: 'German' },
+                        { value: 'ar', label: 'العربية' },
                       ]}
                       {...form.getInputProps('language')}
                     />

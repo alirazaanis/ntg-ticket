@@ -125,9 +125,13 @@ export const useSearch = () => {
     (search: string) => {
       if (!search.trim()) return;
 
+      // Only add to recent searches if it's different from the last search
+      const trimmedSearch = search.trim();
+      if (recentSearches[0] === trimmedSearch) return;
+
       const updatedRecent = [
-        search,
-        ...recentSearches.filter(s => s !== search),
+        trimmedSearch,
+        ...recentSearches.filter(s => s !== trimmedSearch),
       ].slice(0, 10); // Keep only last 10 searches
 
       saveRecentSearches(updatedRecent);
@@ -139,18 +143,28 @@ export const useSearch = () => {
     saveRecentSearches([]);
   }, [saveRecentSearches]);
 
+  const removeRecentSearch = useCallback(
+    (search: string) => {
+      const updatedRecent = recentSearches.filter(s => s !== search);
+      saveRecentSearches(updatedRecent);
+    },
+    [recentSearches, saveRecentSearches]
+  );
+
   const getSearchQuery = useCallback(() => {
     const query: Partial<TicketFilters> = {};
 
     if (filters.search) query.search = filters.search;
-    if (filters.status.length > 0)
+    if (filters.status && filters.status.length > 0)
       query.status = filters.status as TicketStatus[];
-    if (filters.priority.length > 0)
+    if (filters.priority && filters.priority.length > 0)
       query.priority = filters.priority as TicketPriority[];
-    if (filters.category.length > 0)
+    if (filters.category && filters.category.length > 0)
       query.category = filters.category as TicketCategory[];
-    if (filters.assignedTo.length > 0) query.assignedTo = filters.assignedTo[0];
-    if (filters.requester.length > 0) query.requester = filters.requester[0];
+    if (filters.assignedTo && filters.assignedTo.length > 0)
+      query.assignedTo = filters.assignedTo[0];
+    if (filters.requester && filters.requester.length > 0)
+      query.requester = filters.requester[0];
     if (filters.dateFrom) query.dateFrom = filters.dateFrom.toISOString();
     if (filters.dateTo) query.dateTo = filters.dateTo.toISOString();
 
@@ -160,14 +174,14 @@ export const useSearch = () => {
   const hasActiveFilters = useCallback(() => {
     return (
       filters.search ||
-      filters.status.length > 0 ||
-      filters.priority.length > 0 ||
-      filters.category.length > 0 ||
-      filters.assignedTo.length > 0 ||
-      filters.requester.length > 0 ||
+      (filters.status && filters.status.length > 0) ||
+      (filters.priority && filters.priority.length > 0) ||
+      (filters.category && filters.category.length > 0) ||
+      (filters.assignedTo && filters.assignedTo.length > 0) ||
+      (filters.requester && filters.requester.length > 0) ||
       filters.dateFrom ||
       filters.dateTo ||
-      filters.tags.length > 0
+      (filters.tags && filters.tags.length > 0)
     );
   }, [filters]);
 
@@ -182,6 +196,7 @@ export const useSearch = () => {
     loadSearch,
     addRecentSearch,
     clearRecentSearches,
+    removeRecentSearch,
     getSearchQuery,
     hasActiveFilters,
   };

@@ -425,4 +425,150 @@ export class AdminService {
       return false;
     }
   }
+
+  async getFieldConfig() {
+    try {
+      const [categories, subcategories, customFields] = await Promise.all([
+        this.prisma.category.findMany({
+          where: { isActive: true },
+          include: {
+            subcategories: {
+              where: { isActive: true },
+              orderBy: { name: 'asc' },
+            },
+          },
+          orderBy: { name: 'asc' },
+        }),
+        this.prisma.subcategory.findMany({
+          where: { isActive: true },
+          include: {
+            category: true,
+          },
+          orderBy: { name: 'asc' },
+        }),
+        this.prisma.customField.findMany({
+          where: { isActive: true },
+          orderBy: { name: 'asc' },
+        }),
+      ]);
+
+      return {
+        categories,
+        subcategories,
+        customFields,
+        fieldOptions: {
+          priorities: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
+          impacts: ['MINOR', 'MODERATE', 'MAJOR', 'CRITICAL'],
+          urgencies: ['LOW', 'NORMAL', 'HIGH', 'IMMEDIATE'],
+          slaLevels: ['STANDARD', 'PREMIUM', 'CRITICAL_SUPPORT'],
+          statuses: [
+            'NEW',
+            'OPEN',
+            'IN_PROGRESS',
+            'ON_HOLD',
+            'RESOLVED',
+            'CLOSED',
+            'REOPENED',
+          ],
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error getting field configuration:', error);
+      throw error;
+    }
+  }
+
+  async updateFieldConfig(fieldConfig: Record<string, unknown>) {
+    try {
+      const { categories, subcategories, customFields } = fieldConfig;
+      const results: Record<string, string> = {};
+
+      // Update categories if provided
+      if (categories && Array.isArray(categories)) {
+        for (const category of categories) {
+          if (category.id) {
+            await this.prisma.category.update({
+              where: { id: category.id },
+              data: {
+                name: category.name,
+                description: category.description,
+                isActive: category.isActive,
+              },
+            });
+          } else {
+            await this.prisma.category.create({
+              data: {
+                name: category.name,
+                description: category.description,
+                isActive: category.isActive ?? true,
+                createdBy: 'system', // This should be the current user ID
+              },
+            });
+          }
+        }
+        results.categories = 'Updated successfully';
+      }
+
+      // Update subcategories if provided
+      if (subcategories && Array.isArray(subcategories)) {
+        for (const subcategory of subcategories) {
+          if (subcategory.id) {
+            await this.prisma.subcategory.update({
+              where: { id: subcategory.id },
+              data: {
+                name: subcategory.name,
+                description: subcategory.description,
+                isActive: subcategory.isActive,
+              },
+            });
+          } else {
+            await this.prisma.subcategory.create({
+              data: {
+                name: subcategory.name,
+                description: subcategory.description,
+                isActive: subcategory.isActive ?? true,
+                categoryId: subcategory.categoryId,
+                createdBy: 'system', // This should be the current user ID
+              },
+            });
+          }
+        }
+        results.subcategories = 'Updated successfully';
+      }
+
+      // Update custom fields if provided
+      if (customFields && Array.isArray(customFields)) {
+        for (const field of customFields) {
+          if (field.id) {
+            await this.prisma.customField.update({
+              where: { id: field.id },
+              data: {
+                name: field.name,
+                fieldType: field.fieldType,
+                options: field.options,
+                isRequired: field.isRequired,
+                isActive: field.isActive,
+              },
+            });
+          } else {
+            await this.prisma.customField.create({
+              data: {
+                name: field.name,
+                fieldType: field.fieldType,
+                options: field.options,
+                isRequired: field.isRequired ?? false,
+                isActive: field.isActive ?? true,
+              },
+            });
+          }
+        }
+        results.customFields = 'Updated successfully';
+      }
+
+      return results;
+    } catch (error) {
+      this.logger.error('Error updating field configuration:', error);
+      throw error;
+    }
+  }
 }

@@ -1,28 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { customFieldsApi } from '../lib/apiClient';
 import {
-  customFieldsApi,
-  CustomField,
   CreateCustomFieldInput,
   UpdateCustomFieldInput,
-} from '../lib/apiClient';
+} from '../types/unified';
 
-export function useCustomFields() {
+export function useCustomFields(params?: {
+  category?: string;
+  isActive?: boolean;
+}) {
   return useQuery({
-    queryKey: ['custom-fields'],
+    queryKey: ['customFields', params],
     queryFn: async () => {
       const response = await customFieldsApi.getCustomFields();
-      return response.data.data as CustomField[];
+      return response.data.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
 export function useCustomField(id: string) {
   return useQuery({
-    queryKey: ['custom-field', id],
+    queryKey: ['customField', id],
     queryFn: async () => {
       const response = await customFieldsApi.getCustomField(id);
-      return response.data.data as CustomField;
+      return response.data.data;
     },
     enabled: !!id,
   });
@@ -34,10 +35,10 @@ export function useCreateCustomField() {
   return useMutation({
     mutationFn: async (data: CreateCustomFieldInput) => {
       const response = await customFieldsApi.createCustomField(data);
-      return response.data.data as CustomField;
+      return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields'] });
+      queryClient.invalidateQueries({ queryKey: ['customFields'] });
     },
   });
 }
@@ -54,11 +55,10 @@ export function useUpdateCustomField() {
       data: UpdateCustomFieldInput;
     }) => {
       const response = await customFieldsApi.updateCustomField(id, data);
-      return response.data.data as CustomField;
+      return response.data.data;
     },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields'] });
-      queryClient.invalidateQueries({ queryKey: ['custom-field', id] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customFields'] });
     },
   });
 }
@@ -68,55 +68,11 @@ export function useDeleteCustomField() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await customFieldsApi.deleteCustomField(id);
+      const response = await customFieldsApi.deleteCustomField(id);
+      return response.data;
     },
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['custom-fields'] });
-      queryClient.invalidateQueries({ queryKey: ['custom-field', id] });
-    },
-  });
-}
-
-export function useTicketCustomFields(ticketId: string) {
-  return useQuery({
-    queryKey: ['ticket-custom-fields', ticketId],
-    queryFn: async () => {
-      const response = await customFieldsApi.getTicketCustomFields(ticketId);
-      return response.data.data as Record<
-        string,
-        string | number | boolean | string[]
-      >;
-    },
-    enabled: !!ticketId,
-    staleTime: 1 * 60 * 1000, // 1 minute
-  });
-}
-
-export function useSetTicketCustomField() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      ticketId,
-      customFieldId,
-      value,
-    }: {
-      ticketId: string;
-      customFieldId: string;
-      value: string;
-    }) => {
-      const response = await customFieldsApi.setTicketCustomField(
-        ticketId,
-        customFieldId,
-        value
-      );
-      return response.data.data;
-    },
-    onSuccess: (_, { ticketId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ['ticket-custom-fields', ticketId],
-      });
-      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customFields'] });
     },
   });
 }

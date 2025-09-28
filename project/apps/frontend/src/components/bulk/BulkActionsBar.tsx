@@ -362,10 +362,16 @@ export function BulkActionsBar({
             label='Assign To'
             placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
             data={
-              users?.map((user: User) => ({
-                value: user.id,
-                label: `${user.name} (${user.role})`,
-              })) || []
+              users
+                ?.filter((user: User) =>
+                  ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(
+                    user.role
+                  )
+                )
+                .map((user: User) => ({
+                  value: user.id,
+                  label: `${user.name} (${user.role})`,
+                })) || []
             }
             value={selectedAssignee}
             onChange={value => setSelectedAssignee(value || '')}

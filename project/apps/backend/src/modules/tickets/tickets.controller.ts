@@ -22,6 +22,7 @@ import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { TicketFiltersDto } from './dto/ticket-filters.dto';
+import { AssignTicketDto } from './dto/assign-ticket.dto';
 import { NextAuthJwtGuard } from '../auth/guards/nextauth-jwt.guard';
 import { TicketStatus } from '@prisma/client';
 
@@ -203,12 +204,12 @@ export class TicketsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async assignTicket(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { assignedToId: string },
+    @Body() assignTicketDto: AssignTicketDto,
     @Request() req
   ) {
     const ticket = await this.ticketsService.assignTicket(
       id,
-      body.assignedToId,
+      assignTicketDto.assignedToId,
       req.user.id,
       req.user.role
     );

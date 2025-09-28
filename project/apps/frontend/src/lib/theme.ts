@@ -1,16 +1,16 @@
 import { createTheme, MantineColorsTuple } from '@mantine/core';
 
 const blue: MantineColorsTuple = [
-  '#e7f5ff',
-  '#d0ebff',
-  '#a5d8ff',
-  '#74c0fc',
-  '#4dabf7',
-  '#339af0',
-  '#228be6',
-  '#1c7ed6',
-  '#1971c2',
-  '#1864ab',
+  '#f0f2ff', // Lightest - based on #667eea
+  '#e1e7ff', // Very light
+  '#c7d2fe', // Light
+  '#a5b4fc', // Lighter
+  '#8b9cf8', // Light-medium
+  '#667eea', // Primary color from landing page
+  '#5a67d8', // Medium
+  '#4c51bf', // Medium-dark
+  '#434190', // Dark
+  '#3c366b', // Darkest
 ];
 
 export const theme = createTheme({

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Title,
@@ -73,6 +74,7 @@ const priorityColors: Record<TicketPriority, string> = {
 };
 
 export default function TicketsPage() {
+  const t = useTranslations('tickets');
   const router = useRouter();
   const { user } = useAuthStore();
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,6 +90,8 @@ export default function TicketsPage() {
     updateFilters,
     clearFilters,
     addRecentSearch,
+    clearRecentSearches,
+    removeRecentSearch,
     getSearchQuery,
     hasActiveFilters,
   } = useSearch();
@@ -136,6 +140,7 @@ export default function TicketsPage() {
     data: ticketsData,
     isLoading,
     error,
+    isFetching,
   } = useTicketsWithPagination(ticketsQuery);
 
   // Get all tickets for counting (without pagination)
@@ -209,33 +214,37 @@ export default function TicketsPage() {
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={1}>Tickets</Title>
+          <Title order={1}>{t('title')}</Title>
           <Text c='dimmed'>Manage and track support tickets</Text>
         </div>
         <Button
           leftSection={<IconPlus size={16} />}
           onClick={handleCreateTicket}
         >
-          Create Ticket
+          {t('createTicket')}
         </Button>
       </Group>
 
       <Tabs value={activeTab} onChange={setActiveTab} mb='md'>
         <Tabs.List>
           <Tabs.Tab value='all'>
-            All Tickets ({totalTicketsCount || 0})
+            {t('allTickets')} (
+            {hasActiveFilters()
+              ? pagination?.total || 0
+              : totalTicketsCount || 0}
+            )
           </Tabs.Tab>
           <Tabs.Tab value='my'>
-            My Tickets (
+            {t('myTickets')} (
             {allTickets?.filter(t => t.requester?.id === user?.id).length || 0})
           </Tabs.Tab>
           <Tabs.Tab value='assigned'>
-            Assigned to Me (
+            {t('assignedTickets')} (
             {allTickets?.filter(t => t.assignedTo?.id === user?.id).length || 0}
             )
           </Tabs.Tab>
           <Tabs.Tab value='overdue'>
-            Overdue (
+            {t('overdueTickets')} (
             {allTickets?.filter(t =>
               ['OPEN', 'IN_PROGRESS', 'ON_HOLD'].includes(t.status)
             ).length || 0}
@@ -245,17 +254,27 @@ export default function TicketsPage() {
       </Tabs>
 
       <Grid mb='md'>
-        <Grid.Col span={8}>
+        <Grid.Col span={{ base: 12, md: 6 }}>
           <SearchBar
+            key={searchFilters.search || 'empty'}
             value={searchFilters.search}
-            onChange={value => updateFilters({ search: value })}
+            onChange={value => {
+              updateFilters({ search: value });
+              if (value.trim()) {
+                addRecentSearch(value);
+              }
+            }}
             onAdvancedSearch={() => setAdvancedSearchOpen(true)}
             onSimpleFilters={() => setSimpleFiltersOpen(true)}
             recentSearches={recentSearches}
             onRecentSearchClick={addRecentSearch}
+            onClearRecentSearches={clearRecentSearches}
+            onRemoveRecentSearch={removeRecentSearch}
+            debounceMs={1500}
+            isLoading={isFetching}
           />
         </Grid.Col>
-        <Grid.Col span={2}>
+        <Grid.Col span={{ base: 6, md: 3 }}>
           <Button
             variant='light'
             leftSection={<IconFilter size={16} />}
@@ -265,7 +284,7 @@ export default function TicketsPage() {
             Advanced
           </Button>
         </Grid.Col>
-        <Grid.Col span={2}>
+        <Grid.Col span={{ base: 6, md: 3 }}>
           {hasActiveFilters() && (
             <Button
               variant='outline'
@@ -273,7 +292,7 @@ export default function TicketsPage() {
               fullWidth
               onClick={clearFilters}
             >
-              Clear
+              Clear Filters
             </Button>
           )}
         </Grid.Col>
@@ -473,11 +492,28 @@ export default function TicketsPage() {
       <AdvancedSearchModal
         opened={advancedSearchOpen}
         onClose={() => setAdvancedSearchOpen(false)}
-        onSearch={filters => {
-          updateFilters(filters);
-          addRecentSearch(filters.search);
+        onSearch={advancedFilters => {
+          // Map AdvancedSearchCriteria to SearchCriteria format
+          const searchCriteria = {
+            search: advancedFilters.query || '',
+            status: advancedFilters.status || [],
+            priority: advancedFilters.priority || [],
+            category: advancedFilters.category || [],
+            impact: advancedFilters.impact || [],
+            urgency: advancedFilters.urgency || [],
+            slaLevel: advancedFilters.slaLevel || [],
+            assignedTo: advancedFilters.assignedTo || [],
+            requester: advancedFilters.requester || [],
+            dateFrom: advancedFilters.createdFrom || null,
+            dateTo: advancedFilters.createdTo || null,
+            tags: [],
+            customFields: advancedFilters.customFields || {},
+          };
+          updateFilters(searchCriteria);
+          if (advancedFilters.query) {
+            addRecentSearch(advancedFilters.query);
+          }
         }}
-        initialFilters={searchFilters}
       />
 
       <SimpleFiltersModal
@@ -486,7 +522,6 @@ export default function TicketsPage() {
         onApply={filters => {
           updateFilters(filters);
         }}
-        initialFilters={searchFilters}
       />
     </Container>
   );

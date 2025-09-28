@@ -11,6 +11,8 @@ declare module 'next-auth' {
       image?: string | null;
     };
     accessToken?: string;
+    refreshToken?: string;
+    error?: string;
   }
 
   interface User {
@@ -20,6 +22,7 @@ declare module 'next-auth' {
     role: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
     image?: string | null;
     accessToken?: string;
+    refreshToken?: string;
   }
 }
 
@@ -28,5 +31,8 @@ declare module 'next-auth/jwt' {
     id: string;
     role: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
     accessToken?: string;
+    refreshToken?: string;
+    accessTokenExpires?: number;
+    error?: string;
   }
 }

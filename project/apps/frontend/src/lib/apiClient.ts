@@ -42,6 +42,11 @@ import {
   AttachmentDownloadUrl,
   SystemStats,
   SystemHealth,
+  Integration,
+  CreateIntegrationInput,
+  UpdateIntegrationInput,
+  IntegrationTestResult,
+  WebhookPayload,
 } from '../types/unified';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -91,6 +96,11 @@ export type {
   AttachmentDownloadUrl,
   SystemStats,
   SystemHealth,
+  Integration,
+  CreateIntegrationInput,
+  UpdateIntegrationInput,
+  IntegrationTestResult,
+  WebhookPayload,
   TicketFormData,
   DynamicTicketFormValues,
   EmailTemplateFormData,
@@ -121,13 +131,42 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and token refresh
 apiClient.interceptors.response.use(
   response => response,
   async error => {
-    if (error.response?.status === 401) {
-      await signOut({ callbackUrl: '/auth/signin' });
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const session = await getSession();
+        if (session?.refreshToken) {
+          // Try to refresh the token
+          const refreshResponse = await axios.post(
+            `${API_BASE_URL}/api/v1/auth/refresh`,
+            { refresh_token: session.refreshToken }
+          );
+
+          if (refreshResponse.data?.data) {
+            const { access_token } = refreshResponse.data.data;
+
+            // Update the authorization header and retry the request
+            originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+            // Retry the original request
+            return apiClient(originalRequest);
+          }
+        }
+      } catch (refreshError) {
+        // If refresh fails, sign out the user
+        console.error('Token refresh failed:', refreshError);
+        await signOut({ callbackUrl: '/auth/signin' });
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -280,38 +319,6 @@ export const ticketApi = {
     apiClient.get<ApiResponse<Ticket[]>>('/tickets/breached-sla'),
 };
 
-// ===== CUSTOM FIELDS API =====
-export const customFieldsApi = {
-  getCustomFields: () =>
-    apiClient.get<ApiResponse<CustomField[]>>('/custom-fields'),
-
-  getCustomField: (id: string) =>
-    apiClient.get<ApiResponse<CustomField>>(`/custom-fields/${id}`),
-
-  createCustomField: (data: CreateCustomFieldInput) =>
-    apiClient.post<ApiResponse<CustomField>>('/custom-fields', data),
-
-  updateCustomField: (id: string, data: UpdateCustomFieldInput) =>
-    apiClient.put<ApiResponse<CustomField>>(`/custom-fields/${id}`, data),
-
-  deleteCustomField: (id: string) => apiClient.delete(`/custom-fields/${id}`),
-
-  getTicketCustomFields: (ticketId: string) =>
-    apiClient.get<
-      ApiResponse<Record<string, string | number | boolean | string[]>>
-    >(`/tickets/${ticketId}/custom-fields`),
-
-  setTicketCustomField: (
-    ticketId: string,
-    customFieldId: string,
-    value: string
-  ) =>
-    apiClient.put<ApiResponse<{ success: boolean; message?: string }>>(
-      `/tickets/${ticketId}/custom-fields/${customFieldId}`,
-      { value }
-    ),
-};
-
 // ===== CATEGORIES API =====
 export const categoriesApi = {
   getCategories: () => apiClient.get<ApiResponse<Category[]>>('/categories'),
@@ -451,17 +458,25 @@ export const notificationsApi = {
       ApiResponse<
         Array<{
           id: string;
-          message: string;
+          userId: string;
+          ticketId?: string;
           type: string;
-          read: boolean;
+          title: string;
+          message: string;
+          isRead: boolean;
           createdAt: string;
+          ticket?: {
+            id: string;
+            ticketNumber: string;
+            title: string;
+          };
         }>
       >
     >('/notifications'),
 
-  markAsRead: (id: string) => apiClient.put(`/notifications/${id}/read`),
+  markAsRead: (id: string) => apiClient.patch(`/notifications/${id}/read`),
 
-  markAllAsRead: () => apiClient.put('/notifications/read-all'),
+  markAllAsRead: () => apiClient.patch('/notifications/read-all'),
 
   deleteNotification: (id: string) => apiClient.delete(`/notifications/${id}`),
 
@@ -480,6 +495,11 @@ export const authApi = {
   getCurrentUser: () => apiClient.get<ApiResponse<User>>('/auth/me'),
 
   logout: () => apiClient.post<ApiResponse<void>>('/auth/logout'),
+
+  refreshToken: (refreshToken: string) =>
+    apiClient.post<
+      ApiResponse<{ access_token: string; refresh_token: string }>
+    >('/auth/refresh', { refresh_token: refreshToken }),
 
   updateUserRole: (userId: string, role: string) =>
     apiClient.patch<ApiResponse<User>>(`/auth/users/${userId}/role`, { role }),
@@ -561,6 +581,69 @@ export const auditLogsApi = {
         };
       }>
     >('/audit-logs', { params: filters }),
+
+  getTicketAuditLogs: (ticketId: string, page?: number, limit?: number) =>
+    apiClient.get<
+      ApiResponse<{
+        data: AuditLog[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+        };
+      }>
+    >(`/audit-logs/ticket/${ticketId}`, { params: { page, limit } }),
+
+  getSystemAuditLogs: (
+    page?: number,
+    limit?: number,
+    dateFrom?: string,
+    dateTo?: string
+  ) =>
+    apiClient.get<
+      ApiResponse<{
+        data: AuditLog[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+        };
+      }>
+    >('/audit-logs/system', { params: { page, limit, dateFrom, dateTo } }),
+
+  getUserActivityLogs: (
+    userId: string,
+    page?: number,
+    limit?: number,
+    dateFrom?: string,
+    dateTo?: string
+  ) =>
+    apiClient.get<
+      ApiResponse<{
+        data: AuditLog[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+        };
+      }>
+    >(`/audit-logs/user/${userId}/activity`, {
+      params: { page, limit, dateFrom, dateTo },
+    }),
+
+  getAuditLogStats: (dateFrom?: string, dateTo?: string) =>
+    apiClient.get<
+      ApiResponse<{
+        totalLogs: number;
+        logsByAction: Record<string, number>;
+        logsByResource: Record<string, number>;
+        logsByUser: Array<{ userId: string; userName: string; count: number }>;
+        dailyActivity: Array<{ date: string; count: number }>;
+      }>
+    >('/audit-logs/stats', { params: { dateFrom, dateTo } }),
 };
 
 // ===== SAVED SEARCHES API =====
@@ -608,6 +691,49 @@ export const savedSearchesApi = {
 
   deleteSavedSearch: (id: string) =>
     apiClient.delete<ApiResponse<{ message: string }>>(`/saved-searches/${id}`),
+};
+
+// ===== CUSTOM FIELDS API =====
+export const customFieldsApi = {
+  getCustomFields: (params?: { category?: string; isActive?: boolean }) =>
+    apiClient.get<ApiResponse<CustomField[]>>('/custom-fields', { params }),
+  getCustomField: (id: string) =>
+    apiClient.get<ApiResponse<CustomField>>(`/custom-fields/${id}`),
+  createCustomField: (data: CreateCustomFieldInput) =>
+    apiClient.post<ApiResponse<CustomField>>('/custom-fields', data),
+  updateCustomField: (id: string, data: UpdateCustomFieldInput) =>
+    apiClient.put<ApiResponse<CustomField>>(`/custom-fields/${id}`, data),
+  deleteCustomField: (id: string) =>
+    apiClient.delete<ApiResponse<void>>(`/custom-fields/${id}`),
+};
+
+// ===== INTEGRATIONS API =====
+export const integrationsApi = {
+  getIntegrations: () =>
+    apiClient.get<ApiResponse<Integration[]>>('/integrations'),
+
+  getIntegration: (id: string) =>
+    apiClient.get<ApiResponse<Integration>>(`/integrations/${id}`),
+
+  createIntegration: (data: CreateIntegrationInput) =>
+    apiClient.post<ApiResponse<Integration>>('/integrations', data),
+
+  updateIntegration: (id: string, data: UpdateIntegrationInput) =>
+    apiClient.put<ApiResponse<Integration>>(`/integrations/${id}`, data),
+
+  deleteIntegration: (id: string) =>
+    apiClient.delete<ApiResponse<void>>(`/integrations/${id}`),
+
+  testIntegration: (id: string) =>
+    apiClient.post<ApiResponse<IntegrationTestResult>>(
+      `/integrations/${id}/test`
+    ),
+
+  sendWebhook: (id: string, payload: WebhookPayload) =>
+    apiClient.post<ApiResponse<{ success: boolean }>>(
+      `/integrations/${id}/webhook`,
+      payload
+    ),
 };
 
 export default apiClient;

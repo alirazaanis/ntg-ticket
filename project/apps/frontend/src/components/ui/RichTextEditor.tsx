@@ -59,6 +59,7 @@ import {
   MenuLabel,
   MenuTarget,
   MenuDropdown,
+  useMantineTheme,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
@@ -231,6 +232,7 @@ export const RichTextEditorComponent: React.FC<RichTextEditorProps> = ({
   className,
   style,
 }) => {
+  const theme = useMantineTheme();
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -943,7 +945,9 @@ export const RichTextEditorComponent: React.FC<RichTextEditorProps> = ({
 
       <Box
         style={{
-          border: error ? '1px solid #fa5252' : '1px solid #e9ecef',
+          border: error
+            ? `1px solid ${theme.colors.red[6]}`
+            : `1px solid ${theme.colors.gray[3]}`,
           borderRadius: '4px',
           overflow: 'hidden',
         }}

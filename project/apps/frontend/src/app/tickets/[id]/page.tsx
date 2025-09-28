@@ -106,7 +106,10 @@ export default function TicketDetailPage() {
     user?.role === 'ADMIN' ||
     user?.role === 'SUPPORT_MANAGER' ||
     (user?.role === 'SUPPORT_STAFF' && ticket?.assignedTo?.id === user?.id);
-  const canAssign = user?.role === 'ADMIN' || user?.role === 'SUPPORT_MANAGER';
+  const canAssign =
+    user?.role === 'ADMIN' ||
+    user?.role === 'SUPPORT_MANAGER' ||
+    user?.role === 'SUPPORT_STAFF';
   const canDelete = user?.role === 'ADMIN';
 
   const handleStatusUpdate = async () => {
@@ -134,6 +137,15 @@ export default function TicketDetailPage() {
   };
 
   const handleAssignTicket = async () => {
+    if (!selectedAssignee) {
+      notifications.show({
+        title: 'Error',
+        message: 'Please select a user to assign the ticket to',
+        color: 'red',
+      });
+      return;
+    }
+
     try {
       await assignTicketMutation.mutateAsync({
         id: ticketId,
@@ -145,6 +157,7 @@ export default function TicketDetailPage() {
         color: 'green',
       });
       setAssignModalOpen(false);
+      setSelectedAssignee(''); // Reset selection
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -264,7 +277,7 @@ export default function TicketDetailPage() {
 
       <Grid>
         {/* Main Content */}
-        <Grid.Col span={8}>
+        <Grid.Col span={{ base: 12, md: 8 }}>
           <Tabs value={activeTab} onChange={setActiveTab}>
             <Tabs.List>
               <Tabs.Tab value='details' leftSection={<IconEye size={16} />}>
@@ -483,7 +496,7 @@ export default function TicketDetailPage() {
         </Grid.Col>
 
         {/* Sidebar */}
-        <Grid.Col span={4}>
+        <Grid.Col span={{ base: 12, md: 4 }}>
           <Stack gap='md'>
             {/* Status Card */}
             <Card withBorder p='md'>
@@ -720,10 +733,16 @@ export default function TicketDetailPage() {
             label='Assign To'
             placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
             data={
-              users?.map(user => ({
-                value: user.id,
-                label: `${user.name} (${user.role})`,
-              })) || []
+              users
+                ?.filter(user =>
+                  ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(
+                    user.role
+                  )
+                )
+                .map(user => ({
+                  value: user.id,
+                  label: `${user.name} (${user.role})`,
+                })) || []
             }
             value={selectedAssignee}
             onChange={value => setSelectedAssignee(value || '')}
@@ -737,6 +756,7 @@ export default function TicketDetailPage() {
             <Button
               onClick={handleAssignTicket}
               loading={assignTicketMutation.isPending}
+              disabled={!selectedAssignee}
             >
               Assign
             </Button>
@@ -751,6 +771,7 @@ export default function TicketDetailPage() {
         title='Add Comment'
         centered
         size='lg'
+        fullScreen
       >
         <Stack gap='md'>
           <Textarea

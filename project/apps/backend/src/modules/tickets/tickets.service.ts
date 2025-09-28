@@ -805,10 +805,23 @@ export class TicketsService {
     );
 
     // Validate user role can assign tickets
-    if (!['SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
-      throw new BadRequestException(
-        'Only managers and admins can assign tickets'
+    if (!['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
+      this.logger.error(
+        `User ${userId} with role ${userRole} cannot assign tickets`,
+        'TicketsService'
       );
+      throw new BadRequestException(
+        'Only support staff, managers and admins can assign tickets'
+      );
+    }
+
+    // Validate assignedToId is provided
+    if (!assignedToId || assignedToId.trim() === '') {
+      this.logger.error(
+        `Empty assignedToId provided by user ${userId}`,
+        'TicketsService'
+      );
+      throw new BadRequestException('Assignee ID is required');
     }
 
     const ticket = await this.prisma.ticket.findUnique({
@@ -830,34 +843,63 @@ export class TicketsService {
     if (
       !['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(assignee.role)
     ) {
+      this.logger.error(
+        `Assignee ${assignedToId} has invalid role ${assignee.role}`,
+        'TicketsService'
+      );
       throw new BadRequestException('Assignee must be a support staff member');
     }
 
-    const updatedTicket = await this.prisma.ticket.update({
-      where: { id },
-      data: {
-        assignedToId,
-        status: TicketStatus.OPEN,
-        updatedAt: new Date(),
-      },
-      include: {
-        requester: true,
-        assignedTo: true,
-        category: true,
-        subcategory: true,
-      },
-    });
+    this.logger.log(
+      `Updating ticket ${id} with assignee ${assignedToId}`,
+      'TicketsService'
+    );
+
+    let updatedTicket;
+    try {
+      updatedTicket = await this.prisma.ticket.update({
+        where: { id },
+        data: {
+          assignedToId,
+          status: TicketStatus.OPEN,
+          updatedAt: new Date(),
+        },
+        include: {
+          requester: true,
+          assignedTo: true,
+          category: true,
+          subcategory: true,
+        },
+      });
+
+      this.logger.log(`Ticket ${id} updated successfully`, 'TicketsService');
+    } catch (error) {
+      this.logger.error(
+        `Error updating ticket ${id}: ${error.message}`,
+        'TicketsService'
+      );
+      throw error;
+    }
 
     // Record in history
-    await this.prisma.ticketHistory.create({
-      data: {
-        ticketId: id,
-        userId,
-        fieldName: 'assignedToId',
-        oldValue: ticket.assignedToId,
-        newValue: assignedToId,
-      },
-    });
+    try {
+      await this.prisma.ticketHistory.create({
+        data: {
+          ticketId: id,
+          userId,
+          fieldName: 'assignedToId',
+          oldValue: ticket.assignedToId,
+          newValue: assignedToId,
+        },
+      });
+      this.logger.log(`History recorded for ticket ${id}`, 'TicketsService');
+    } catch (error) {
+      this.logger.error(
+        `Error recording history for ticket ${id}: ${error.message}`,
+        'TicketsService'
+      );
+      // Don't throw here, just log the error
+    }
 
     // Update in Elasticsearch
     try {
@@ -867,27 +909,48 @@ export class TicketsService {
     }
 
     // Send notifications
-    await Promise.all([
-      // Notify requester
-      this.notifications.create({
-        userId: ticket.requesterId,
-        ticketId: ticket.id,
-        type: 'TICKET_ASSIGNED',
-        title: 'Ticket Assigned',
-        message: `Your ticket ${ticket.ticketNumber} has been assigned to ${assignee.name}.`,
-      }),
-      // Notify assignee
-      this.notifications.create({
-        userId: assignedToId,
-        ticketId: ticket.id,
-        type: 'TICKET_ASSIGNED',
-        title: 'New Ticket Assignment',
-        message: `You have been assigned ticket ${ticket.ticketNumber}.`,
-      }),
-    ]);
+    try {
+      await Promise.all([
+        // Notify requester
+        this.notifications.create({
+          userId: ticket.requesterId,
+          ticketId: ticket.id,
+          type: 'TICKET_ASSIGNED',
+          title: 'Ticket Assigned',
+          message: `Your ticket ${ticket.ticketNumber} has been assigned to ${assignee.name}.`,
+        }),
+        // Notify assignee
+        this.notifications.create({
+          userId: assignedToId,
+          ticketId: ticket.id,
+          type: 'TICKET_ASSIGNED',
+          title: 'New Ticket Assignment',
+          message: `You have been assigned ticket ${ticket.ticketNumber}.`,
+        }),
+      ]);
+      this.logger.log(`Notifications sent for ticket ${id}`, 'TicketsService');
+    } catch (error) {
+      this.logger.error(
+        `Error sending notifications for ticket ${id}: ${error.message}`,
+        'TicketsService'
+      );
+      // Don't throw here, just log the error
+    }
 
     // Emit WebSocket event
-    this.websocketGateway.emitTicketAssigned(updatedTicket);
+    try {
+      this.websocketGateway.emitTicketAssigned(updatedTicket);
+      this.logger.log(
+        `WebSocket event emitted for ticket ${id}`,
+        'TicketsService'
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error emitting WebSocket event for ticket ${id}: ${error.message}`,
+        'TicketsService'
+      );
+      // Don't throw here, just log the error
+    }
 
     this.logger.log(
       `Ticket assigned: ${ticket.ticketNumber} to ${assignee.name}`,

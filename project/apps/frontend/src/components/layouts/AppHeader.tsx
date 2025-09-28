@@ -10,29 +10,47 @@ import {
   Badge,
   ActionIcon,
   Burger,
+  Image,
+  Stack,
+  useMantineTheme,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import {
   IconBell,
   IconLogout,
   IconSettings,
   IconUser,
   IconChevronDown,
+  IconHelp,
 } from '@tabler/icons-react';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useNotificationsStore } from '../../stores/useNotificationsStore';
 import { useSiteBranding } from '../../hooks/useSiteBranding';
+import { useMarkNotificationAsRead } from '../../hooks/useNotifications';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { LanguageSwitcher } from '../language/LanguageSwitcher';
 import { authApi } from '../../lib/apiClient';
+import { useMediaQuery } from '@mantine/hooks';
 
-export function AppHeader() {
-  const [opened, { toggle }] = useDisclosure();
+interface AppHeaderProps {
+  onHelpClick?: () => void;
+  mobileOpened: boolean;
+  toggleMobile: () => void;
+}
+
+export function AppHeader({
+  onHelpClick,
+  mobileOpened,
+  toggleMobile,
+}: AppHeaderProps) {
   const { user, logout } = useAuthStore();
-  const { unreadCount } = useNotificationsStore();
+  const { unreadCount, getRecentNotifications } = useNotificationsStore();
   const { siteName } = useSiteBranding();
   const router = useRouter();
+  const theme = useMantineTheme();
+  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+  const markAsReadMutation = useMarkNotificationAsRead();
 
   const handleLogout = async () => {
     try {
@@ -83,21 +101,43 @@ export function AppHeader() {
   return (
     <AppShell.Header>
       <Group h='100%' px='md' justify='space-between'>
+        {/* Left side - Logo and Brand */}
         <Group>
-          <Burger opened={opened} onClick={toggle} hiddenFrom='sm' size='sm' />
-          <Text fw={700} size='lg' c='blue'>
-            {siteName}
-          </Text>
+          <Burger
+            opened={mobileOpened}
+            onClick={toggleMobile}
+            hiddenFrom='sm'
+            size='sm'
+          />
+          <Group
+            gap='xs'
+            style={{ cursor: 'pointer' }}
+            onClick={() => router.push('/')}
+          >
+            {/* Logo */}
+            <Image
+              src='/logo.svg'
+              alt='NTG Ticket Logo'
+              w={32}
+              h={32}
+              style={{ objectFit: 'contain' }}
+            />
+            {!isMobile && (
+              <Text fw={700} size='lg' c='blue'>
+                {siteName}
+              </Text>
+            )}
+          </Group>
         </Group>
 
-        <Group>
-          <ThemeToggle />
-
-          <Menu shadow='md' width={200}>
+        {/* Right side - Actions */}
+        <Group gap='xs'>
+          {/* Notifications - Always visible (most important) */}
+          <Menu shadow='md' width={280}>
             <Menu.Target>
               <ActionIcon
                 variant='subtle'
-                color='gray'
+                color='blue'
                 size='lg'
                 pos='relative'
               >
@@ -118,61 +158,291 @@ export function AppHeader() {
             </Menu.Target>
             <Menu.Dropdown>
               <Menu.Label>Notifications</Menu.Label>
+
+              {/* Show recent notifications (up to 5) */}
+              {getRecentNotifications(5).length > 0 ? (
+                getRecentNotifications(5).map(notification => (
+                  <Menu.Item
+                    key={notification.id}
+                    leftSection={<IconBell size={14} />}
+                    onClick={() => {
+                      // Mark as read if unread using API
+                      if (!notification.isRead) {
+                        markAsReadMutation.mutate(notification.id);
+                      }
+                      // Navigate to notification or related page
+                      router.push('/notifications');
+                    }}
+                    style={{
+                      transition: 'background-color 0.2s ease',
+                      marginBottom: '4px',
+                      backgroundColor: notification.isRead
+                        ? 'transparent'
+                        : theme.colors.blue[0],
+                    }}
+                    onMouseEnter={e => {
+                      // Use theme-aware hover: light for light mode, dark for dark mode
+                      const isDarkMode =
+                        document.documentElement.getAttribute(
+                          'data-mantine-color-scheme'
+                        ) === 'dark';
+                      if (isDarkMode) {
+                        e.currentTarget.style.backgroundColor =
+                          'var(--mantine-color-blue-2)';
+                        e.currentTarget.style.color =
+                          'var(--mantine-color-blue-8)';
+                      } else {
+                        e.currentTarget.style.backgroundColor = '#f8f9ff';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.backgroundColor =
+                        notification.isRead
+                          ? 'transparent'
+                          : theme.colors.blue[0];
+                      e.currentTarget.style.color = 'inherit';
+                    }}
+                  >
+                    <Stack gap={4}>
+                      <Group justify='space-between'>
+                        <Text size='sm' fw={notification.isRead ? 400 : 600}>
+                          {notification.title}
+                        </Text>
+                        {!notification.isRead && (
+                          <Badge size='xs' color='blue' variant='filled'>
+                            New
+                          </Badge>
+                        )}
+                      </Group>
+                      <Text size='xs' c='dimmed' lineClamp={2}>
+                        {notification.message}
+                      </Text>
+                      <Text size='xs' c='dimmed'>
+                        {new Date(notification.createdAt).toLocaleDateString()}
+                      </Text>
+                    </Stack>
+                  </Menu.Item>
+                ))
+              ) : (
+                <Menu.Item disabled>
+                  <Text size='sm' c='dimmed'>
+                    No notifications
+                  </Text>
+                </Menu.Item>
+              )}
+
+              {/* View all notifications */}
+              <Menu.Divider />
               <Menu.Item
                 leftSection={<IconBell size={14} />}
                 onClick={() => router.push('/notifications')}
+                style={{
+                  transition: 'background-color 0.2s ease',
+                  marginBottom: '4px',
+                }}
+                onMouseEnter={e => {
+                  // Use theme-aware hover: light for light mode, dark for dark mode
+                  const isDarkMode =
+                    document.documentElement.getAttribute(
+                      'data-mantine-color-scheme'
+                    ) === 'dark';
+                  if (isDarkMode) {
+                    e.currentTarget.style.backgroundColor =
+                      'var(--mantine-color-blue-2)';
+                    e.currentTarget.style.color = 'var(--mantine-color-blue-8)';
+                  } else {
+                    e.currentTarget.style.backgroundColor = '#f8f9ff';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'inherit';
+                }}
               >
-                View all notifications
+                <Group justify='space-between'>
+                  <Text size='sm'>View all notifications</Text>
+                  {unreadCount > 0 && (
+                    <Badge size='xs' color='red' variant='filled'>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
+                </Group>
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
 
-          <Menu shadow='md' width={250}>
+          {/* User Profile - Always visible (personal) */}
+          <Menu shadow='md' width={isMobile ? 200 : 250}>
             <Menu.Target>
-              <Button
-                variant='subtle'
-                leftSection={<Avatar size='sm' src={user?.avatar} />}
-              >
-                <Group gap='xs'>
-                  <div>
-                    <Text size='sm' fw={500}>
-                      {user?.name}
-                    </Text>
-                    <Badge
-                      size='xs'
-                      color={getRoleBadgeColor(user?.role || 'END_USER')}
-                    >
-                      {getRoleLabel(user?.role || 'END_USER')}
-                    </Badge>
-                  </div>
-                  <IconChevronDown size={14} />
-                </Group>
-              </Button>
+              {isMobile ? (
+                <ActionIcon variant='subtle' color='blue' size='lg'>
+                  <Avatar size='sm' src={user?.avatar} />
+                </ActionIcon>
+              ) : (
+                <Button
+                  variant='subtle'
+                  color='blue'
+                  leftSection={<Avatar size='sm' src={user?.avatar} />}
+                >
+                  <Group gap='xs'>
+                    <div>
+                      <Text size='sm' fw={500}>
+                        {user?.name}
+                      </Text>
+                      <Badge
+                        size='xs'
+                        color={getRoleBadgeColor(user?.role || 'END_USER')}
+                      >
+                        {getRoleLabel(user?.role || 'END_USER')}
+                      </Badge>
+                    </div>
+                    <IconChevronDown size={14} />
+                  </Group>
+                </Button>
+              )}
             </Menu.Target>
             <Menu.Dropdown>
               <Menu.Label>Account</Menu.Label>
+              {isMobile && (
+                <Menu.Item>
+                  <Text size='sm' fw={500}>
+                    {user?.name}
+                  </Text>
+                  <Badge
+                    size='xs'
+                    color={getRoleBadgeColor(user?.role || 'END_USER')}
+                  >
+                    {getRoleLabel(user?.role || 'END_USER')}
+                  </Badge>
+                </Menu.Item>
+              )}
               <Menu.Item
                 leftSection={<IconUser size={14} />}
                 onClick={() => router.push('/profile')}
+                style={{
+                  transition: 'background-color 0.2s ease',
+                  marginBottom: '4px',
+                }}
+                onMouseEnter={e => {
+                  // Use theme-aware hover: light for light mode, dark for dark mode
+                  const isDarkMode =
+                    document.documentElement.getAttribute(
+                      'data-mantine-color-scheme'
+                    ) === 'dark';
+                  if (isDarkMode) {
+                    e.currentTarget.style.backgroundColor =
+                      'var(--mantine-color-blue-2)';
+                    e.currentTarget.style.color = 'var(--mantine-color-blue-8)';
+                  } else {
+                    e.currentTarget.style.backgroundColor = '#f8f9ff';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'inherit';
+                }}
               >
-                Profile
+                <Text size='sm'>Profile</Text>
               </Menu.Item>
               <Menu.Item
                 leftSection={<IconSettings size={14} />}
                 onClick={() => router.push('/settings')}
+                style={{
+                  transition: 'background-color 0.2s ease',
+                  marginBottom: '4px',
+                }}
+                onMouseEnter={e => {
+                  // Use theme-aware hover: light for light mode, dark for dark mode
+                  const isDarkMode =
+                    document.documentElement.getAttribute(
+                      'data-mantine-color-scheme'
+                    ) === 'dark';
+                  if (isDarkMode) {
+                    e.currentTarget.style.backgroundColor =
+                      'var(--mantine-color-blue-2)';
+                    e.currentTarget.style.color = 'var(--mantine-color-blue-8)';
+                  } else {
+                    e.currentTarget.style.backgroundColor = '#f8f9ff';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'inherit';
+                }}
               >
-                Settings
+                <Text size='sm'>Settings</Text>
               </Menu.Item>
+              {isMobile && (
+                <>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconHelp size={14} />}
+                    onClick={onHelpClick}
+                    style={{
+                      transition: 'background-color 0.2s ease',
+                      marginBottom: '4px',
+                    }}
+                    onMouseEnter={e => {
+                      // Use theme-aware hover: light for light mode, dark for dark mode
+                      const isDarkMode =
+                        document.documentElement.getAttribute(
+                          'data-mantine-color-scheme'
+                        ) === 'dark';
+                      if (isDarkMode) {
+                        e.currentTarget.style.backgroundColor =
+                          'var(--mantine-color-blue-2)';
+                        e.currentTarget.style.color =
+                          'var(--mantine-color-blue-8)';
+                      } else {
+                        e.currentTarget.style.backgroundColor = '#f8f9ff';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = 'inherit';
+                    }}
+                  >
+                    <Text size='sm'>Help & Support</Text>
+                  </Menu.Item>
+                </>
+              )}
               <Menu.Divider />
               <Menu.Item
                 leftSection={<IconLogout size={14} />}
                 onClick={handleLogout}
                 color='red'
+                style={{
+                  '&:hover': {
+                    backgroundColor: 'var(--mantine-color-red-1)',
+                  },
+                }}
               >
                 Sign out
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
+
+          {/* Desktop-only elements - Preferences and Support */}
+          {!isMobile && (
+            <>
+              {/* Help & Support */}
+              <ActionIcon
+                variant='subtle'
+                color='blue'
+                size='lg'
+                onClick={onHelpClick}
+                title='Help & Support'
+              >
+                <IconHelp size={20} />
+              </ActionIcon>
+
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
+              {/* Theme Toggle */}
+              <ThemeToggle />
+            </>
+          )}
         </Group>
       </Group>
     </AppShell.Header>

@@ -134,7 +134,17 @@ export function useTicketsWithPagination(filters?: TicketFilters) {
         throw error;
       }
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 2 * 60 * 1000, // 2 minutes - increased for better performance
+    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection time
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
+    retry: (failureCount, error) => {
+      // Retry up to 3 times for network errors
+      if (failureCount < 3 && error instanceof Error) {
+        return true;
+      }
+      return false;
+    },
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Tabs,
@@ -69,6 +70,7 @@ import {
 type EditingItem = User | CustomField | EmailTemplate;
 
 export function AdminPanel() {
+  const t = useTranslations('admin');
   const [activeTab, setActiveTab] = useState('users');
   const [showUserForm, setShowUserForm] = useState(false);
   const [showCustomFieldForm, setShowCustomFieldForm] = useState(false);
@@ -356,25 +358,25 @@ export function AdminPanel() {
         >
           <Tabs.List>
             <Tabs.Tab value='users' leftSection={<IconUsers size={16} />}>
-              Users
+              {t('users')}
             </Tabs.Tab>
             <Tabs.Tab
               value='custom-fields'
               leftSection={<IconSettings size={16} />}
             >
-              Custom Fields
+              {t('customFields')}
             </Tabs.Tab>
             <Tabs.Tab
               value='email-templates'
               leftSection={<IconMail size={16} />}
             >
-              Email Templates
+              {t('emailTemplates')}
             </Tabs.Tab>
             <Tabs.Tab
               value='system-settings'
               leftSection={<IconShield size={16} />}
             >
-              System Settings
+              {t('systemSettings')}
             </Tabs.Tab>
             <Tabs.Tab
               value='analytics'
@@ -405,7 +407,7 @@ export function AdminPanel() {
                 <Grid>
                   {users?.map((user: User) => (
                     <Grid.Col span={6} key={user.id}>
-                      <Card>  
+                      <Card>
                         <Group justify='space-between'>
                           <div>
                             <Text fw={500}>{user.name}</Text>

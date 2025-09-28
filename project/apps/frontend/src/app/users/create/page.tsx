@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Title,
@@ -17,6 +18,7 @@ import { useCreateUser } from '../../../hooks/useUsers';
 import { UserFormData, UserRole } from '../../../types/unified';
 
 export default function CreateUserPage() {
+  const t = useTranslations('users');
   const router = useRouter();
   const createUserMutation = useCreateUser();
 
@@ -54,10 +56,10 @@ export default function CreateUserPage() {
           leftSection={<IconArrowLeft size={16} />}
           onClick={handleCancel}
         >
-          Back to Users
+          {t('backToUsers')}
         </Button>
         <div>
-          <Title order={1}>Create New User</Title>
+          <Title order={1}>{t('createUser')}</Title>
           <Text c='dimmed'>Add a new user to the system</Text>
         </div>
       </Group>

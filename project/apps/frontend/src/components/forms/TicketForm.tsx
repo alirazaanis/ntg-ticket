@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   TextInput,
   Textarea,
@@ -23,6 +23,15 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useAutoAssignSettings } from '../../hooks/useAutoAssignSettings';
+import { useCategories } from '../../hooks/useCategories';
+import { useCustomFields } from '../../hooks/useCustomFields';
+import { Category, Subcategory } from '../../types/unified';
+
+// Subcategory option interface for form display
+interface SubcategoryOption {
+  value: string;
+  label: string;
+}
 
 // Ticket form data interface
 export interface TicketFormData {
@@ -127,7 +136,50 @@ export function TicketForm({
 }: TicketFormProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCategory] = useState<string>('');
+  const [, setAvailableSubcategories] = useState<SubcategoryOption[]>([]);
+  // const [availableCustomFields] = useState<CustomField[]>([]);
+
   const { getAutoAssignMessage, getAutoCloseMessage } = useAutoAssignSettings();
+  const { data: categoriesData } = useCategories();
+  const { data: customFieldsData } = useCustomFields();
+
+  // Dynamic form behavior based on category selection
+  useEffect(() => {
+    if (selectedCategory && categoriesData) {
+      const category = categoriesData.find(
+        cat => cat.name === selectedCategory
+      );
+      if (category && 'subcategories' in category && category.subcategories) {
+        setAvailableSubcategories(
+          (
+            category as Category & { subcategories: Subcategory[] }
+          ).subcategories.map((sub: Subcategory) => ({
+            value: sub.name,
+            label: sub.description || sub.name,
+          }))
+        );
+      } else {
+        setAvailableSubcategories([]);
+      }
+    } else {
+      setAvailableSubcategories([]);
+    }
+  }, [selectedCategory, categoriesData]);
+
+  // Load custom fields based on category
+  useEffect(() => {
+    if (selectedCategory && customFieldsData) {
+      // const categoryFields = customFieldsData.filter(
+      //   (field: CustomField) =>
+      //     (field as CustomField & { category?: string }).category === selectedCategory ||
+      //     (field as CustomField & { category?: string }).category === 'ALL'
+      // );
+      // setAvailableCustomFields(categoryFields);
+    } else {
+      // setAvailableCustomFields(customFieldsData || []);
+    }
+  }, [selectedCategory, customFieldsData]);
 
   const form = useForm<TicketFormData>({
     initialValues: {
@@ -225,7 +277,7 @@ export function TicketForm({
         />
 
         <Grid>
-          <Grid.Col span={6}>
+          <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
               label='Category'
               placeholder='Select category'
@@ -235,7 +287,7 @@ export function TicketForm({
               onChange={value => handleCategoryChange(value || '')}
             />
           </Grid.Col>
-          <Grid.Col span={6}>
+          <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
               label='Subcategory'
               placeholder='Select subcategory'
@@ -248,21 +300,21 @@ export function TicketForm({
         </Grid>
 
         <Grid>
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, sm: 4 }}>
             <Select
               label='Priority'
               data={priorities}
               {...form.getInputProps('priority')}
             />
           </Grid.Col>
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, sm: 4 }}>
             <Select
               label='Impact'
               data={impacts}
               {...form.getInputProps('impact')}
             />
           </Grid.Col>
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, sm: 4 }}>
             <Select
               label='Urgency'
               data={urgencies}

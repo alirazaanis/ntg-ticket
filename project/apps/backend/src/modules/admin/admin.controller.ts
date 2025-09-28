@@ -113,4 +113,54 @@ export class AdminController {
     const result = await this.adminService.updateSystemConfiguration(config);
     return result;
   }
+
+  @Get('field-config')
+  @ApiOperation({ summary: 'Get field configuration options (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Field configuration retrieved successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async getFieldConfig(@Request() req) {
+    // Check if user is admin
+    if (req.user.role !== 'ADMIN') {
+      throw new Error('Forbidden - Admin access required');
+    }
+
+    const fieldConfig = await this.adminService.getFieldConfig();
+    return {
+      data: fieldConfig,
+      message: 'Field configuration retrieved successfully',
+    };
+  }
+
+  @Patch('field-config')
+  @ApiOperation({ summary: 'Update field configuration (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Field configuration updated successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async updateFieldConfig(
+    @Request() req,
+    @Body() fieldConfig: Record<string, unknown>
+  ) {
+    // Check if user is admin
+    if (req.user.role !== 'ADMIN') {
+      throw new Error('Forbidden - Admin access required');
+    }
+
+    const updatedConfig =
+      await this.adminService.updateFieldConfig(fieldConfig);
+    return {
+      data: updatedConfig,
+      message: 'Field configuration updated successfully',
+    };
+  }
 }

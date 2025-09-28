@@ -1,13 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { CreateCustomFieldDto } from './dto/create-custom-field.dto';
-import { UpdateCustomFieldDto } from './dto/update-custom-field.dto';
 import { CustomFieldType } from '@prisma/client';
+import {
+  CreateCustomFieldDto,
+  UpdateCustomFieldDto,
+} from './dto/custom-field.dto';
 
 @Injectable()
 export class CustomFieldsService {
@@ -15,24 +12,23 @@ export class CustomFieldsService {
 
   constructor(private prisma: PrismaService) {}
 
-  async create(createCustomFieldDto: CreateCustomFieldDto) {
+  async findAll(filters?: { category?: string; isActive?: boolean }) {
     try {
-      const customField = await this.prisma.customField.create({
-        data: createCustomFieldDto,
-      });
+      const where: {
+        category?: string;
+        isActive?: boolean;
+      } = {};
 
-      this.logger.log(`Custom field created: ${customField.name}`);
-      return customField;
-    } catch (error) {
-      this.logger.error('Error creating custom field:', error);
-      throw error;
-    }
-  }
+      if (filters?.category) {
+        where.category = filters.category;
+      }
 
-  async findAll() {
-    try {
+      if (filters?.isActive !== undefined) {
+        where.isActive = filters.isActive;
+      }
+
       const customFields = await this.prisma.customField.findMany({
-        where: { isActive: true },
+        where,
         orderBy: { name: 'asc' },
       });
 
@@ -50,7 +46,7 @@ export class CustomFieldsService {
       });
 
       if (!customField) {
-        throw new NotFoundException(`Custom field with ID ${id} not found`);
+        throw new NotFoundException('Custom field not found');
       }
 
       return customField;
@@ -60,17 +56,59 @@ export class CustomFieldsService {
     }
   }
 
-  async update(id: string, updateCustomFieldDto: UpdateCustomFieldDto) {
+  async create(createCustomFieldDto: CreateCustomFieldDto) {
     try {
-      const customField = await this.prisma.customField.update({
-        where: { id },
+      const customField = await this.prisma.customField.create({
         data: {
-          ...updateCustomFieldDto,
-          updatedAt: new Date(),
+          name: createCustomFieldDto.name,
+          fieldType: createCustomFieldDto.fieldType as CustomFieldType,
+          options: createCustomFieldDto.options,
+          isRequired: createCustomFieldDto.isRequired ?? false,
+          isActive: createCustomFieldDto.isActive ?? true,
         },
       });
 
-      this.logger.log(`Custom field updated: ${customField.name}`);
+      return customField;
+    } catch (error) {
+      this.logger.error('Error creating custom field:', error);
+      throw error;
+    }
+  }
+
+  async update(id: string, updateCustomFieldDto: UpdateCustomFieldDto) {
+    try {
+      await this.findOne(id);
+
+      const updateData: {
+        name?: string;
+        fieldType?: CustomFieldType;
+        options?: string[] | null;
+        isRequired?: boolean;
+        isActive?: boolean;
+      } = {};
+
+      if (updateCustomFieldDto.name !== undefined) {
+        updateData.name = updateCustomFieldDto.name;
+      }
+      if (updateCustomFieldDto.fieldType !== undefined) {
+        updateData.fieldType =
+          updateCustomFieldDto.fieldType as CustomFieldType;
+      }
+      if (updateCustomFieldDto.options !== undefined) {
+        updateData.options = updateCustomFieldDto.options;
+      }
+      if (updateCustomFieldDto.isRequired !== undefined) {
+        updateData.isRequired = updateCustomFieldDto.isRequired;
+      }
+      if (updateCustomFieldDto.isActive !== undefined) {
+        updateData.isActive = updateCustomFieldDto.isActive;
+      }
+
+      const customField = await this.prisma.customField.update({
+        where: { id },
+        data: updateData,
+      });
+
       return customField;
     } catch (error) {
       this.logger.error('Error updating custom field:', error);
@@ -80,134 +118,16 @@ export class CustomFieldsService {
 
   async remove(id: string) {
     try {
-      // Soft delete by setting isActive to false
-      const customField = await this.prisma.customField.update({
+      await this.findOne(id);
+
+      await this.prisma.customField.delete({
         where: { id },
-        data: {
-          isActive: false,
-          updatedAt: new Date(),
-        },
       });
 
-      this.logger.log(`Custom field deactivated: ${customField.name}`);
-      return { message: 'Custom field deactivated successfully' };
+      return { message: 'Custom field deleted successfully' };
     } catch (error) {
-      this.logger.error('Error deactivating custom field:', error);
+      this.logger.error('Error deleting custom field:', error);
       throw error;
-    }
-  }
-
-  async getTicketCustomFields(ticketId: string) {
-    try {
-      const ticketCustomFields = await this.prisma.ticketCustomField.findMany({
-        where: { ticketId },
-        include: {
-          customField: true,
-        },
-      });
-
-      return ticketCustomFields;
-    } catch (error) {
-      this.logger.error('Error getting ticket custom fields:', error);
-      throw error;
-    }
-  }
-
-  async setTicketCustomField(
-    ticketId: string,
-    customFieldId: string,
-    value: string
-  ) {
-    try {
-      const customField = await this.findOne(customFieldId);
-
-      // Validate value based on field type
-      this.validateFieldValue(
-        customField.fieldType,
-        value,
-        customField.options as {
-          minLength?: number;
-          maxLength?: number;
-          required?: boolean;
-          choices?: string[];
-        }
-      );
-
-      const ticketCustomField = await this.prisma.ticketCustomField.upsert({
-        where: {
-          ticketId_customFieldId: {
-            ticketId,
-            customFieldId,
-          },
-        },
-        update: { value },
-        create: {
-          ticketId,
-          customFieldId,
-          value,
-        },
-        include: {
-          customField: true,
-        },
-      });
-
-      return ticketCustomField;
-    } catch (error) {
-      this.logger.error('Error setting ticket custom field:', error);
-      throw error;
-    }
-  }
-
-  private validateFieldValue(
-    fieldType: CustomFieldType,
-    value: string,
-    options: {
-      minLength?: number;
-      maxLength?: number;
-      required?: boolean;
-      choices?: string[];
-    }
-  ) {
-    switch (fieldType) {
-      case CustomFieldType.TEXT:
-        if (typeof value !== 'string') {
-          throw new BadRequestException(
-            'Value must be a string for TEXT field'
-          );
-        }
-        break;
-
-      case CustomFieldType.NUMBER:
-        if (isNaN(Number(value))) {
-          throw new BadRequestException(
-            'Value must be a number for NUMBER field'
-          );
-        }
-        break;
-
-      case CustomFieldType.DATE:
-        if (isNaN(Date.parse(value))) {
-          throw new BadRequestException(
-            'Value must be a valid date for DATE field'
-          );
-        }
-        break;
-
-      case CustomFieldType.SELECT:
-        if (options && Array.isArray(options) && !options.includes(value)) {
-          throw new BadRequestException(
-            `Value must be one of: ${options.join(', ')}`
-          );
-        }
-        break;
-
-      case CustomFieldType.BOOLEAN:
-        if (!['true', 'false'].includes(value.toLowerCase())) {
-          throw new BadRequestException(
-            'Value must be true or false for BOOLEAN field'
-          );
-        }
-        break;
     }
   }
 }

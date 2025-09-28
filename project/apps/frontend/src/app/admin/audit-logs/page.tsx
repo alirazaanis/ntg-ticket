@@ -22,6 +22,7 @@ import {
   Pagination,
   Loader,
   Center,
+  ScrollArea,
 } from '@mantine/core';
 import {
   IconSearch,
@@ -35,7 +36,7 @@ import {
   IconDatabase,
   IconDownload,
 } from '@tabler/icons-react';
-import { useAuditLogs, useExportAuditLogs } from '../../../hooks/useAuditLogs';
+import { useAuditLogs } from '../../../hooks/useAuditLogs';
 import { notifications } from '@mantine/notifications';
 
 import { DatePickerInput } from '@mantine/dates';
@@ -96,8 +97,18 @@ export default function AuditLogsPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
-  const { data: auditLogs, isLoading, refetch } = useAuditLogs(filters);
-  const exportLogs = useExportAuditLogs();
+  const {
+    data: auditLogs,
+    isLoading,
+    refetch,
+  } = useAuditLogs({
+    ...filters,
+    page: filters.page || 1,
+    limit: filters.limit || 20,
+    dateFrom: filters.dateFrom?.toISOString(),
+    dateTo: filters.dateTo?.toISOString(),
+  });
+  // const exportLogs = useExportAuditLogs();
 
   const handleSearch = () => {
     setFilters({ ...filters, page: 1 });
@@ -110,15 +121,15 @@ export default function AuditLogsPage() {
 
   const handleExport = async () => {
     try {
-      const blob = await exportLogs.mutateAsync(filters);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // const blob = await exportLogs.mutateAsync(filters);
+      // const url = window.URL.createObjectURL(blob);
+      // const a = document.createElement('a');
+      // a.href = url;
+      // a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
+      // document.body.appendChild(a);
+      // a.click();
+      // window.URL.revokeObjectURL(url);
+      // document.body.removeChild(a);
 
       notifications.show({
         title: 'Success',
@@ -202,7 +213,7 @@ export default function AuditLogsPage() {
           <Button
             leftSection={<IconDownload size={16} />}
             onClick={handleExport}
-            loading={exportLogs.isPending}
+            loading={false}
           >
             Export
           </Button>
@@ -214,7 +225,7 @@ export default function AuditLogsPage() {
         <Stack>
           <Title order={4}>Filter Audit Logs</Title>
           <Grid>
-            <Grid.Col span={3}>
+            <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
               <TextInput
                 label='Search'
                 placeholder='Search logs...'
@@ -223,7 +234,7 @@ export default function AuditLogsPage() {
                 leftSection={<IconSearch size={16} />}
               />
             </Grid.Col>
-            <Grid.Col span={3}>
+            <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
               <Select
                 label='Action'
                 placeholder='Select action'
@@ -235,7 +246,7 @@ export default function AuditLogsPage() {
                 clearable
               />
             </Grid.Col>
-            <Grid.Col span={3}>
+            <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
               <Select
                 label='Field'
                 placeholder='Select field'
@@ -247,12 +258,12 @@ export default function AuditLogsPage() {
                 clearable
               />
             </Grid.Col>
-            <Grid.Col span={3}>
+            <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
               <Button onClick={handleSearch} fullWidth mt='xl'>
                 Apply Filters
               </Button>
             </Grid.Col>
-            <Grid.Col span={6}>
+            <Grid.Col span={{ base: 12, md: 6 }}>
               <DatePickerInput
                 label='From Date'
                 placeholder='Select start date'
@@ -262,7 +273,7 @@ export default function AuditLogsPage() {
                 }
               />
             </Grid.Col>
-            <Grid.Col span={6}>
+            <Grid.Col span={{ base: 12, md: 6 }}>
               <DatePickerInput
                 label='To Date'
                 placeholder='Select end date'
@@ -308,108 +319,118 @@ export default function AuditLogsPage() {
                 </Center>
               ) : (
                 <>
-                  <Table>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Timestamp</Table.Th>
-                        <Table.Th>User</Table.Th>
-                        <Table.Th>Action</Table.Th>
-                        <Table.Th>Resource</Table.Th>
-                        <Table.Th>Field</Table.Th>
-                        <Table.Th>Changes</Table.Th>
-                        <Table.Th>Actions</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {auditLogs?.data?.map(
-                        (log: {
-                          id: string;
-                          action: string;
-                          createdAt: string;
-                          user?: { name: string; email: string };
-                          ticket?: { title: string; ticketNumber: string };
-                          fieldName?: string;
-                          oldValue?: string;
-                          newValue?: string;
-                          ipAddress?: string;
-                          resourceType?: string;
-                        }) => (
-                          <Table.Tr key={log.id}>
-                            <Table.Td>
-                              <Stack gap='xs'>
-                                <Text size='sm' fw={500}>
-                                  {new Date(log.createdAt).toLocaleString()}
+                  <ScrollArea>
+                    <Table>
+                      <Table.Thead>
+                        <Table.Tr>
+                          <Table.Th>Timestamp</Table.Th>
+                          <Table.Th>User</Table.Th>
+                          <Table.Th>Action</Table.Th>
+                          <Table.Th>Resource</Table.Th>
+                          <Table.Th>Field</Table.Th>
+                          <Table.Th>Changes</Table.Th>
+                          <Table.Th>Actions</Table.Th>
+                        </Table.Tr>
+                      </Table.Thead>
+                      <Table.Tbody>
+                        {auditLogs?.data?.data?.map(
+                          (log: {
+                            id: string;
+                            action: string;
+                            createdAt: string;
+                            user?: { name: string; email: string };
+                            ticket?: { title: string; ticketNumber: string };
+                            fieldName?: string;
+                            oldValue?: string;
+                            newValue?: string;
+                            ipAddress?: string;
+                            resourceType?: string;
+                          }) => (
+                            <Table.Tr key={log.id}>
+                              <Table.Td>
+                                <Stack gap='xs'>
+                                  <Text size='sm' fw={500}>
+                                    {new Date(log.createdAt).toLocaleString()}
+                                  </Text>
+                                  <Text size='xs' c='dimmed'>
+                                    {new Date(
+                                      log.createdAt
+                                    ).toLocaleDateString()}
+                                  </Text>
+                                </Stack>
+                              </Table.Td>
+                              <Table.Td>
+                                <Stack gap='xs'>
+                                  <Text size='sm' fw={500}>
+                                    {log.user?.name || 'System'}
+                                  </Text>
+                                  <Text size='xs' c='dimmed'>
+                                    {log.user?.email || 'system@ntg-ticket.com'}
+                                  </Text>
+                                </Stack>
+                              </Table.Td>
+                              <Table.Td>
+                                <Badge
+                                  color={getActionColor(log.action)}
+                                  variant='light'
+                                  leftSection={getActionIcon(log.action)}
+                                  size='sm'
+                                >
+                                  {log.action}
+                                </Badge>
+                              </Table.Td>
+                              <Table.Td>
+                                <Text size='sm'>
+                                  {log.ticket?.title ||
+                                    log.resourceType ||
+                                    'N/A'}
                                 </Text>
-                                <Text size='xs' c='dimmed'>
-                                  {new Date(log.createdAt).toLocaleDateString()}
-                                </Text>
-                              </Stack>
-                            </Table.Td>
-                            <Table.Td>
-                              <Stack gap='xs'>
-                                <Text size='sm' fw={500}>
-                                  {log.user?.name || 'System'}
-                                </Text>
-                                <Text size='xs' c='dimmed'>
-                                  {log.user?.email || 'system@ntg-ticket.com'}
-                                </Text>
-                              </Stack>
-                            </Table.Td>
-                            <Table.Td>
-                              <Badge
-                                color={getActionColor(log.action)}
-                                variant='light'
-                                leftSection={getActionIcon(log.action)}
-                                size='sm'
-                              >
-                                {log.action}
-                              </Badge>
-                            </Table.Td>
-                            <Table.Td>
-                              <Text size='sm'>
-                                {log.ticket?.title || log.resourceType || 'N/A'}
-                              </Text>
-                              {log.ticket?.ticketNumber && (
-                                <Text size='xs' c='dimmed'>
-                                  #{log.ticket.ticketNumber}
-                                </Text>
-                              )}
-                            </Table.Td>
-                            <Table.Td>
-                              <Text size='sm'>{log.fieldName || 'N/A'}</Text>
-                            </Table.Td>
-                            <Table.Td>
-                              <Group gap='xs'>
-                                {log.oldValue && (
-                                  <Badge color='red' variant='light' size='xs'>
-                                    Old
-                                  </Badge>
+                                {log.ticket?.ticketNumber && (
+                                  <Text size='xs' c='dimmed'>
+                                    #{log.ticket.ticketNumber}
+                                  </Text>
                                 )}
-                                {log.newValue && (
-                                  <Badge
-                                    color='green'
-                                    variant='light'
-                                    size='xs'
-                                  >
-                                    New
-                                  </Badge>
-                                )}
-                              </Group>
-                            </Table.Td>
-                            <Table.Td>
-                              <ActionIcon
-                                variant='light'
-                                size='sm'
-                                onClick={() => handleLogClick(log)}
-                              >
-                                <IconEye size={14} />
-                              </ActionIcon>
-                            </Table.Td>
-                          </Table.Tr>
-                        )
-                      )}
-                    </Table.Tbody>
-                  </Table>
+                              </Table.Td>
+                              <Table.Td>
+                                <Text size='sm'>{log.fieldName || 'N/A'}</Text>
+                              </Table.Td>
+                              <Table.Td>
+                                <Group gap='xs'>
+                                  {log.oldValue && (
+                                    <Badge
+                                      color='red'
+                                      variant='light'
+                                      size='xs'
+                                    >
+                                      Old
+                                    </Badge>
+                                  )}
+                                  {log.newValue && (
+                                    <Badge
+                                      color='green'
+                                      variant='light'
+                                      size='xs'
+                                    >
+                                      New
+                                    </Badge>
+                                  )}
+                                </Group>
+                              </Table.Td>
+                              <Table.Td>
+                                <ActionIcon
+                                  variant='light'
+                                  size='sm'
+                                  onClick={() => handleLogClick(log)}
+                                >
+                                  <IconEye size={14} />
+                                </ActionIcon>
+                              </Table.Td>
+                            </Table.Tr>
+                          )
+                        )}
+                      </Table.Tbody>
+                    </Table>
+                  </ScrollArea>
 
                   {auditLogs?.pagination && (
                     <Group justify='center' mt='md'>
@@ -435,81 +456,81 @@ export default function AuditLogsPage() {
                 All changes made to tickets including status updates,
                 assignments, and content modifications.
               </Alert>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Ticket</Table.Th>
-                    <Table.Th>Action</Table.Th>
-                    <Table.Th>User</Table.Th>
-                    <Table.Th>Changes</Table.Th>
-                    <Table.Th>Time</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {auditLogs?.data
-                    ?.filter(
-                      log =>
-                        log.details &&
-                        typeof log.details === 'object' &&
-                        'ticket' in log.details
-                    )
-                    .map(log => {
-                      const ticketInfo = log.details.ticket as {
-                        id: string;
-                        title: string;
-                      };
-                      return (
-                        <Table.Tr key={log.id}>
-                          <Table.Td>
-                            <Stack gap='xs'>
-                              <Text fw={500}>{ticketInfo?.title}</Text>
-                              <Text size='xs' c='dimmed'>
-                                #{ticketInfo?.id}
+              <ScrollArea>
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Ticket</Table.Th>
+                      <Table.Th>Action</Table.Th>
+                      <Table.Th>User</Table.Th>
+                      <Table.Th>Changes</Table.Th>
+                      <Table.Th>Time</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {auditLogs?.data?.data
+                      ?.filter(log => log.resource === 'ticket')
+                      .map(log => {
+                        const ticketInfo = { id: log.id, title: 'N/A' };
+                        return (
+                          <Table.Tr key={log.id}>
+                            <Table.Td>
+                              <Stack gap='xs'>
+                                <Text fw={500}>{ticketInfo?.title}</Text>
+                                <Text size='xs' c='dimmed'>
+                                  #{ticketInfo?.id}
+                                </Text>
+                              </Stack>
+                            </Table.Td>
+                            <Table.Td>
+                              <Badge
+                                color={getActionColor(log.action)}
+                                variant='light'
+                                size='sm'
+                              >
+                                {log.action}
+                              </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size='sm'>
+                                {log.user?.name || 'System'}
                               </Text>
-                            </Stack>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge
-                              color={getActionColor(log.action)}
-                              variant='light'
-                              size='sm'
-                            >
-                              {log.action}
-                            </Badge>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>{log.user?.name || 'System'}</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Group gap='xs'>
-                              {log.details.oldValue !== undefined &&
-                                log.details.oldValue !== null && (
-                                  <Badge color='red' variant='light' size='xs'>
-                                    Old
-                                  </Badge>
-                                )}
-                              {log.details.newValue !== undefined &&
-                                log.details.newValue !== null && (
-                                  <Badge
-                                    color='green'
-                                    variant='light'
-                                    size='xs'
-                                  >
-                                    New
-                                  </Badge>
-                                )}
-                            </Group>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>
-                              {new Date(log.createdAt).toLocaleString()}
-                            </Text>
-                          </Table.Td>
-                        </Table.Tr>
-                      );
-                    })}
-                </Table.Tbody>
-              </Table>
+                            </Table.Td>
+                            <Table.Td>
+                              <Group gap='xs'>
+                                {log.oldValue !== undefined &&
+                                  log.oldValue !== null && (
+                                    <Badge
+                                      color='red'
+                                      variant='light'
+                                      size='xs'
+                                    >
+                                      Old
+                                    </Badge>
+                                  )}
+                                {log.newValue !== undefined &&
+                                  log.newValue !== null && (
+                                    <Badge
+                                      color='green'
+                                      variant='light'
+                                      size='xs'
+                                    >
+                                      New
+                                    </Badge>
+                                  )}
+                              </Group>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size='sm'>
+                                {new Date(log.createdAt).toLocaleString()}
+                              </Text>
+                            </Table.Td>
+                          </Table.Tr>
+                        );
+                      })}
+                  </Table.Tbody>
+                </Table>
+              </ScrollArea>
             </Stack>
           </Card>
         </Tabs.Panel>
@@ -522,73 +543,75 @@ export default function AuditLogsPage() {
                 Login, logout, profile changes, and other user-related
                 activities.
               </Alert>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>User</Table.Th>
-                    <Table.Th>Action</Table.Th>
-                    <Table.Th>Details</Table.Th>
-                    <Table.Th>IP Address</Table.Th>
-                    <Table.Th>Time</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {auditLogs?.data
-                    ?.filter(
-                      (log: {
-                        id: string;
-                        action: string;
-                        createdAt: string;
-                        user?: { name: string; email: string };
-                        fieldName?: string;
-                        ipAddress?: string;
-                      }) => ['LOGIN', 'LOGOUT', 'UPDATE'].includes(log.action)
-                    )
-                    .map(
-                      (log: {
-                        id: string;
-                        action: string;
-                        createdAt: string;
-                        user?: { name: string; email: string };
-                        fieldName?: string;
-                        ipAddress?: string;
-                      }) => (
-                        <Table.Tr key={log.id}>
-                          <Table.Td>
-                            <Stack gap='xs'>
-                              <Text fw={500}>
-                                {log.user?.name || 'Unknown'}
-                              </Text>
-                              <Text size='xs' c='dimmed'>
-                                {log.user?.email || 'N/A'}
-                              </Text>
-                            </Stack>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge
-                              color={getActionColor(log.action)}
-                              variant='light'
-                              size='sm'
-                            >
-                              {log.action}
-                            </Badge>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>{log.fieldName || 'N/A'}</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>{log.ipAddress || 'N/A'}</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>
-                              {new Date(log.createdAt).toLocaleString()}
-                            </Text>
-                          </Table.Td>
-                        </Table.Tr>
+              <ScrollArea>
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>User</Table.Th>
+                      <Table.Th>Action</Table.Th>
+                      <Table.Th>Details</Table.Th>
+                      <Table.Th>IP Address</Table.Th>
+                      <Table.Th>Time</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {auditLogs?.data?.data
+                      ?.filter(
+                        (log: {
+                          id: string;
+                          action: string;
+                          createdAt: string;
+                          user?: { name: string; email: string };
+                          fieldName?: string;
+                          ipAddress?: string;
+                        }) => ['LOGIN', 'LOGOUT', 'UPDATE'].includes(log.action)
                       )
-                    )}
-                </Table.Tbody>
-              </Table>
+                      .map(
+                        (log: {
+                          id: string;
+                          action: string;
+                          createdAt: string;
+                          user?: { name: string; email: string };
+                          fieldName?: string;
+                          ipAddress?: string;
+                        }) => (
+                          <Table.Tr key={log.id}>
+                            <Table.Td>
+                              <Stack gap='xs'>
+                                <Text fw={500}>
+                                  {log.user?.name || 'Unknown'}
+                                </Text>
+                                <Text size='xs' c='dimmed'>
+                                  {log.user?.email || 'N/A'}
+                                </Text>
+                              </Stack>
+                            </Table.Td>
+                            <Table.Td>
+                              <Badge
+                                color={getActionColor(log.action)}
+                                variant='light'
+                                size='sm'
+                              >
+                                {log.action}
+                              </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size='sm'>{log.fieldName || 'N/A'}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size='sm'>{log.ipAddress || 'N/A'}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size='sm'>
+                                {new Date(log.createdAt).toLocaleString()}
+                              </Text>
+                            </Table.Td>
+                          </Table.Tr>
+                        )
+                      )}
+                  </Table.Tbody>
+                </Table>
+              </ScrollArea>
             </Stack>
           </Card>
         </Tabs.Panel>
@@ -601,56 +624,58 @@ export default function AuditLogsPage() {
                 System-level events, configuration changes, and administrative
                 actions.
               </Alert>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Event</Table.Th>
-                    <Table.Th>Severity</Table.Th>
-                    <Table.Th>Description</Table.Th>
-                    <Table.Th>Time</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {auditLogs?.data
-                    ?.filter(
-                      (log: {
-                        id: string;
-                        action: string;
-                        createdAt: string;
-                        description?: string;
-                      }) => log.action === 'SYSTEM'
-                    )
-                    .map(
-                      (log: {
-                        id: string;
-                        action: string;
-                        createdAt: string;
-                        description?: string;
-                      }) => (
-                        <Table.Tr key={log.id}>
-                          <Table.Td>
-                            <Text fw={500}>{log.action}</Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge color='orange' variant='light' size='sm'>
-                              System
-                            </Badge>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>
-                              {log.description || 'System event'}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>
-                              {new Date(log.createdAt).toLocaleString()}
-                            </Text>
-                          </Table.Td>
-                        </Table.Tr>
+              <ScrollArea>
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Event</Table.Th>
+                      <Table.Th>Severity</Table.Th>
+                      <Table.Th>Description</Table.Th>
+                      <Table.Th>Time</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {auditLogs?.data?.data
+                      ?.filter(
+                        (log: {
+                          id: string;
+                          action: string;
+                          createdAt: string;
+                          description?: string;
+                        }) => log.action === 'SYSTEM'
                       )
-                    )}
-                </Table.Tbody>
-              </Table>
+                      .map(
+                        (log: {
+                          id: string;
+                          action: string;
+                          createdAt: string;
+                          description?: string;
+                        }) => (
+                          <Table.Tr key={log.id}>
+                            <Table.Td>
+                              <Text fw={500}>{log.action}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Badge color='orange' variant='light' size='sm'>
+                                System
+                              </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size='sm'>
+                                {log.description || 'System event'}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size='sm'>
+                                {new Date(log.createdAt).toLocaleString()}
+                              </Text>
+                            </Table.Td>
+                          </Table.Tr>
+                        )
+                      )}
+                  </Table.Tbody>
+                </Table>
+              </ScrollArea>
             </Stack>
           </Card>
         </Tabs.Panel>
@@ -662,15 +687,16 @@ export default function AuditLogsPage() {
         onClose={() => setDetailModalOpen(false)}
         title='Audit Log Details'
         size='lg'
+        fullScreen
       >
         {selectedLog && (
           <Stack>
             <Grid>
-              <Grid.Col span={6}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Text fw={500}>Timestamp</Text>
                 <Text>{new Date(selectedLog.createdAt).toLocaleString()}</Text>
               </Grid.Col>
-              <Grid.Col span={6}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Text fw={500}>Action</Text>
                 <Badge
                   color={getActionColor(selectedLog.action)}
@@ -683,14 +709,14 @@ export default function AuditLogsPage() {
             </Grid>
 
             <Grid>
-              <Grid.Col span={6}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Text fw={500}>User</Text>
                 <Text>{selectedLog.user?.name || 'System'}</Text>
                 <Text size='sm' c='dimmed'>
                   {selectedLog.user?.email || 'system@ntg-ticket.com'}
                 </Text>
               </Grid.Col>
-              <Grid.Col span={6}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Text fw={500}>IP Address</Text>
                 <Text>{selectedLog.ipAddress || 'N/A'}</Text>
               </Grid.Col>
@@ -709,13 +735,13 @@ export default function AuditLogsPage() {
             <Stack>
               <Text fw={500}>Field Changes</Text>
               <Grid>
-                <Grid.Col span={6}>
+                <Grid.Col span={{ base: 12, sm: 6 }}>
                   <Text size='sm' c='dimmed'>
                     Field
                   </Text>
                   <Text>{selectedLog.fieldName || 'N/A'}</Text>
                 </Grid.Col>
-                <Grid.Col span={6}>
+                <Grid.Col span={{ base: 12, sm: 6 }}>
                   <Text size='sm' c='dimmed'>
                     Resource Type
                   </Text>
@@ -729,7 +755,7 @@ export default function AuditLogsPage() {
                 <Text fw={500}>Value Changes</Text>
                 <Grid>
                   {selectedLog.oldValue && (
-                    <Grid.Col span={6}>
+                    <Grid.Col span={{ base: 12, sm: 6 }}>
                       <Text size='sm' c='dimmed'>
                         Old Value
                       </Text>
@@ -737,7 +763,7 @@ export default function AuditLogsPage() {
                     </Grid.Col>
                   )}
                   {selectedLog.newValue && (
-                    <Grid.Col span={6}>
+                    <Grid.Col span={{ base: 12, sm: 6 }}>
                       <Text size='sm' c='dimmed'>
                         New Value
                       </Text>

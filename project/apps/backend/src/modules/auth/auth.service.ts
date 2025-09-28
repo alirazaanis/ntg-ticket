@@ -55,8 +55,15 @@ export class AuthService {
       role: user.role,
     };
 
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(
+      { sub: user.id, type: 'refresh' },
+      { expiresIn: '7d' }
+    );
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
+      refresh_token: refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -292,6 +299,54 @@ export class AuthService {
       return userWithoutPassword;
     } catch (error) {
       this.logger.error('Error validating user credentials:', error);
+      return null;
+    }
+  }
+
+  async refreshToken(refreshToken: string): Promise<{
+    access_token: string;
+    refresh_token: string;
+  } | null> {
+    try {
+      const decoded = this.jwtService.verify(refreshToken);
+
+      if (decoded.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          isActive: true,
+        },
+      });
+
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('User not found or inactive');
+      }
+
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
+
+      const newAccessToken = this.jwtService.sign(payload);
+      const newRefreshToken = this.jwtService.sign(
+        { sub: user.id, type: 'refresh' },
+        { expiresIn: '7d' }
+      );
+
+      return {
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken,
+      };
+    } catch (error) {
+      this.logger.error('Error refreshing token:', error);
       return null;
     }
   }

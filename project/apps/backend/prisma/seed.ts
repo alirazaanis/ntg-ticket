@@ -22,7 +22,7 @@ async function main() {
     update: {},
     create: {
       email: 'admin@ntg-ticket.com',
-      name: 'System Administrator',
+      name: 'أحمد محمد علي',
       password: await bcrypt.hash('admin123', 12),
       role: UserRole.ADMIN,
       isActive: true,
@@ -34,7 +34,7 @@ async function main() {
     update: {},
     create: {
       email: 'manager@ntg-ticket.com',
-      name: 'Support Manager',
+      name: 'فاطمة عبد الرحمن',
       password: await bcrypt.hash('manager123', 12),
       role: UserRole.SUPPORT_MANAGER,
       isActive: true,
@@ -46,7 +46,7 @@ async function main() {
     update: {},
     create: {
       email: 'support1@ntg-ticket.com',
-      name: 'John Smith',
+      name: 'محمد حسن إبراهيم',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -58,7 +58,7 @@ async function main() {
     update: {},
     create: {
       email: 'support2@ntg-ticket.com',
-      name: 'Jane Doe',
+      name: 'عائشة أحمد محمود',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -70,7 +70,7 @@ async function main() {
     update: {},
     create: {
       email: 'support3@ntg-ticket.com',
-      name: 'Mike Johnson',
+      name: 'خالد عبد الله السعيد',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -82,7 +82,7 @@ async function main() {
     update: {},
     create: {
       email: 'support4@ntg-ticket.com',
-      name: 'Sarah Wilson',
+      name: 'نور الدين محمد',
       password: await bcrypt.hash('support123', 12),
       role: UserRole.SUPPORT_STAFF,
       isActive: true,
@@ -94,7 +94,7 @@ async function main() {
     update: {},
     create: {
       email: 'user1@company.com',
-      name: 'Alice Johnson',
+      name: 'مريم علي حسن',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -106,7 +106,7 @@ async function main() {
     update: {},
     create: {
       email: 'user2@company.com',
-      name: 'Bob Wilson',
+      name: 'يوسف عبد العزيز',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -118,7 +118,7 @@ async function main() {
     update: {},
     create: {
       email: 'user3@company.com',
-      name: 'Carol Davis',
+      name: 'زينب محمد عبد الرحمن',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -130,7 +130,7 @@ async function main() {
     update: {},
     create: {
       email: 'user4@company.com',
-      name: 'David Brown',
+      name: 'عمر أحمد الشريف',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -142,7 +142,7 @@ async function main() {
     update: {},
     create: {
       email: 'user5@company.com',
-      name: 'Emma Taylor',
+      name: 'سارة محمود إبراهيم',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -154,7 +154,7 @@ async function main() {
     update: {},
     create: {
       email: 'user6@company.com',
-      name: 'Frank Miller',
+      name: 'طارق محمد علي',
       password: await bcrypt.hash('user123', 12),
       role: UserRole.END_USER,
       isActive: true,
@@ -1140,12 +1140,27 @@ async function main() {
     const category = await prisma.category.findFirst({
       where: { name: ticketData.category },
     });
+
+    if (!category) {
+      console.error(
+        `Category not found for ticket ${ticketData.ticketNumber}: ${ticketData.category}`
+      );
+      continue;
+    }
+
     const subcategory = await prisma.subcategory.findFirst({
       where: {
         name: ticketData.subcategory,
-        categoryId: category?.id,
+        categoryId: category.id,
       },
     });
+
+    if (!subcategory) {
+      console.error(
+        `Subcategory not found for ticket ${ticketData.ticketNumber}: ${ticketData.subcategory} in category ${category.name}`
+      );
+      continue;
+    }
 
     await prisma.ticket.upsert({
       where: { ticketNumber: ticketData.ticketNumber },
@@ -1172,10 +1187,10 @@ async function main() {
             }
           : undefined,
         category: {
-          connect: { id: category?.id },
+          connect: { id: category.id },
         },
         subcategory: {
-          connect: { id: subcategory?.id },
+          connect: { id: subcategory.id },
         },
       },
     });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Container,
@@ -45,39 +45,29 @@ export default function EditTicketPage() {
   const { data: ticket, isLoading, error } = useTicket(ticketId);
   const updateTicketMutation = useUpdateTicket();
 
+  // Memoize initial values to prevent form recreation
+  const initialValues = useMemo(
+    () => ({
+      title: ticket?.title || '',
+      description: ticket?.description || '',
+      category:
+        (ticket?.category?.name as TicketCategory) || TicketCategory.SOFTWARE,
+      priority: ticket?.priority || TicketPriority.MEDIUM,
+      impact: ticket?.impact || TicketImpact.MODERATE,
+      urgency: ticket?.urgency || TicketUrgency.NORMAL,
+      slaLevel: ticket?.slaLevel || SlaLevel.STANDARD,
+      status: ticket?.status || TicketStatus.NEW,
+      resolution: ticket?.resolution || '',
+    }),
+    [ticket]
+  );
+
   const form = useForm({
-    initialValues: {
-      title: '',
-      description: '',
-      category: TicketCategory.SOFTWARE,
-      priority: TicketPriority.MEDIUM,
-      impact: TicketImpact.MODERATE,
-      urgency: TicketUrgency.NORMAL,
-      slaLevel: SlaLevel.STANDARD,
-      status: TicketStatus.NEW,
-      resolution: '',
-    },
+    initialValues,
     validate: {
       title: value => (!value ? 'Title is required' : null),
       description: value => (!value ? 'Description is required' : null),
     },
-  });
-
-  // Update form when ticket data loads
-  useState(() => {
-    if (ticket) {
-      form.setValues({
-        title: ticket.title,
-        description: ticket.description,
-        category: ticket.category.id as TicketCategory,
-        priority: ticket.priority,
-        impact: ticket.impact,
-        urgency: ticket.urgency,
-        slaLevel: ticket.slaLevel,
-        status: ticket.status,
-        resolution: ticket.resolution || '',
-      });
-    }
   });
 
   const handleSubmit = async (values: typeof form.values) => {

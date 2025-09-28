@@ -20,6 +20,10 @@ import { VirusScanModule } from './modules/virus-scan/virus-scan.module';
 import { SavedSearchesModule } from './modules/saved-searches/saved-searches.module';
 import { EmailTemplatesModule } from './modules/email-templates/email-templates.module';
 import { BackgroundJobsModule } from './modules/background-jobs/background-jobs.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
+import { CustomFieldsModule } from './modules/custom-fields/custom-fields.module';
+import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 
 // Common modules
 import { LoggerModule } from './common/logger/logger.module';
@@ -77,6 +81,10 @@ import { SystemConfigModule } from './common/config/system-config.module';
     SavedSearchesModule,
     EmailTemplatesModule,
     BackgroundJobsModule,
+    PermissionsModule,
+    IntegrationsModule,
+    CustomFieldsModule,
+    AuditLogsModule,
   ],
 })
 export class AppModule {}

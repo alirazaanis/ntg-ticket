@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
-  Container,
-  Paper,
   TextInput,
   PasswordInput,
   Button,
@@ -13,21 +12,29 @@ import {
   Stack,
   Alert,
   Group,
-  Divider,
   Select,
+  Box,
+  ThemeIcon,
+  Anchor,
 } from '@mantine/core';
 import {
   IconAlertCircle,
   IconMail,
   IconLock,
   IconUser,
+  IconShield,
+  IconArrowRight,
+  IconCheck,
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePasswordValidation } from '../../../hooks/usePasswordValidation';
 import { userApi } from '../../../lib/apiClient';
 import { UserRole } from '@/types/unified';
+import { AuthLayout } from '../../../components/layouts/AuthLayout';
 
 export default function SignUpPage() {
+  const t = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,6 +44,11 @@ export default function SignUpPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentStep, setCurrentStep] = useState<
+    'personal' | 'credentials' | 'role' | 'complete'
+  >('personal');
+  const [emailValid, setEmailValid] = useState(false);
+  const [passwordValid, setPasswordValid] = useState(false);
   const router = useRouter();
   const { validatePassword } = usePasswordValidation();
 
@@ -54,7 +66,7 @@ export default function SignUpPage() {
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(tAuth('passwordMismatch'));
       setLoading(false);
       return;
     }
@@ -79,9 +91,11 @@ export default function SignUpPage() {
       });
 
       if (response.status === 201) {
-        router.push('/auth/signin?message=Account created successfully');
+        router.push(
+          `/auth/signin?message=${tAuth('accountCreatedSuccessfully')}`
+        );
       } else {
-        setError('An error occurred while creating your account');
+        setError(tAuth('errorCreatingAccount'));
       }
     } catch (error: unknown) {
       // Handle signup error
@@ -90,113 +104,481 @@ export default function SignUpPage() {
           response?: { status?: number; data?: { message?: string } };
         };
         if (axiosError.response?.status === 409) {
-          setError('An account with this email already exists');
+          setError(tAuth('accountExists'));
         } else if (axiosError.response?.status === 400) {
           setError(
-            axiosError.response?.data?.message || 'Invalid data provided'
+            axiosError.response?.data?.message || tAuth('invalidDataProvided')
           );
         } else {
-          setError('An error occurred. Please try again.');
+          setError(tAuth('errorOccurred'));
         }
       } else {
-        setError('An error occurred. Please try again.');
+        setError(tAuth('errorOccurred'));
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  // Real-time validation (UIR7: Immediate error feedback)
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
-  return (
-    <Container size={420} my={40}>
-      <Title ta='center' mb='md'>
-        Create account
-      </Title>
-      <Text c='dimmed' size='sm' ta='center' mt={5} mb={30}>
-        Sign up for NTG Ticket
-      </Text>
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
 
-      <Paper withBorder shadow='md' p={30} mt={30} radius='md'>
-        <form onSubmit={handleSubmit}>
-          <Stack>
+    // Real-time validation
+    if (field === 'email') {
+      setEmailValid(validateEmail(value));
+    } else if (field === 'password') {
+      const passwordError = validatePassword(value);
+      setPasswordValid(!passwordError && value.length >= 8);
+    }
+
+    setError('');
+  };
+
+  const handleNext = () => {
+    switch (currentStep) {
+      case 'personal':
+        if (formData.name.trim() && emailValid) {
+          setCurrentStep('credentials');
+        } else {
+          setError(tAuth('fillRequiredFields'));
+        }
+        break;
+      case 'credentials':
+        if (passwordValid && formData.password === formData.confirmPassword) {
+          setCurrentStep('role');
+        } else {
+          setError(tAuth('passwordsMatchRequirements'));
+        }
+        break;
+      case 'role':
+        handleSubmit(new Event('submit') as unknown as React.FormEvent);
+        break;
+    }
+  };
+
+  const handleBack = () => {
+    switch (currentStep) {
+      case 'credentials':
+        setCurrentStep('personal');
+        break;
+      case 'role':
+        setCurrentStep('credentials');
+        break;
+    }
+    setError('');
+  };
+
+  // Guided step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 'personal':
+        return (
+          <Stack gap='lg'>
+            <Box>
+              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+                {tAuth('personalInfo')}
+              </Title>
+              <Text c='dimmed' size='sm'>
+                {tAuth('personalInfoSubtitle')}
+              </Text>
+            </Box>
+
             {error && (
-              <Alert icon={<IconAlertCircle size={16} />} color='red'>
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                color='red'
+                variant='light'
+                radius='md'
+              >
                 {error}
               </Alert>
             )}
 
-            <TextInput
-              label='Full Name'
-              placeholder='John Doe'
-              required
-              leftSection={<IconUser size={16} />}
-              value={formData.name}
-              onChange={e => handleChange('name', e.currentTarget.value)}
-            />
+            <Stack gap='md'>
+              <TextInput
+                label={tAuth('fullName')}
+                placeholder='John Doe'
+                required
+                leftSection={<IconUser size={18} />}
+                value={formData.name}
+                onChange={e => handleChange('name', e.currentTarget.value)}
+                size='lg'
+                radius='md'
+                autoComplete='name'
+                name='name'
+                id='name'
+                dir='auto'
+                styles={{
+                  input: {
+                    border: formData.name.trim()
+                      ? '2px solid #51cf66'
+                      : '2px solid #e9ecef',
+                    '&:focus': {
+                      borderColor: formData.name.trim() ? '#51cf66' : '#667eea',
+                    },
+                  },
+                }}
+              />
 
-            <TextInput
-              label='Email'
-              placeholder='your@email.com'
-              required
-              leftSection={<IconMail size={16} />}
-              value={formData.email}
-              onChange={e => handleChange('email', e.currentTarget.value)}
-              type='email'
-            />
+              <TextInput
+                label={tAuth('email')}
+                placeholder='your@email.com'
+                required
+                leftSection={<IconMail size={18} />}
+                value={formData.email}
+                onChange={e => handleChange('email', e.currentTarget.value)}
+                type='email'
+                size='lg'
+                radius='md'
+                autoComplete='email'
+                name='email'
+                id='email'
+                dir='auto'
+                error={
+                  formData.email && !emailValid ? tAuth('emailInvalid') : ''
+                }
+                styles={{
+                  input: {
+                    border: emailValid
+                      ? '2px solid #51cf66'
+                      : '2px solid #e9ecef',
+                    '&:focus': {
+                      borderColor: emailValid ? '#51cf66' : '#667eea',
+                    },
+                  },
+                }}
+              />
+            </Stack>
 
-            <Select
-              label='Role'
-              placeholder='Select your role'
-              data={[
-                { value: 'END_USER', label: 'End User' },
-                { value: 'SUPPORT_STAFF', label: 'Support Staff' },
-                { value: 'SUPPORT_MANAGER', label: 'Support Manager' },
-                { value: 'ADMIN', label: 'Administrator' },
-              ]}
-              value={formData.role}
-              onChange={value => handleChange('role', value || 'END_USER')}
-            />
-
-            <PasswordInput
-              label='Password'
-              placeholder='Your password'
-              required
-              leftSection={<IconLock size={16} />}
-              value={formData.password}
-              onChange={e => handleChange('password', e.currentTarget.value)}
-            />
-
-            <PasswordInput
-              label='Confirm Password'
-              placeholder='Confirm your password'
-              required
-              leftSection={<IconLock size={16} />}
-              value={formData.confirmPassword}
-              onChange={e =>
-                handleChange('confirmPassword', e.currentTarget.value)
-              }
-            />
-
-            <Button type='submit' fullWidth loading={loading}>
-              Create account
+            <Button
+              onClick={handleNext}
+              fullWidth
+              disabled={!formData.name.trim() || !emailValid}
+              size='lg'
+              radius='md'
+              rightSection={<IconArrowRight size={18} />}
+              style={{
+                background:
+                  formData.name.trim() && emailValid
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : '#e9ecef',
+                border: 'none',
+                fontWeight: 600,
+                color: formData.name.trim() && emailValid ? 'white' : '#adb5bd',
+              }}
+            >
+              {t('next')}
             </Button>
 
-            <Divider label='or' labelPosition='center' />
-
             <Group justify='center'>
-              <Text size='sm'>
-                Already have an account?{' '}
-                <Link href='/auth/signin' style={{ textDecoration: 'none' }}>
-                  Sign in
-                </Link>
+              <Text size='sm' c='dimmed'>
+                {tAuth('alreadyHaveAccount')}{' '}
+                <Anchor
+                  component={Link}
+                  href='/auth/signin'
+                  fw={600}
+                  style={{
+                    color: '#667eea',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {tAuth('signIn')}
+                </Anchor>
               </Text>
             </Group>
           </Stack>
-        </form>
-      </Paper>
-    </Container>
+        );
+
+      case 'credentials':
+        return (
+          <Stack gap='lg'>
+            <Box>
+              <Button
+                variant='subtle'
+                leftSection={
+                  <IconArrowRight
+                    size={16}
+                    style={{ transform: 'rotate(180deg)' }}
+                  />
+                }
+                onClick={handleBack}
+                size='sm'
+                mb='md'
+                style={{ alignSelf: 'flex-start' }}
+              >
+                {t('back')}
+              </Button>
+              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+                {tAuth('createPassword')}
+              </Title>
+              <Text c='dimmed' size='sm'>
+                {tAuth('createPasswordSubtitle')}
+              </Text>
+            </Box>
+
+            {error && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                color='red'
+                variant='light'
+                radius='md'
+              >
+                {error}
+              </Alert>
+            )}
+
+            <Stack gap='md'>
+              <PasswordInput
+                label={tAuth('password')}
+                placeholder='Create a strong password'
+                required
+                leftSection={<IconLock size={18} />}
+                value={formData.password}
+                onChange={e => handleChange('password', e.currentTarget.value)}
+                size='lg'
+                radius='md'
+                autoFocus
+                autoComplete='new-password'
+                name='password'
+                id='password'
+                dir='auto'
+                error={
+                  formData.password && !passwordValid
+                    ? validatePassword(formData.password)
+                    : ''
+                }
+                styles={{
+                  input: {
+                    border: passwordValid
+                      ? '2px solid #51cf66'
+                      : '2px solid #e9ecef',
+                    '&:focus': {
+                      borderColor: passwordValid ? '#51cf66' : '#667eea',
+                    },
+                  },
+                }}
+              />
+
+              <PasswordInput
+                label={tAuth('confirmPassword')}
+                placeholder='Confirm your password'
+                required
+                leftSection={<IconLock size={18} />}
+                value={formData.confirmPassword}
+                onChange={e =>
+                  handleChange('confirmPassword', e.currentTarget.value)
+                }
+                size='lg'
+                radius='md'
+                autoComplete='new-password'
+                name='confirmPassword'
+                id='confirmPassword'
+                dir='auto'
+                error={
+                  formData.confirmPassword &&
+                  formData.password !== formData.confirmPassword
+                    ? tAuth('passwordMismatch')
+                    : ''
+                }
+                styles={{
+                  input: {
+                    border:
+                      formData.confirmPassword &&
+                      formData.password === formData.confirmPassword
+                        ? '2px solid #51cf66'
+                        : '2px solid #e9ecef',
+                    '&:focus': {
+                      borderColor:
+                        formData.confirmPassword &&
+                        formData.password === formData.confirmPassword
+                          ? '#51cf66'
+                          : '#667eea',
+                    },
+                  },
+                }}
+              />
+            </Stack>
+
+            <Button
+              onClick={handleNext}
+              fullWidth
+              disabled={
+                !passwordValid || formData.password !== formData.confirmPassword
+              }
+              size='lg'
+              radius='md'
+              rightSection={<IconArrowRight size={18} />}
+              style={{
+                background:
+                  passwordValid &&
+                  formData.password === formData.confirmPassword
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : '#e9ecef',
+                border: 'none',
+                fontWeight: 600,
+                color:
+                  passwordValid &&
+                  formData.password === formData.confirmPassword
+                    ? 'white'
+                    : '#adb5bd',
+              }}
+            >
+              {t('next')}
+            </Button>
+          </Stack>
+        );
+
+      case 'role':
+        return (
+          <Stack gap='lg'>
+            <Box>
+              <Button
+                variant='subtle'
+                leftSection={
+                  <IconArrowRight
+                    size={16}
+                    style={{ transform: 'rotate(180deg)' }}
+                  />
+                }
+                onClick={handleBack}
+                size='sm'
+                mb='md'
+                style={{ alignSelf: 'flex-start' }}
+              >
+                {t('back')}
+              </Button>
+              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+                {tAuth('selectRole')}
+              </Title>
+              <Text c='dimmed' size='sm'>
+                {tAuth('selectRoleSubtitle')}
+              </Text>
+            </Box>
+
+            {error && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                color='red'
+                variant='light'
+                radius='md'
+              >
+                {error}
+              </Alert>
+            )}
+
+            <Select
+              label={tAuth('role')}
+              placeholder='Select your role'
+              data={[
+                {
+                  value: 'END_USER',
+                  label: tAuth('endUser'),
+                },
+                {
+                  value: 'SUPPORT_STAFF',
+                  label: tAuth('supportStaff'),
+                },
+                {
+                  value: 'SUPPORT_MANAGER',
+                  label: tAuth('supportManager'),
+                },
+                { value: 'ADMIN', label: tAuth('administrator') },
+              ]}
+              value={formData.role}
+              onChange={value => handleChange('role', value || 'END_USER')}
+              size='lg'
+              radius='md'
+              dir='auto'
+              styles={{
+                input: {
+                  border: '2px solid #e9ecef',
+                  '&:focus': {
+                    borderColor: '#667eea',
+                  },
+                },
+              }}
+            />
+
+            <Button
+              onClick={handleNext}
+              fullWidth
+              loading={loading}
+              size='lg'
+              radius='md'
+              rightSection={<IconArrowRight size={18} />}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                fontWeight: 600,
+              }}
+            >
+              {tAuth('createAccount')}
+            </Button>
+
+            <Box
+              style={{
+                background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #e0e7ff',
+              }}
+            >
+              <Group gap='sm'>
+                <ThemeIcon size='sm' variant='light' color='blue'>
+                  <IconShield size={14} />
+                </ThemeIcon>
+                <Text size='xs' c='blue.7' fw={500}>
+                  {tAuth('secureLogin')}
+                </Text>
+              </Group>
+            </Box>
+          </Stack>
+        );
+
+      case 'complete':
+        return (
+          <Stack gap='lg' align='center'>
+            <Box ta='center'>
+              <ThemeIcon
+                size={60}
+                radius='xl'
+                variant='gradient'
+                gradient={{ from: 'green', to: 'teal' }}
+                mb='md'
+              >
+                <IconCheck size={30} />
+              </ThemeIcon>
+              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+                {tAuth('accountCreated')}
+              </Title>
+              <Text c='dimmed' size='sm'>
+                {tAuth('welcome')}, {formData.name}!
+              </Text>
+              <Text c='dimmed' size='sm' mt='xs'>
+                {tAuth('redirectingToSignIn')}
+              </Text>
+            </Box>
+          </Stack>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <AuthLayout
+      title={tAuth('welcome')}
+      subtitle={tAuth('subtitle')}
+      type='signup'
+    >
+      {renderStepContent()}
+    </AuthLayout>
   );
 }

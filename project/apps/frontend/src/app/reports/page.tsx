@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Title,
@@ -73,6 +74,7 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function ReportsPage() {
+  const t = useTranslations('reports');
   const [activeTab, setActiveTab] = useState('overview');
   const [filters, setFilters] = useState<ReportFilters>({});
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -131,7 +133,7 @@ export default function ReportsPage() {
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={2}>Reports & Analytics</Title>
+          <Title order={2}>{t('title')} & Analytics</Title>
           <Text c='dimmed' size='sm'>
             Comprehensive reporting and analytics dashboard
           </Text>
@@ -148,7 +150,7 @@ export default function ReportsPage() {
             leftSection={<IconFileExport size={16} />}
             onClick={() => setExportModalOpen(true)}
           >
-            Export Report
+            {t('exportReport')}
           </Button>
         </Group>
       </Group>
@@ -217,13 +219,13 @@ export default function ReportsPage() {
       >
         <Tabs.List>
           <Tabs.Tab value='overview' leftSection={<IconChartBar size={16} />}>
-            Overview
+            {t('overview')}
           </Tabs.Tab>
           <Tabs.Tab value='tickets' leftSection={<IconTicket size={16} />}>
-            Tickets
+            {t('ticketReport')}
           </Tabs.Tab>
           <Tabs.Tab value='users' leftSection={<IconUsers size={16} />}>
-            Users
+            {t('userReport')}
           </Tabs.Tab>
           <Tabs.Tab value='sla' leftSection={<IconClock size={16} />}>
             SLA

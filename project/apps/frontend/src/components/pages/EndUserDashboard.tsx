@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Grid,
@@ -40,6 +41,7 @@ import { Notification } from '../../types/notification';
 import { useRouter } from 'next/navigation';
 
 export function EndUserDashboard() {
+  const t = useTranslations('dashboard');
   const [createTicketOpened, setCreateTicketOpened] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuthStore();
@@ -102,14 +104,16 @@ export function EndUserDashboard() {
         {/* Header */}
         <Group justify='space-between'>
           <div>
-            <Title order={2}>Welcome back, {user?.name}!</Title>
+            <Title order={2}>
+              {t('welcome')}, {user?.name}!
+            </Title>
             <Text c='dimmed'>Here's what's happening with your tickets</Text>
           </div>
           <Button
             leftSection={<IconPlus size={16} />}
             onClick={() => setCreateTicketOpened(true)}
           >
-            Create Ticket
+            {t('createTicket')}
           </Button>
         </Group>
 
@@ -146,10 +150,10 @@ export function EndUserDashboard() {
               value='overview'
               leftSection={<IconTrendingUp size={16} />}
             >
-              Overview
+              {t('overview')}
             </Tabs.Tab>
             <Tabs.Tab value='tickets' leftSection={<IconTicket size={16} />}>
-              My Tickets
+              {t('myTickets')}
             </Tabs.Tab>
             <Tabs.Tab
               value='notifications'
@@ -220,14 +224,14 @@ export function EndUserDashboard() {
           <Tabs.Panel value='tickets' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>My Tickets</Title>
+                <Title order={3}>{t('myTickets')}</Title>
                 <Group>
                   <Button
                     variant='outline'
                     leftSection={<IconTicket size={16} />}
                     onClick={() => router.push('/tickets/my')}
                   >
-                    View All My Tickets
+                    {t('viewAllTickets')}
                   </Button>
                 </Group>
               </Group>
@@ -256,6 +260,7 @@ export function EndUserDashboard() {
         onClose={() => setCreateTicketOpened(false)}
         title='Create New Ticket'
         size='lg'
+        fullScreen
       >
         <DynamicTicketForm onSubmit={() => setCreateTicketOpened(false)} />
       </Modal>

@@ -1,7 +1,10 @@
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '../components/providers/Providers';
 import { ConditionalLayout } from '@/components/layouts/ConditionalLayout';
+import { LanguageDetector } from '../components/language/LanguageDetector';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -9,19 +12,34 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'NTG Ticket',
   description: 'IT Support - Ticket Management System',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+    ],
+    apple: '/favicon.svg',
+  },
+  manifest: '/manifest.json',
 };
 
-export default function RootLayout({
-  children,
-}: {
+type Props = {
   children: React.ReactNode;
-}) {
+};
+
+export default async function RootLayout({ children }: Props) {
+  // Providing all messages to the client
+  // side is the easiest way to get started
+  const messages = await getMessages();
+
   return (
-    <html lang='en'>
+    <html dir='auto'>
       <body className={inter.className}>
-        <Providers>
-          <ConditionalLayout>{children}</ConditionalLayout>
-        </Providers>
+        <LanguageDetector />
+        <NextIntlClientProvider messages={messages}>
+          <Providers>
+            <ConditionalLayout>{children}</ConditionalLayout>
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

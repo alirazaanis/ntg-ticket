@@ -361,3 +361,22 @@ model SystemSettings {
 
   @@map("system_settings")
 }
+
+model Integration {
+  id           String   @id @default(uuid())
+  name         String
+  type         String
+  enabled      Boolean  @default(false)
+  config       Json     @default("{}")
+  credentials  Json     @default("{}")
+  webhookUrl   String?
+  apiKey       String?
+  clientId     String?
+  clientSecret String?
+  tenantId     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("integrations")
+}

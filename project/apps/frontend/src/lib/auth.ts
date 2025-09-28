@@ -1,5 +1,47 @@
 import { NextAuthOptions } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
+
+async function refreshAccessToken(token: {
+  refreshToken?: string;
+  accessToken?: string;
+  accessTokenExpires?: number;
+}) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          refresh_token: token.refreshToken,
+        }),
+      }
+    );
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.data.access_token,
+      refreshToken: refreshedTokens.data.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+      accessTokenExpires: Date.now() + 30 * 60 * 1000, // 30 minutes
+    } as JWT;
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
+    } as JWT;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -55,6 +97,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
             image: user.avatar || null,
             accessToken: access_token,
+            refreshToken: loginData.data.refresh_token,
           };
         } catch (error) {
           return null;
@@ -64,20 +107,33 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 1 day
-    updateAge: 4 * 60 * 60, // 4 hours - refresh session every 4 hours
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+    updateAge: 30 * 60, // 30 minutes - refresh session every 30 minutes
   },
   jwt: {
-    maxAge: 24 * 60 * 60, // 1 day
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.id = user.id;
-        token.accessToken = user.accessToken;
+    async jwt({ token, user, account }) {
+      // Initial sign in
+      if (user && account) {
+        return {
+          ...token,
+          role: user.role,
+          id: user.id,
+          accessToken: user.accessToken,
+          refreshToken: user.refreshToken,
+          accessTokenExpires: Date.now() + 30 * 60 * 1000, // 30 minutes
+        };
       }
-      return token;
+
+      // Return previous token if the access token has not expired yet
+      if (Date.now() < (token.accessTokenExpires as number)) {
+        return token;
+      }
+
+      // Access token has expired, try to update it
+      return await refreshAccessToken(token);
     },
     async session({ session, token }) {
       if (token) {
@@ -88,6 +144,7 @@ export const authOptions: NextAuthOptions = {
           | 'SUPPORT_MANAGER'
           | 'ADMIN';
         session.accessToken = token.accessToken as string;
+        session.error = token.error as string;
       }
       return session;
     },

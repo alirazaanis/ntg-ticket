@@ -761,17 +761,20 @@ export interface Backup {
 export interface AuditLog {
   id: string;
   userId: string;
-  user: {
+  user?: {
     id: string;
     name: string;
     email: string;
   };
   action: string;
   resource: string;
-  resourceId: string;
-  details: Record<string, unknown>;
-  ipAddress: string;
-  userAgent: string;
+  resourceId?: string;
+  fieldName?: string;
+  oldValue?: string;
+  newValue?: string;
+  metadata?: any;
+  ipAddress?: string;
+  userAgent?: string;
   createdAt: string;
 }
 
@@ -780,6 +783,9 @@ export interface AuditLogsFilters {
   limit?: number;
   userId?: string;
   action?: string;
+  ticketId?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // ===== DYNAMIC FIELDS INTERFACES =====
@@ -810,4 +816,67 @@ export interface SystemHealth {
     storage: { status: string; availableSpace: number };
   };
   lastChecked: string;
+}
+
+// ===== INTEGRATIONS TYPES =====
+export interface Integration {
+  id: string;
+  name: string;
+  type:
+    | 'webhook'
+    | 'api'
+    | 'sso'
+    | 'email'
+    | 'slack'
+    | 'teams'
+    | 'jira'
+    | 'serviceNow';
+  enabled: boolean;
+  config: Record<string, unknown>;
+  credentials?: Record<string, string>;
+  webhookUrl?: string;
+  apiKey?: string;
+  clientId?: string;
+  clientSecret?: string;
+  tenantId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateIntegrationInput {
+  name: string;
+  type: Integration['type'];
+  enabled?: boolean;
+  config?: Record<string, unknown>;
+  credentials?: Record<string, string>;
+  webhookUrl?: string;
+  apiKey?: string;
+  clientId?: string;
+  clientSecret?: string;
+  tenantId?: string;
+}
+
+export interface UpdateIntegrationInput {
+  name?: string;
+  type?: Integration['type'];
+  enabled?: boolean;
+  config?: Record<string, unknown>;
+  credentials?: Record<string, string>;
+  webhookUrl?: string;
+  apiKey?: string;
+  clientId?: string;
+  clientSecret?: string;
+  tenantId?: string;
+}
+
+export interface IntegrationTestResult {
+  success: boolean;
+  message: string;
+}
+
+export interface WebhookPayload {
+  event: string;
+  data: Record<string, unknown>;
+  timestamp: string;
+  signature?: string;
 }

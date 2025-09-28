@@ -38,7 +38,7 @@ type NotificationData = {
   id: string;
   message: string;
   type: string;
-  read: boolean;
+  isRead: boolean;
   createdAt: string;
 };
 
@@ -74,10 +74,10 @@ export default function NotificationsPage() {
 
   const allNotifications = notificationsData || [];
   const unreadNotifications = allNotifications.filter(
-    (n: NotificationData) => !n.read
+    (n: NotificationData) => !n.isRead
   );
   const readNotifications = allNotifications.filter(
-    (n: NotificationData) => n.read
+    (n: NotificationData) => n.isRead
   );
 
   const handleMarkAsRead = async (notificationId: string) => {
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
         radius='md'
         withBorder
         style={{
-          opacity: notification.read ? 0.7 : 1,
+          opacity: notification.isRead ? 0.7 : 1,
           borderLeft: `4px solid var(--mantine-color-${getNotificationColor(notification.type)}-6)`,
         }}
       >
@@ -191,7 +191,7 @@ export default function NotificationsPage() {
             </div>
           </Group>
           <Group gap='xs'>
-            {!notification.read && (
+            {!notification.isRead && (
               <Badge size='xs' color='red' variant='dot'>
                 New
               </Badge>
@@ -203,7 +203,7 @@ export default function NotificationsPage() {
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {!notification.read && (
+                {!notification.isRead && (
                   <Menu.Item
                     leftSection={<IconCheck size={14} />}
                     onClick={() => handleMarkAsRead(notification.id)}

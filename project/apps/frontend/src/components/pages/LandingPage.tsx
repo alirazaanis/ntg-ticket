@@ -7,202 +7,126 @@ import {
   Button,
   Group,
   Stack,
-  Card,
-  Grid,
-  ThemeIcon,
-  List,
+  Box,
   Center,
+  Flex,
 } from '@mantine/core';
-import {
-  IconTicket,
-  IconUsers,
-  IconChartBar,
-  IconShield,
-  IconClock,
-  IconCheck,
-  IconArrowRight,
-} from '@tabler/icons-react';
+import { IconArrowRight, IconRocket } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { LanguageSwitcher } from '../language/LanguageSwitcher';
 
 export function LandingPage() {
-  const features = [
-    {
-      icon: IconTicket,
-      title: 'Ticket Management',
-      description: 'Create, track, and manage support tickets with ease',
-    },
-    {
-      icon: IconUsers,
-      title: 'Team Collaboration',
-      description: 'Work together with your team to resolve issues quickly',
-    },
-    {
-      icon: IconChartBar,
-      title: 'Analytics & Reports',
-      description: 'Get insights into your support performance and trends',
-    },
-    {
-      icon: IconShield,
-      title: 'Secure & Reliable',
-      description: 'Enterprise-grade security with role-based access control',
-    },
-    {
-      icon: IconClock,
-      title: 'SLA Management',
-      description: 'Automated SLA tracking and escalation notifications',
-    },
-    {
-      icon: IconCheck,
-      title: 'Quality Assurance',
-      description:
-        'Ensure consistent service quality and customer satisfaction',
-    },
-  ];
+  const t = useTranslations('HomePage');
 
   return (
-    <Container size='xl' py='xl'>
-      <Stack gap='xl'>
-        {/* Hero Section */}
-        <Center py='xl'>
-          <Stack align='center' gap='md'>
-            <Title order={1} size='3rem' ta='center'>
-              NTG Ticket
-            </Title>
-            <Text size='xl' c='dimmed' ta='center' maw={600}>
-              Streamline your IT support operations with our comprehensive
-              ticket management platform
-            </Text>
-            <Group mt='xl'>
-              <Button
-                component={Link}
-                href='/auth/signin'
-                size='lg'
-                rightSection={<IconArrowRight size={16} />}
-              >
-                Sign In
-              </Button>
-              <Button
-                component={Link}
-                href='/auth/signup'
-                variant='outline'
-                size='lg'
-              >
-                Get Started
-              </Button>
-            </Group>
-          </Stack>
-        </Center>
+    <Box
+      dir='auto'
+      style={{
+        minHeight: '100vh',
+        background:
+          'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Animated Background Elements */}
+      <Box
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.08) 0%, transparent 50%)
+          `,
+        }}
+      />
 
-        {/* Features Section */}
-        <div>
-          <Title order={2} ta='center' mb='xl'>
-            Why Choose NTG Ticket?
-          </Title>
-          <Grid>
-            {features.map(feature => (
-              <Grid.Col key={feature.title} span={{ base: 12, md: 6, lg: 4 }}>
-                <Card withBorder p='md' h='100%'>
-                  <Stack align='center' gap='md'>
-                    <ThemeIcon size='xl' variant='light' color='blue'>
-                      <feature.icon size={32} />
-                    </ThemeIcon>
-                    <Title order={3} size='h4' ta='center'>
-                      {feature.title}
-                    </Title>
-                    <Text c='dimmed' ta='center'>
-                      {feature.description}
-                    </Text>
-                  </Stack>
-                </Card>
-              </Grid.Col>
-            ))}
-          </Grid>
-        </div>
+      <Container size='xl' py='xl' style={{ position: 'relative', zIndex: 1 }}>
+        {/* Language Switcher - Top Right */}
+        <Flex justify='flex-end' mb='md'>
+          <LanguageSwitcher />
+        </Flex>
 
-        {/* Benefits Section */}
-        <Card withBorder p='xl' mt='xl'>
-          <Grid>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <Stack gap='md'>
-                <Title order={3}>Key Benefits</Title>
-                <List spacing='sm'>
-                  <List.Item icon={<IconCheck size={16} />}>
-                    Reduce response times by up to 50%
-                  </List.Item>
-                  <List.Item icon={<IconCheck size={16} />}>
-                    Improve customer satisfaction scores
-                  </List.Item>
-                  <List.Item icon={<IconCheck size={16} />}>
-                    Streamline workflow processes
-                  </List.Item>
-                  <List.Item icon={<IconCheck size={16} />}>
-                    Real-time collaboration tools
-                  </List.Item>
-                  <List.Item icon={<IconCheck size={16} />}>
-                    Comprehensive reporting and analytics
-                  </List.Item>
-                  <List.Item icon={<IconCheck size={16} />}>
-                    Mobile-responsive design
-                  </List.Item>
-                </List>
-              </Stack>
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <Stack gap='md'>
-                <Title order={3}>Perfect For</Title>
-                <List spacing='sm'>
-                  <List.Item icon={<IconUsers size={16} />}>
-                    IT Support Teams
-                  </List.Item>
-                  <List.Item icon={<IconUsers size={16} />}>
-                    Help Desk Operations
-                  </List.Item>
-                  <List.Item icon={<IconUsers size={16} />}>
-                    Customer Service Teams
-                  </List.Item>
-                  <List.Item icon={<IconUsers size={16} />}>
-                    Enterprise Organizations
-                  </List.Item>
-                  <List.Item icon={<IconUsers size={16} />}>
-                    Small to Medium Businesses
-                  </List.Item>
-                </List>
-              </Stack>
-            </Grid.Col>
-          </Grid>
-        </Card>
+        <Stack gap='xl'>
+          {/* Hero Section */}
+          <Center py='xl' style={{ minHeight: '80vh' }}>
+            <Stack align='center' gap='xl'>
+              {/* Main Title */}
+              <Title
+                order={1}
+                size='4rem'
+                ta='center'
+                fw={900}
+                style={{
+                  background:
+                    'linear-gradient(135deg, #ffffff 0%, #a8a8ff 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  lineHeight: 1.1,
+                }}
+              >
+                {t('title')}
+              </Title>
 
-        {/* CTA Section */}
-        <Center py='xl'>
-          <Stack align='center' gap='md'>
-            <Title order={2} ta='center'>
-              Ready to Get Started?
-            </Title>
-            <Text c='dimmed' ta='center' maw={500}>
-              Join thousands of teams already using NTG Ticket to improve their
-              support operations
-            </Text>
-            <Group mt='md'>
-              <Button
-                component={Link}
-                href='/auth/signup'
-                size='lg'
-                rightSection={<IconArrowRight size={16} />}
+              <Text
+                size='xl'
+                ta='center'
+                maw={600}
+                style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '1.25rem',
+                  lineHeight: 1.6,
+                }}
               >
-                Create Account
-              </Button>
-              <Button
-                component={Link}
-                href='/auth/signin'
-                variant='outline'
-                size='lg'
-              >
-                Sign In
-              </Button>
-            </Group>
-          </Stack>
-        </Center>
-      </Stack>
-    </Container>
+                {t('subtitle')}
+              </Text>
+
+              {/* CTA Buttons */}
+              <Group mt='xl' gap='md'>
+                <Button
+                  component={Link}
+                  href='/auth/signup'
+                  size='xl'
+                  radius='xl'
+                  rightSection={<IconRocket size={20} />}
+                  style={{
+                    background:
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    fontWeight: 600,
+                    padding: '16px 32px',
+                  }}
+                >
+                  {t('getStarted')}
+                </Button>
+                <Button
+                  component={Link}
+                  href='/auth/signin'
+                  variant='outline'
+                  size='xl'
+                  radius='xl'
+                  rightSection={<IconArrowRight size={20} />}
+                  style={{
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    color: 'white',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    padding: '16px 32px',
+                  }}
+                >
+                  {t('signIn')}
+                </Button>
+              </Group>
+            </Stack>
+          </Center>
+        </Stack>
+      </Container>
+    </Box>
   );
 }

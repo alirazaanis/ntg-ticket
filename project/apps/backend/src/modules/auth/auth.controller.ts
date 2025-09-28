@@ -83,6 +83,43 @@ export class AuthController {
     }
   }
 
+  @Post('refresh')
+  @UseGuards(RateLimitGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh JWT token' })
+  @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid refresh token' })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
+  async refreshToken(@Body() body: { refresh_token: string }): Promise<{
+    data: {
+      access_token: string;
+      refresh_token: string;
+    };
+    message: string;
+  }> {
+    try {
+      if (!body.refresh_token) {
+        throw new UnauthorizedException('Refresh token is required');
+      }
+
+      const result = await this.authService.refreshToken(body.refresh_token);
+
+      if (!result) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      return {
+        data: result,
+        message: 'Token refreshed successfully',
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
   @Post('logout')
   @UseGuards(NextAuthJwtGuard)
   @HttpCode(HttpStatus.OK)

@@ -45,6 +45,8 @@ interface NotificationState {
   getNotificationsByType: (type: string) => Notification[];
   getUnreadNotifications: () => Notification[];
   clearAllNotifications: () => void;
+  updateNotification: (id: string, updates: Partial<Notification>) => void;
+  syncWithApi: (apiNotifications: Notification[]) => void;
 }
 
 export const useNotificationsStore = create<NotificationState>((set, get) => ({
@@ -185,4 +187,45 @@ export const useNotificationsStore = create<NotificationState>((set, get) => ({
   clearAllNotifications: () => {
     set({ notifications: [], unreadCount: 0 });
   },
+  updateNotification: (id: string, updates: Partial<Notification>) =>
+    set(state => {
+      const updatedNotifications = state.notifications.map(notification =>
+        notification.id === id ? { ...notification, ...updates } : notification
+      );
+      return {
+        notifications: updatedNotifications,
+        unreadCount: updatedNotifications.filter(n => !n.isRead).length,
+      };
+    }),
+  syncWithApi: (apiNotifications: Notification[]) =>
+    set(state => {
+      // Merge API notifications with existing store notifications
+      // API notifications take precedence for read status and other updates
+      const mergedNotifications = [...state.notifications];
+
+      apiNotifications.forEach(apiNotification => {
+        const existingIndex = mergedNotifications.findIndex(
+          n => n.id === apiNotification.id
+        );
+
+        if (existingIndex >= 0) {
+          // Update existing notification
+          mergedNotifications[existingIndex] = apiNotification;
+        } else {
+          // Add new notification
+          mergedNotifications.unshift(apiNotification);
+        }
+      });
+
+      // Sort by creation date (newest first)
+      const sortedNotifications = mergedNotifications.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      return {
+        notifications: sortedNotifications,
+        unreadCount: sortedNotifications.filter(n => !n.isRead).length,
+      };
+    }),
 }));

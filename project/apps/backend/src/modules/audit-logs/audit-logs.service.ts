@@ -2,6 +2,46 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '@prisma/client';
 
+export interface AuditLogFilters {
+  page: number;
+  limit: number;
+  action?: string;
+  userId?: string;
+  ticketId?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  fieldName?: string;
+  oldValue?: string;
+  newValue?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  metadata?: any;
+  userId: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: Date;
+}
+
+export interface PaginatedAuditLogs {
+  data: AuditLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 @Injectable()
 export class AuditLogsService {
   private readonly logger = new Logger(AuditLogsService.name);
@@ -9,76 +49,82 @@ export class AuditLogsService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Get audit logs with filtering and pagination
+   * Get audit logs with pagination and filters
    */
-  async getAuditLogs(
-    filters: { userId?: string; action?: string },
-    pagination: { page: number; limit: number }
-  ) {
+  async getAuditLogs(filters: AuditLogFilters): Promise<PaginatedAuditLogs> {
     try {
-      const { page, limit } = pagination;
+      const { page, limit, action, userId, ticketId, dateFrom, dateTo } =
+        filters;
       const skip = (page - 1) * limit;
 
-      const where: {
-        userId?: string;
-        action?:
-          | 'CREATE'
-          | 'UPDATE'
-          | 'DELETE'
-          | 'LOGIN'
-          | 'LOGOUT'
-          | 'ASSIGN'
-          | 'ESCALATE'
-          | 'COMMENT'
-          | 'ATTACH'
-          | 'STATUS_CHANGE'
-          | 'PRIORITY_CHANGE'
-          | 'CATEGORY_CHANGE';
-      } = {};
-      if (filters.userId) where.userId = filters.userId;
-      if (filters.action)
-        where.action = filters.action as
-          | 'CREATE'
-          | 'UPDATE'
-          | 'DELETE'
-          | 'LOGIN'
-          | 'LOGOUT'
-          | 'ASSIGN'
-          | 'ESCALATE'
-          | 'COMMENT'
-          | 'ATTACH'
-          | 'STATUS_CHANGE'
-          | 'PRIORITY_CHANGE'
-          | 'CATEGORY_CHANGE';
+      // Build where clause
+      const where: Prisma.AuditLogWhereInput = {};
 
-      const [auditLogs, total] = await Promise.all([
-        this.prisma.auditLog.findMany({
-          where,
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
+      if (action) {
+        where.action = action as any;
+      }
+
+      if (userId) {
+        where.userId = userId;
+      }
+
+      if (ticketId) {
+        where.resourceId = ticketId;
+      }
+
+      if (dateFrom || dateTo) {
+        where.createdAt = {};
+        if (dateFrom) {
+          where.createdAt.gte = dateFrom;
+        }
+        if (dateTo) {
+          where.createdAt.lte = dateTo;
+        }
+      }
+
+      // Get total count
+      const total = await this.prisma.auditLog.count({ where });
+
+      // Get audit logs with user information
+      const auditLogs = await this.prisma.auditLog.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          skip,
-          take: limit,
-        }),
-        this.prisma.auditLog.count({ where }),
-      ]);
+        },
+      });
+
+      const totalPages = Math.ceil(total / limit);
 
       return {
-        data: auditLogs,
+        data: auditLogs.map(log => ({
+          id: log.id,
+          action: log.action,
+          resource: log.resource,
+          resourceId: log.resourceId,
+          fieldName: log.fieldName,
+          oldValue: log.oldValue,
+          newValue: log.newValue,
+          ipAddress: log.ipAddress,
+          userAgent: log.userAgent,
+          metadata: log.metadata,
+          userId: log.userId,
+          user: log.user,
+          createdAt: log.createdAt,
+        })),
         pagination: {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit),
+          totalPages,
         },
       };
     } catch (error) {
@@ -88,96 +134,64 @@ export class AuditLogsService {
   }
 
   /**
-   * Create an audit log entry
-   */
-  async createAuditLog(data: {
-    userId: string;
-    action: string;
-    resource: string;
-    resourceId?: string;
-    fieldName?: string;
-    oldValue?: string;
-    newValue?: string;
-    ipAddress?: string;
-    userAgent?: string;
-    metadata?: Record<string, unknown>;
-  }) {
-    try {
-      return await this.prisma.auditLog.create({
-        data: {
-          userId: data.userId,
-          action: data.action as
-            | 'CREATE'
-            | 'UPDATE'
-            | 'DELETE'
-            | 'LOGIN'
-            | 'LOGOUT'
-            | 'ASSIGN'
-            | 'ESCALATE'
-            | 'COMMENT'
-            | 'ATTACH'
-            | 'STATUS_CHANGE'
-            | 'PRIORITY_CHANGE'
-            | 'CATEGORY_CHANGE',
-          resource: data.resource,
-          resourceId: data.resourceId,
-          fieldName: data.fieldName,
-          oldValue: data.oldValue,
-          newValue: data.newValue,
-          ipAddress: data.ipAddress,
-          userAgent: data.userAgent,
-          metadata: data.metadata as Prisma.JsonValue,
-        },
-      });
-    } catch (error) {
-      this.logger.error('Error creating audit log:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Get audit logs for a specific ticket
    */
-  async getTicketAuditLogs(ticketId: string, userId: string, userRole: string) {
+  async getTicketAuditLogs(
+    ticketId: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginatedAuditLogs> {
     try {
-      // Check if user has access to this ticket
-      const ticket = await this.prisma.ticket.findUnique({
-        where: { id: ticketId },
-        select: {
-          requesterId: true,
-          assignedToId: true,
-        },
-      });
+      const skip = (page - 1) * limit;
 
-      if (!ticket) {
-        throw new Error('Ticket not found');
-      }
+      const where: Prisma.AuditLogWhereInput = {
+        resource: 'ticket',
+        resourceId: ticketId,
+      };
 
-      // Check access permissions
-      if (userRole !== 'ADMIN' && userRole !== 'SUPPORT_MANAGER') {
-        if (ticket.requesterId !== userId && ticket.assignedToId !== userId) {
-          throw new Error(
-            'Access denied: You can only view audit logs for your own tickets'
-          );
-        }
-      }
+      const total = await this.prisma.auditLog.count({ where });
 
-      const auditLogs = await this.prisma.ticketHistory.findMany({
-        where: { ticketId },
+      const auditLogs = await this.prisma.auditLog.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
         include: {
           user: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true,
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
       });
 
-      return auditLogs;
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: auditLogs.map(log => ({
+          id: log.id,
+          action: log.action,
+          resource: log.resource,
+          resourceId: log.resourceId,
+          fieldName: log.fieldName,
+          oldValue: log.oldValue,
+          newValue: log.newValue,
+          ipAddress: log.ipAddress,
+          userAgent: log.userAgent,
+          metadata: log.metadata,
+          userId: log.userId,
+          user: log.user,
+          createdAt: log.createdAt,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+        },
+      };
     } catch (error) {
       this.logger.error('Error getting ticket audit logs:', error);
       throw error;
@@ -185,79 +199,74 @@ export class AuditLogsService {
   }
 
   /**
-   * Get system-wide audit logs (Admin only)
+   * Get system-wide audit logs (admin only)
    */
   async getSystemAuditLogs(
     page: number = 1,
-    limit: number = 50,
-    filters?: {
-      userId?: string;
-      ticketId?: string;
-      fieldName?: string;
-      dateFrom?: Date;
-      dateTo?: Date;
-    }
-  ) {
+    limit: number = 20,
+    dateFrom?: Date,
+    dateTo?: Date
+  ): Promise<PaginatedAuditLogs> {
     try {
-      const where: {
-        userId?: string;
-        ticketId?: string;
-        fieldName?: string;
-        createdAt?: { gte?: Date; lte?: Date };
-      } = {};
+      const skip = (page - 1) * limit;
 
-      if (filters?.userId) {
-        where.userId = filters.userId;
-      }
+      const where: Prisma.AuditLogWhereInput = {
+        resource: {
+          in: ['system', 'user', 'settings', 'integration', 'permission'],
+        },
+      };
 
-      if (filters?.ticketId) {
-        where.ticketId = filters.ticketId;
-      }
-
-      if (filters?.fieldName) {
-        where.fieldName = filters.fieldName;
-      }
-
-      if (filters?.dateFrom || filters?.dateTo) {
+      if (dateFrom || dateTo) {
         where.createdAt = {};
-        if (filters.dateFrom) where.createdAt.gte = filters.dateFrom;
-        if (filters.dateTo) where.createdAt.lte = filters.dateTo;
+        if (dateFrom) {
+          where.createdAt.gte = dateFrom;
+        }
+        if (dateTo) {
+          where.createdAt.lte = dateTo;
+        }
       }
 
-      const [auditLogs, total] = await Promise.all([
-        this.prisma.ticketHistory.findMany({
-          where,
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-            ticket: {
-              select: {
-                id: true,
-                ticketNumber: true,
-                title: true,
-              },
+      const total = await this.prisma.auditLog.count({ where });
+
+      const auditLogs = await this.prisma.auditLog.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
             },
           },
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        this.prisma.ticketHistory.count({ where }),
-      ]);
+        },
+      });
+
+      const totalPages = Math.ceil(total / limit);
 
       return {
-        data: auditLogs,
+        data: auditLogs.map(log => ({
+          id: log.id,
+          action: log.action,
+          resource: log.resource,
+          resourceId: log.resourceId,
+          fieldName: log.fieldName,
+          oldValue: log.oldValue,
+          newValue: log.newValue,
+          ipAddress: log.ipAddress,
+          userAgent: log.userAgent,
+          metadata: log.metadata,
+          userId: log.userId,
+          user: log.user,
+          createdAt: log.createdAt,
+        })),
         pagination: {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit),
+          totalPages,
         },
       };
     } catch (error) {
@@ -267,40 +276,73 @@ export class AuditLogsService {
   }
 
   /**
-   * Get user activity audit logs
+   * Get user activity logs
    */
   async getUserActivityLogs(
     userId: string,
     page: number = 1,
-    limit: number = 50
-  ) {
+    limit: number = 20,
+    dateFrom?: Date,
+    dateTo?: Date
+  ): Promise<PaginatedAuditLogs> {
     try {
-      const [auditLogs, total] = await Promise.all([
-        this.prisma.ticketHistory.findMany({
-          where: { userId },
-          include: {
-            ticket: {
-              select: {
-                id: true,
-                ticketNumber: true,
-                title: true,
-              },
+      const skip = (page - 1) * limit;
+
+      const where: Prisma.AuditLogWhereInput = {
+        userId,
+      };
+
+      if (dateFrom || dateTo) {
+        where.createdAt = {};
+        if (dateFrom) {
+          where.createdAt.gte = dateFrom;
+        }
+        if (dateTo) {
+          where.createdAt.lte = dateTo;
+        }
+      }
+
+      const total = await this.prisma.auditLog.count({ where });
+
+      const auditLogs = await this.prisma.auditLog.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
             },
           },
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        this.prisma.ticketHistory.count({ where: { userId } }),
-      ]);
+        },
+      });
+
+      const totalPages = Math.ceil(total / limit);
 
       return {
-        data: auditLogs,
+        data: auditLogs.map(log => ({
+          id: log.id,
+          action: log.action,
+          resource: log.resource,
+          resourceId: log.resourceId,
+          fieldName: log.fieldName,
+          oldValue: log.oldValue,
+          newValue: log.newValue,
+          ipAddress: log.ipAddress,
+          userAgent: log.userAgent,
+          metadata: log.metadata,
+          userId: log.userId,
+          user: log.user,
+          createdAt: log.createdAt,
+        })),
         pagination: {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit),
+          totalPages,
         },
       };
     } catch (error) {
@@ -312,48 +354,111 @@ export class AuditLogsService {
   /**
    * Get audit log statistics
    */
-  async getAuditLogStats() {
+  async getAuditLogStats(
+    dateFrom?: Date,
+    dateTo?: Date
+  ): Promise<{
+    totalLogs: number;
+    logsByAction: Record<string, number>;
+    logsByResource: Record<string, number>;
+    logsByUser: Array<{ userId: string; userName: string; count: number }>;
+    dailyActivity: Array<{ date: string; count: number }>;
+  }> {
     try {
-      const [totalLogs, logsByField, logsByUser, recentActivity] =
-        await Promise.all([
-          this.prisma.ticketHistory.count(),
-          this.prisma.ticketHistory.groupBy({
-            by: ['fieldName'],
-            _count: { fieldName: true },
-            orderBy: { _count: { fieldName: 'desc' } },
-            take: 10,
-          }),
-          this.prisma.ticketHistory.groupBy({
-            by: ['userId'],
-            _count: { userId: true },
-            orderBy: { _count: { userId: 'desc' } },
-            take: 10,
-          }),
-          this.prisma.ticketHistory.findMany({
-            take: 10,
-            orderBy: { createdAt: 'desc' },
-            include: {
-              user: {
-                select: {
-                  name: true,
-                  email: true,
-                },
-              },
-              ticket: {
-                select: {
-                  ticketNumber: true,
-                  title: true,
-                },
-              },
-            },
-          }),
-        ]);
+      const where: Prisma.AuditLogWhereInput = {};
+
+      if (dateFrom || dateTo) {
+        where.createdAt = {};
+        if (dateFrom) {
+          where.createdAt.gte = dateFrom;
+        }
+        if (dateTo) {
+          where.createdAt.lte = dateTo;
+        }
+      }
+
+      // Get total logs count
+      const totalLogs = await this.prisma.auditLog.count({ where });
+
+      // Get logs by action
+      const logsByActionData = await this.prisma.auditLog.groupBy({
+        by: ['action'],
+        where,
+        _count: { action: true },
+      });
+
+      const logsByAction = logsByActionData.reduce(
+        (acc, item) => {
+          acc[item.action] = item._count.action;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
+      // Get logs by resource
+      const logsByResourceData = await this.prisma.auditLog.groupBy({
+        by: ['resource'],
+        where,
+        _count: { resource: true },
+      });
+
+      const logsByResource = logsByResourceData.reduce(
+        (acc, item) => {
+          acc[item.resource] = item._count.resource;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
+      // Get logs by user
+      const logsByUserData = await this.prisma.auditLog.groupBy({
+        by: ['userId'],
+        where,
+        _count: { userId: true },
+        orderBy: { _count: { userId: 'desc' } },
+        take: 10,
+      });
+
+      const logsByUser = await Promise.all(
+        logsByUserData.map(async item => {
+          const user = await this.prisma.user.findUnique({
+            where: { id: item.userId },
+            select: { name: true },
+          });
+          return {
+            userId: item.userId,
+            userName: user?.name || 'Unknown',
+            count: item._count.userId,
+          };
+        })
+      );
+
+      // Get daily activity (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const dailyActivityData = await this.prisma.auditLog.groupBy({
+        by: ['createdAt'],
+        where: {
+          ...where,
+          createdAt: {
+            gte: thirtyDaysAgo,
+          },
+        },
+        _count: { createdAt: true },
+      });
+
+      const dailyActivity = dailyActivityData.map(item => ({
+        date: item.createdAt.toISOString().split('T')[0],
+        count: item._count.createdAt,
+      }));
 
       return {
         totalLogs,
-        logsByField,
+        logsByAction,
+        logsByResource,
         logsByUser,
-        recentActivity,
+        dailyActivity,
       };
     } catch (error) {
       this.logger.error('Error getting audit log stats:', error);
@@ -362,93 +467,66 @@ export class AuditLogsService {
   }
 
   /**
-   * Export audit logs to CSV
+   * Create audit log entry
    */
-  async exportAuditLogs(filters?: {
-    userId?: string;
-    ticketId?: string;
+  async createAuditLog(data: {
+    action: string;
+    resource: string;
+    resourceId?: string;
     fieldName?: string;
-    dateFrom?: Date;
-    dateTo?: Date;
-  }) {
+    oldValue?: string;
+    newValue?: string;
+    metadata?: any;
+    userId: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<AuditLog> {
     try {
-      const where: {
-        userId?: string;
-        ticketId?: string;
-        fieldName?: string;
-        createdAt?: { gte?: Date; lte?: Date };
-      } = {};
-
-      if (filters?.userId) {
-        where.userId = filters.userId;
-      }
-
-      if (filters?.ticketId) {
-        where.ticketId = filters.ticketId;
-      }
-
-      if (filters?.fieldName) {
-        where.fieldName = filters.fieldName;
-      }
-
-      if (filters?.dateFrom || filters?.dateTo) {
-        where.createdAt = {};
-        if (filters.dateFrom) where.createdAt.gte = filters.dateFrom;
-        if (filters.dateTo) where.createdAt.lte = filters.dateTo;
-      }
-
-      const auditLogs = await this.prisma.ticketHistory.findMany({
-        where,
+      const auditLog = await this.prisma.auditLog.create({
+        data: {
+          action: data.action as any,
+          resource: data.resource,
+          resourceId: data.resourceId,
+          fieldName: data.fieldName,
+          oldValue: data.oldValue,
+          newValue: data.newValue,
+          metadata: data.metadata,
+          userId: data.userId,
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+        },
         include: {
           user: {
             select: {
+              id: true,
               name: true,
               email: true,
-              role: true,
-            },
-          },
-          ticket: {
-            select: {
-              ticketNumber: true,
-              title: true,
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
       });
 
-      // Convert to CSV format
-      const csvHeaders = [
-        'Date',
-        'User',
-        'Email',
-        'Role',
-        'Ticket Number',
-        'Ticket Title',
-        'Field Name',
-        'Old Value',
-        'New Value',
-      ];
-
-      const csvRows = auditLogs.map(log => [
-        log.createdAt.toISOString(),
-        log.user.name,
-        log.user.email,
-        log.user.role,
-        log.ticket?.ticketNumber || '',
-        log.ticket?.title || '',
-        log.fieldName,
-        log.oldValue || '',
-        log.newValue || '',
-      ]);
+      this.logger.log(
+        `Audit log created: ${auditLog.action} by ${auditLog.userId}`
+      );
 
       return {
-        headers: csvHeaders,
-        rows: csvRows,
-        total: auditLogs.length,
+        id: auditLog.id,
+        action: auditLog.action,
+        resource: auditLog.resource,
+        resourceId: auditLog.resourceId,
+        fieldName: auditLog.fieldName,
+        oldValue: auditLog.oldValue,
+        newValue: auditLog.newValue,
+        ipAddress: auditLog.ipAddress,
+        userAgent: auditLog.userAgent,
+        metadata: auditLog.metadata,
+        userId: auditLog.userId,
+        user: auditLog.user,
+        createdAt: auditLog.createdAt,
       };
     } catch (error) {
-      this.logger.error('Error exporting audit logs:', error);
+      this.logger.error('Error creating audit log:', error);
       throw error;
     }
   }

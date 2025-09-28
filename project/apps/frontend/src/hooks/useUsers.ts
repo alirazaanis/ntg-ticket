@@ -20,7 +20,7 @@ export function useUsers(filters?: UserFilters) {
           return [];
         }
       } catch (error) {
-        console.error('Error fetching users:', error);
+        // Handle error fetching users
         return [];
       }
     },
