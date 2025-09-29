@@ -22,9 +22,9 @@ import {
   IconMail,
   IconLock,
   IconClock,
-  IconArrowRight,
   IconCheck,
 } from '@tabler/icons-react';
+import { RTLArrowRight } from '../../../components/ui/RTLIcon';
 import Link from 'next/link';
 import { useLoginAttempts } from '../../../hooks/useLoginAttempts';
 import { AuthLayout } from '../../../components/layouts/AuthLayout';
@@ -174,7 +174,7 @@ export default function SignInPage() {
                   '&:focus': {
                     borderColor: emailValid
                       ? theme.colors.green[5]
-                      : theme.colors.blue[5],
+                      : theme.colors.red[5],
                   },
                 },
               })}
@@ -186,10 +186,10 @@ export default function SignInPage() {
               disabled={!emailValid}
               size='lg'
               radius='md'
-              rightSection={<IconArrowRight size={18} />}
+              rightSection={<RTLArrowRight size={18} />}
               style={theme => ({
                 background: emailValid
-                  ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                  ? 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)'
                   : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
@@ -207,7 +207,7 @@ export default function SignInPage() {
                   href='/auth/signup'
                   fw={600}
                   style={theme => ({
-                    color: theme.colors.blue[5],
+                    color: theme.colors.red[5],
                     textDecoration: 'none',
                   })}
                 >
@@ -225,12 +225,7 @@ export default function SignInPage() {
               <Box>
                 <Button
                   variant='subtle'
-                  leftSection={
-                    <IconArrowRight
-                      size={16}
-                      style={{ transform: 'rotate(180deg)' }}
-                    />
-                  }
+                  leftSection={<RTLArrowRight size={16} />}
                   onClick={handleBack}
                   size='sm'
                   mb='md'
@@ -299,7 +294,7 @@ export default function SignInPage() {
                   input: {
                     border: `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: theme.colors.blue[5],
+                      borderColor: theme.colors.red[5],
                     },
                   },
                 })}
@@ -313,7 +308,7 @@ export default function SignInPage() {
                 radius='md'
                 style={{
                   background:
-                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    'linear-gradient(135deg, #C52720 0%, #991b1b 100%)',
                   border: 'none',
                   fontWeight: 600,
                 }}
@@ -328,7 +323,7 @@ export default function SignInPage() {
                     href='#'
                     fw={600}
                     style={theme => ({
-                      color: theme.colors.blue[5],
+                      color: theme.colors.red[5],
                       textDecoration: 'none',
                     })}
                   >

@@ -55,7 +55,7 @@ import { useSearch } from '../../hooks/useSearch';
 import { BulkActionsBar } from '../../components/bulk/BulkActionsBar';
 import { BulkSelectCheckbox } from '../../components/bulk/BulkSelectCheckbox';
 import { useBulkOperations } from '../../hooks/useBulkOperations';
-import { PAGINATION_CONFIG, STATUS_FILTERS } from '../../lib/constants';
+import { PAGINATION_CONFIG } from '../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
   NEW: 'blue',
@@ -117,9 +117,16 @@ export default function TicketsPage() {
     // Add activeTab filter for backend filtering
     ...(activeTab === 'my' && { requesterId: [user?.id] }),
     ...(activeTab === 'assigned' && { assignedToId: [user?.id] }),
-    ...(activeTab === 'overdue' && {
-      status: [...STATUS_FILTERS.ACTIVE] as TicketStatus[],
+    ...(activeTab === 'open' && {
+      status: ['NEW', 'OPEN', 'IN_PROGRESS'] as TicketStatus[],
     }),
+    ...(activeTab === 'onhold' && {
+      status: ['ON_HOLD'] as TicketStatus[],
+    }),
+    // Note: Overdue filtering is handled client-side since backend doesn't support dueDate filtering
+    // ...(activeTab === 'overdue' && {
+    //   status: [...STATUS_FILTERS.ACTIVE] as TicketStatus[],
+    // }),
   };
 
   // Reset to page 1 when search filters change
@@ -187,8 +194,18 @@ export default function TicketsPage() {
     }
   };
 
-  // Backend handles filtering and pagination
-  const filteredTickets = tickets;
+  // Backend handles filtering and pagination, but overdue needs client-side filtering
+  let filteredTickets = tickets;
+
+  // Client-side filtering for overdue tickets
+  if (activeTab === 'overdue') {
+    filteredTickets = tickets.filter(
+      ticket =>
+        ticket.dueDate &&
+        new Date(ticket.dueDate) < new Date() &&
+        !['RESOLVED', 'CLOSED'].includes(ticket.status)
+    );
+  }
 
   if (isLoading) {
     return (
@@ -244,12 +261,24 @@ export default function TicketsPage() {
             {allTickets?.filter(t => t.assignedTo?.id === user?.id).length || 0}
             )
           </Tabs.Tab>
+          <Tabs.Tab value='open'>
+            {t('openTickets')} (
+            {allTickets?.filter(t =>
+              ['NEW', 'OPEN', 'IN_PROGRESS'].includes(t.status)
+            ).length || 0}
+            )
+          </Tabs.Tab>
+          <Tabs.Tab value='onhold'>
+            {t('on_hold')} (
+            {allTickets?.filter(t => t.status === 'ON_HOLD').length || 0})
+          </Tabs.Tab>
           <Tabs.Tab value='overdue'>
             {t('overdueTickets')} (
-            {allTickets?.filter(t =>
-              STATUS_FILTERS.ACTIVE.includes(
-                t.status as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD'
-              )
+            {allTickets?.filter(
+              t =>
+                t.dueDate &&
+                new Date(t.dueDate) < new Date() &&
+                !['RESOLVED', 'CLOSED'].includes(t.status)
             ).length || 0}
             )
           </Tabs.Tab>

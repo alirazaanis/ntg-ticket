@@ -197,7 +197,7 @@ export function FileUpload({
             <IconUpload
               size={52}
               stroke={1.5}
-              color='var(--mantine-color-blue-6)'
+              color='var(--mantine-color-red-6)'
             />
           </Dropzone.Accept>
           <Dropzone.Reject>
@@ -281,7 +281,7 @@ export function FileUpload({
                     value={fileUpload.progress}
                     size='sm'
                     mt='xs'
-                    color='blue'
+                    color='red'
                   />
                 )}
 

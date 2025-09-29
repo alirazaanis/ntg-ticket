@@ -116,7 +116,7 @@ export default function ProfilePage() {
     notifications.show({
       title: 'Info',
       message: 'Password change functionality needs backend implementation',
-      color: 'blue',
+      color: 'red',
     });
   };
 
@@ -142,7 +142,7 @@ export default function ProfilePage() {
           {updateUserMutation.isPending && <Loader size='sm' />}
           <Button
             leftSection={<IconDeviceFloppy size={16} />}
-            color={saved ? 'green' : 'blue'}
+            color={saved ? 'green' : 'red'}
             loading={updateUserMutation.isPending}
             onClick={() => profileForm.onSubmit(handleProfileUpdate)()}
           >

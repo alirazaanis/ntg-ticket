@@ -34,13 +34,41 @@ export const useTicketsStore = create<TicketState>((set, get) => ({
   },
   isLoading: false,
   error: null,
-  setTickets: tickets => set({ tickets }),
+  setTickets: tickets =>
+    set(state => {
+      // If this is the initial load (empty store), just set the tickets
+      if (state.tickets.length === 0) {
+        return { tickets };
+      }
+
+      // For subsequent updates, merge intelligently to avoid duplicates
+      const existingIds = new Set(state.tickets.map(t => t.id));
+      const newTickets = tickets.filter(t => !existingIds.has(t.id));
+
+      // If no new tickets, just return current state to avoid unnecessary updates
+      if (newTickets.length === 0) {
+        return state;
+      }
+
+      // Merge new tickets with existing ones, but prioritize existing tickets for updates
+      const mergedTickets = [...newTickets, ...state.tickets];
+
+      return { tickets: mergedTickets };
+    }),
   setSelectedTicket: selectedTicket => set({ selectedTicket }),
   setFilters: filters =>
     set(state => ({ filters: { ...state.filters, ...filters } })),
   setLoading: isLoading => set({ isLoading }),
   setError: error => set({ error }),
-  addTicket: ticket => set(state => ({ tickets: [ticket, ...state.tickets] })),
+  addTicket: ticket =>
+    set(state => {
+      // Check if ticket already exists to prevent duplicates
+      const existingTicket = state.tickets.find(t => t.id === ticket.id);
+      if (existingTicket) {
+        return state; // Don't add duplicate
+      }
+      return { tickets: [ticket, ...state.tickets] };
+    }),
   updateTicket: (id, updates) =>
     set(state => ({
       tickets: state.tickets.map(ticket =>

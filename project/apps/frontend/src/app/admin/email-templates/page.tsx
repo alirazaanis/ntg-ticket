@@ -373,7 +373,7 @@ export default function EmailTemplatesPage() {
                         <Group>
                           <Text fw={500}>{template.name}</Text>
                           {template.isDefault && (
-                            <Badge color='blue' variant='light' size='xs'>
+                            <Badge color='red' variant='light' size='xs'>
                               Default
                             </Badge>
                           )}
@@ -408,7 +408,7 @@ export default function EmailTemplatesPage() {
                           <ActionIcon
                             variant='light'
                             size='sm'
-                            color='blue'
+                            color='red'
                             onClick={() =>
                               handlePreviewTemplate({
                                 id: template.id,

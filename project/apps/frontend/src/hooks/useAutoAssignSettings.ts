@@ -7,9 +7,13 @@ export function useAutoAssignSettings() {
 
   // Only use system settings if user is admin, otherwise use defaults
   const isAdmin = user?.role === 'ADMIN';
-  const isAutoAssignEnabled = isAdmin ? (settings?.autoAssignTickets || false) : true;
-  const autoCloseEnabled = isAdmin ? (settings?.autoCloseResolved || false) : false;
-  const autoCloseDays = isAdmin ? (settings?.autoCloseDays || 7) : 7;
+  const isAutoAssignEnabled = isAdmin
+    ? settings?.autoAssignTickets || false
+    : true;
+  const autoCloseEnabled = isAdmin
+    ? settings?.autoCloseResolved || false
+    : false;
+  const autoCloseDays = isAdmin ? settings?.autoCloseDays || 7 : 7;
 
   const getAutoAssignMessage = () => {
     if (isAutoAssignEnabled) {

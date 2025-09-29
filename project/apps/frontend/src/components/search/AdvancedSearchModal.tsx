@@ -243,7 +243,7 @@ export function AdvancedSearchModal({
                 <Button
                   variant='subtle'
                   size='xs'
-                  color='blue'
+                  color='red'
                   onClick={handleClear}
                 >
                   {t('clearAll')}
@@ -254,11 +254,11 @@ export function AdvancedSearchModal({
                   <Badge
                     key={`filter-${filter}`}
                     variant='light'
-                    color='blue'
+                    color='red'
                     rightSection={
                       <ActionIcon
                         size='xs'
-                        color='blue'
+                        color='red'
                         variant='transparent'
                         onClick={removeFilter}
                       >

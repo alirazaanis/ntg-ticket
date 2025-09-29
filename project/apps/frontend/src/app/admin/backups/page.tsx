@@ -339,7 +339,7 @@ export default function BackupsPage() {
         title='Create New Backup'
       >
         <Stack>
-          <Alert color='blue' title='Backup Information'>
+          <Alert color='red' title='Backup Information'>
             This will create a complete backup of the system including all data,
             settings, and configurations.
           </Alert>

@@ -20,7 +20,6 @@ import {
   Menu,
 } from '@mantine/core';
 import {
-  IconArrowLeft,
   IconEdit,
   IconTrash,
   IconDots,
@@ -31,6 +30,7 @@ import {
   IconMail,
   IconShield,
 } from '@tabler/icons-react';
+import { RTLArrowLeft } from '../../../components/ui/RTLIcon';
 import { notifications } from '@mantine/notifications';
 import { useUser, useDeleteUser } from '../../../hooks/useUsers';
 import { useTickets } from '../../../hooks/useTickets';
@@ -121,7 +121,7 @@ export default function UserDetailPage() {
         <Group mt='md'>
           <Button
             variant='outline'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={() => router.back()}
           >
             Go Back
@@ -137,7 +137,7 @@ export default function UserDetailPage() {
         <Group>
           <Button
             variant='subtle'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={() => router.back()}
           >
             Back

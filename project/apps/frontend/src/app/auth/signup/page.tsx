@@ -23,9 +23,9 @@ import {
   IconLock,
   IconUser,
   IconShield,
-  IconArrowRight,
   IconCheck,
 } from '@tabler/icons-react';
+import { RTLArrowRight } from '../../../components/ui/RTLIcon';
 import Link from 'next/link';
 import { usePasswordValidation } from '../../../hooks/usePasswordValidation';
 import { userApi } from '../../../lib/apiClient';
@@ -222,7 +222,7 @@ export default function SignUpPage() {
                     '&:focus': {
                       borderColor: formData.name.trim()
                         ? theme.colors.green[5]
-                        : theme.colors.blue[5],
+                        : theme.colors.red[5],
                     },
                   },
                 })}
@@ -253,7 +253,7 @@ export default function SignUpPage() {
                     '&:focus': {
                       borderColor: emailValid
                         ? theme.colors.green[5]
-                        : theme.colors.blue[5],
+                        : theme.colors.red[5],
                     },
                   },
                 })}
@@ -266,11 +266,11 @@ export default function SignUpPage() {
               disabled={!formData.name.trim() || !emailValid}
               size='lg'
               radius='md'
-              rightSection={<IconArrowRight size={18} />}
+              rightSection={<RTLArrowRight size={18} />}
               style={theme => ({
                 background:
                   formData.name.trim() && emailValid
-                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    ? 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)'
                     : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
@@ -291,7 +291,7 @@ export default function SignUpPage() {
                   href='/auth/signin'
                   fw={600}
                   style={theme => ({
-                    color: theme.colors.blue[5],
+                    color: theme.colors.red[5],
                     textDecoration: 'none',
                   })}
                 >
@@ -308,12 +308,7 @@ export default function SignUpPage() {
             <Box>
               <Button
                 variant='subtle'
-                leftSection={
-                  <IconArrowRight
-                    size={16}
-                    style={{ transform: 'rotate(180deg)' }}
-                  />
-                }
+                leftSection={<RTLArrowRight size={16} />}
                 onClick={handleBack}
                 size='sm'
                 mb='md'
@@ -368,7 +363,7 @@ export default function SignUpPage() {
                     '&:focus': {
                       borderColor: passwordValid
                         ? theme.colors.green[5]
-                        : theme.colors.blue[5],
+                        : theme.colors.red[5],
                     },
                   },
                 })}
@@ -407,7 +402,7 @@ export default function SignUpPage() {
                         formData.confirmPassword &&
                         formData.password === formData.confirmPassword
                           ? theme.colors.green[5]
-                          : theme.colors.blue[5],
+                          : theme.colors.red[5],
                     },
                   },
                 })}
@@ -422,12 +417,12 @@ export default function SignUpPage() {
               }
               size='lg'
               radius='md'
-              rightSection={<IconArrowRight size={18} />}
+              rightSection={<RTLArrowRight size={18} />}
               style={theme => ({
                 background:
                   passwordValid &&
                   formData.password === formData.confirmPassword
-                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    ? 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)'
                     : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
@@ -449,12 +444,7 @@ export default function SignUpPage() {
             <Box>
               <Button
                 variant='subtle'
-                leftSection={
-                  <IconArrowRight
-                    size={16}
-                    style={{ transform: 'rotate(180deg)' }}
-                  />
-                }
+                leftSection={<RTLArrowRight size={16} />}
                 onClick={handleBack}
                 size='sm'
                 mb='md'
@@ -508,7 +498,7 @@ export default function SignUpPage() {
                 input: {
                   border: `2px solid ${theme.colors.gray[3]}`,
                   '&:focus': {
-                    borderColor: theme.colors.blue[5],
+                    borderColor: theme.colors.red[5],
                   },
                 },
               })}
@@ -520,7 +510,7 @@ export default function SignUpPage() {
               loading={loading}
               size='lg'
               radius='md'
-              rightSection={<IconArrowRight size={18} />}
+              rightSection={<RTLArrowRight size={18} />}
               style={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: 'none',
@@ -532,10 +522,10 @@ export default function SignUpPage() {
 
             <Box
               style={theme => ({
-                background: `linear-gradient(135deg, ${theme.colors.blue[0]} 0%, ${theme.colors.blue[1]} 100%)`,
+                background: `linear-gradient(135deg, ${theme.colors.red[0]} 0%, ${theme.colors.red[1]} 100%)`,
                 borderRadius: '12px',
                 padding: '16px',
-                border: `1px solid ${theme.colors.blue[2]}`,
+                border: `1px solid ${theme.colors.red[2]}`,
               })}
             >
               <Group gap='sm'>

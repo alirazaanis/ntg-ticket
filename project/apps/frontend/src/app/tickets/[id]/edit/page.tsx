@@ -17,11 +17,8 @@ import {
   TextInput,
 } from '@mantine/core';
 import { RichTextEditorComponent } from '../../../../components/ui/RichTextEditor';
-import {
-  IconArrowLeft,
-  IconAlertCircle,
-  IconDeviceFloppy,
-} from '@tabler/icons-react';
+import { IconAlertCircle, IconDeviceFloppy } from '@tabler/icons-react';
+import { RTLArrowLeft } from '../../../../components/ui/RTLIcon';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { useTicket, useUpdateTicket } from '../../../../hooks/useTickets';
@@ -123,7 +120,7 @@ export default function EditTicketPage() {
         <Group mt='md'>
           <Button
             variant='outline'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={() => router.back()}
           >
             Go Back
@@ -146,7 +143,7 @@ export default function EditTicketPage() {
         <Group mt='md'>
           <Button
             variant='outline'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={() => router.back()}
           >
             Go Back
@@ -162,7 +159,7 @@ export default function EditTicketPage() {
         <Group>
           <Button
             variant='subtle'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={handleCancel}
           >
             Back to Ticket

@@ -11,7 +11,8 @@ import {
   Card,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
+import { RTLArrowLeft } from '../../../components/ui/RTLIcon';
 import { notifications } from '@mantine/notifications';
 import { UserForm } from '../../../components/forms/UserForm';
 import { useCreateUser } from '../../../hooks/useUsers';
@@ -53,7 +54,7 @@ export default function CreateUserPage() {
       <Group mb='xl'>
         <Button
           variant='subtle'
-          leftSection={<IconArrowLeft size={16} />}
+          leftSection={<RTLArrowLeft size={16} />}
           onClick={handleCancel}
         >
           {t('backToUsers')}

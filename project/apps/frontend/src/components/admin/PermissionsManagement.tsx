@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Text,
   Button,
@@ -63,14 +63,7 @@ export function PermissionsManagement({
     conditions: '',
   });
 
-  const { rolePermissions, loading, error, fetchAllRolePermissions } =
-    usePermissions();
-
-  useEffect(() => {
-    if (opened) {
-      fetchAllRolePermissions();
-    }
-  }, [opened, fetchAllRolePermissions]);
+  const { rolePermissions, loading, error } = usePermissions();
 
   const handleCreatePermission = () => {
     // This would typically open a form to create a new permission
@@ -153,6 +146,10 @@ export function PermissionsManagement({
             <Center h={200}>
               <Loader size='md' />
             </Center>
+          ) : rolePermissions.length === 0 ? (
+            <Center h={200}>
+              <Text c='dimmed'>No permissions found</Text>
+            </Center>
           ) : (
             <Accordion variant='separated' radius='md'>
               {rolePermissions.map(rolePermission => {
@@ -208,7 +205,7 @@ export function PermissionsManagement({
                                   </div>
                                 </Table.Td>
                                 <Table.Td>
-                                  <Badge variant='light' color='blue'>
+                                  <Badge variant='light' color='red'>
                                     {permission.resource}
                                   </Badge>
                                 </Table.Td>

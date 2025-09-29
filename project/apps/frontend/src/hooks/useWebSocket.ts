@@ -157,7 +157,7 @@ export function useWebSocket() {
         notifications.show({
           title: notification.title,
           message: notification.message,
-          color: 'blue',
+          color: 'red',
         });
       }
     );

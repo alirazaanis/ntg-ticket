@@ -41,27 +41,33 @@ export function useAllTicketsForCounting(filters?: TicketFilters) {
     queryKey: ['all-tickets-counting', filters],
     queryFn: async (): Promise<Ticket[]> => {
       try {
-        // Remove pagination parameters to get all tickets
+        // Remove pagination parameters and set high limit to get all tickets
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { page, limit, ...countFilters } = filters || {};
-        const response = await ticketApi.getTickets(countFilters);
+        const response = await ticketApi.getTickets({
+          ...countFilters,
+          limit: 10000, // Set a very high limit to get all tickets
+        });
 
         // Extract tickets from response
+        let tickets: Ticket[] = [];
         if (
           response.data?.data?.data &&
           Array.isArray(response.data.data.data)
         ) {
-          return response.data.data.data;
+          tickets = response.data.data.data;
         } else if (response.data?.data && Array.isArray(response.data.data)) {
-          return response.data.data;
+          tickets = response.data.data;
         } else {
-          return [];
+          tickets = [];
         }
+
+        return tickets;
       } catch (error) {
         throw error;
       }
     },
-    staleTime: QUERY_CONFIG.STALE_TIME.MEDIUM,
+    staleTime: QUERY_CONFIG.STALE_TIME.SHORT, // Use shorter stale time for counting queries
   });
 }
 
@@ -86,7 +92,7 @@ export function useTotalTicketsCount() {
         throw error;
       }
     },
-    staleTime: QUERY_CONFIG.STALE_TIME.LONG,
+    staleTime: QUERY_CONFIG.STALE_TIME.SHORT, // Use shorter stale time for total count
   });
 }
 
@@ -174,7 +180,23 @@ export function useCreateTicket() {
       return response.data.data as Ticket;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      // Invalidate all ticket-related queries to ensure UI updates
+      // Use a small delay to ensure backend has processed the new ticket
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['tickets'] });
+        queryClient.invalidateQueries({
+          queryKey: ['tickets-with-pagination'],
+        });
+        queryClient.invalidateQueries({ queryKey: ['all-tickets-counting'] });
+        queryClient.invalidateQueries({ queryKey: ['total-tickets-count'] });
+        queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
+        queryClient.invalidateQueries({ queryKey: ['assigned-tickets'] });
+        queryClient.invalidateQueries({ queryKey: ['overdue-tickets'] });
+        queryClient.invalidateQueries({
+          queryKey: ['tickets-approaching-sla'],
+        });
+        queryClient.invalidateQueries({ queryKey: ['breached-sla-tickets'] });
+      }, 100); // 100ms delay to ensure backend processing
     },
   });
 }

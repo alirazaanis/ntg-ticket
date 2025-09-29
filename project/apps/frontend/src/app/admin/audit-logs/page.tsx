@@ -438,7 +438,7 @@ export default function AuditLogsPage() {
           <Card mt='md'>
             <Stack>
               <Title order={4}>Ticket Changes</Title>
-              <Alert color='blue' title='Ticket Activity'>
+              <Alert color='red' title='Ticket Activity'>
                 All changes made to tickets including status updates,
                 assignments, and content modifications.
               </Alert>

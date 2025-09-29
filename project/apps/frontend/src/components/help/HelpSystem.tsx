@@ -23,12 +23,12 @@ import {
   IconBook,
   IconMail,
   IconPhone,
-  IconChevronRight,
   IconInfoCircle,
   IconCheck,
   IconX,
   IconAlertTriangle,
 } from '@tabler/icons-react';
+import { RTLChevronRight } from '../ui/RTLIcon';
 
 interface HelpSystemProps {
   opened: boolean;
@@ -67,7 +67,7 @@ const getHelpSections = (t: (key: string) => string) => [
         {
           status: 'NEW',
           description: t('newStatus'),
-          color: 'blue',
+          color: 'red',
         },
         {
           status: 'OPEN',
@@ -324,7 +324,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
       onClose={onClose}
       title={
         <Group gap='sm'>
-          <ThemeIcon size='sm' variant='light' color='blue'>
+          <ThemeIcon size='sm' variant='light' color='red'>
             <IconHelp size={16} />
           </ThemeIcon>
           <Text size='lg' fw={600}>
@@ -361,7 +361,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
             <Text size='sm' fw={500} c='dimmed' mb='xs'>
               Quick Actions
             </Text>
-            {quickActions.map((action) => (
+            {quickActions.map(action => (
               <Card
                 key={`quick-action-${action.title}-${action.target}`}
                 withBorder
@@ -379,7 +379,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
                       {action.description}
                     </Text>
                   </div>
-                  <IconChevronRight size={16} />
+                  <RTLChevronRight size={16} />
                 </Group>
               </Card>
             ))}
@@ -389,7 +389,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
             <Alert
               icon={<IconMail size={16} />}
               title={t('needMoreHelp')}
-              color='blue'
+              color='red'
               variant='light'
             >
               <Text size='xs' mb='sm'>
@@ -417,7 +417,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
                 activeSection === section.id && (
                   <div key={section.id}>
                     <Group mb='md'>
-                      <ThemeIcon size='lg' variant='light' color='blue'>
+                      <ThemeIcon size='lg' variant='light' color='red'>
                         <section.icon size={20} />
                       </ThemeIcon>
                       <div>
@@ -445,7 +445,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
                                   <ThemeIcon
                                     size='sm'
                                     variant='light'
-                                    color='blue'
+                                    color='red'
                                   >
                                     <Text size='xs' fw={600}>
                                       {index + 1}
@@ -537,7 +537,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
                                   key={`permission-${permission}`}
                                   size='xs'
                                   variant='light'
-                                  color='blue'
+                                  color='red'
                                 >
                                   {permission}
                                 </Badge>

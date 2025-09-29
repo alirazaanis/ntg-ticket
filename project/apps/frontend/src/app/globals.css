@@ -609,12 +609,47 @@
   text-align: right;
 }
 
+/* RTL Icon Flipping - Automatic directional icon flipping */
+[dir='rtl'] [data-icon='arrow-right'],
+[dir='rtl'] [data-icon='chevron-right'],
+[dir='rtl'] [data-icon='arrow-forward'],
+[dir='rtl'] [data-icon='chevron-forward'] {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] [data-icon='arrow-left'],
+[dir='rtl'] [data-icon='chevron-left'],
+[dir='rtl'] [data-icon='arrow-back'],
+[dir='rtl'] [data-icon='chevron-back'] {
+  transform: scaleX(-1);
+}
+
+/* RTL Icon classes for manual control */
+.rtl-flip {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .rtl-flip {
+  transform: scaleX(1);
+}
+
+/* RTL Button icons */
+[dir='rtl'] .mantine-Button-root [data-icon='arrow-right'],
+[dir='rtl'] .mantine-Button-root [data-icon='chevron-right'] {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .mantine-Button-root [data-icon='arrow-left'],
+[dir='rtl'] .mantine-Button-root [data-icon='chevron-left'] {
+  transform: scaleX(-1);
+}
+
 /* Custom utility classes */
 .text-gradient {
   background: linear-gradient(
     45deg,
-    var(--mantine-color-blue-6),
-    var(--mantine-color-cyan-6)
+    var(--mantine-color-red-6),
+    var(--mantine-color-red-4)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -702,7 +737,7 @@
 
 /* Focus styles */
 .focus-visible {
-  outline: 2px solid var(--mantine-color-blue-6);
+  outline: 2px solid var(--mantine-color-red-6);
   outline-offset: 2px;
 }
 
@@ -752,8 +787,8 @@
 
 /* Status indicators */
 .status-new {
-  color: var(--mantine-color-blue-6);
-  background-color: var(--mantine-color-blue-0);
+  color: var(--mantine-color-red-6);
+  background-color: var(--mantine-color-red-0);
 }
 
 .status-open {
@@ -793,8 +828,8 @@
 }
 
 .priority-medium {
-  color: var(--mantine-color-blue-6);
-  background-color: var(--mantine-color-blue-0);
+  color: var(--mantine-color-red-6);
+  background-color: var(--mantine-color-red-0);
 }
 
 .priority-high {
@@ -809,7 +844,7 @@
 
 /* SLA indicators */
 .sla-standard {
-  color: var(--mantine-color-blue-6);
+  color: var(--mantine-color-red-6);
 }
 
 .sla-premium {

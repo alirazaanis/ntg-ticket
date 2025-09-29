@@ -114,7 +114,7 @@ export function DataProtectionBanner({
       >
         <Group justify='space-between' align='flex-start'>
           <Group align='flex-start' gap='md' style={{ flex: 1 }}>
-            <ThemeIcon size='lg' variant='light' color='blue'>
+            <ThemeIcon size='lg' variant='light' color='red'>
               <IconShield size={20} />
             </ThemeIcon>
             <Stack gap='xs' style={{ flex: 1 }}>
@@ -183,7 +183,7 @@ export function DataProtectionBanner({
 
             <Group justify='space-between'>
               <Group gap='sm'>
-                <IconDatabase size={16} color='blue' />
+                <IconDatabase size={16} color='red' />
                 <div>
                   <Text size='sm' fw={500}>
                     {tCompliance('analyticsCookies')}

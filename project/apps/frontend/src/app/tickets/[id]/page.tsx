@@ -32,7 +32,6 @@ import {
   Select,
 } from '@mantine/core';
 import {
-  IconArrowLeft,
   IconEdit,
   IconTrash,
   IconMessage,
@@ -51,6 +50,7 @@ import {
   IconBell,
   IconShare,
 } from '@tabler/icons-react';
+import { RTLArrowLeft } from '../../../components/ui/RTLIcon';
 import {
   useTicket,
   useUpdateTicketStatus,
@@ -220,7 +220,7 @@ export default function TicketDetailPage() {
         <Group mt='md'>
           <Button
             variant='outline'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={() => router.back()}
           >
             Go Back
@@ -237,7 +237,7 @@ export default function TicketDetailPage() {
         <Group>
           <Button
             variant='subtle'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={() => router.back()}
           >
             Back

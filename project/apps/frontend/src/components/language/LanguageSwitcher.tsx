@@ -2,7 +2,8 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { Button, Menu, Group, Text, useMantineTheme } from '@mantine/core';
-import { IconChevronDown, IconWorld } from '@tabler/icons-react';
+import { IconWorld } from '@tabler/icons-react';
+import { RTLChevronDown } from '../ui/RTLIcon';
 import { useState, useEffect } from 'react';
 import { useRTL } from '../../hooks/useRTL';
 import { useRouter } from 'next/navigation';
@@ -39,9 +40,9 @@ export function LanguageSwitcher() {
     return (
       <Button
         variant='outline'
-        color='blue'
+        color='red'
         leftSection={<IconWorld size={16} />}
-        rightSection={<IconChevronDown size={16} />}
+        rightSection={<RTLChevronDown size={16} />}
         style={{ minWidth: 120 }}
       >
         <Group gap='xs'>
@@ -66,9 +67,9 @@ export function LanguageSwitcher() {
         <Menu.Target>
           <Button
             variant='outline'
-            color='blue'
+            color='red'
             leftSection={<IconWorld size={16} />}
-            rightSection={<IconChevronDown size={16} />}
+            rightSection={<RTLChevronDown size={16} />}
             style={{
               minWidth: 120,
             }}
@@ -90,10 +91,10 @@ export function LanguageSwitcher() {
               style={{
                 backgroundColor:
                   locale === language.code
-                    ? theme.colors.blue[1]
+                    ? theme.colors.red[1]
                     : 'transparent',
                 color:
-                  locale === language.code ? theme.colors.blue[6] : 'inherit',
+                  locale === language.code ? theme.colors.red[6] : 'inherit',
                 fontWeight: locale === language.code ? 600 : 400,
                 transition: 'background-color 0.2s ease',
                 marginBottom: '4px',
@@ -105,8 +106,8 @@ export function LanguageSwitcher() {
                     'data-mantine-color-scheme'
                   ) === 'dark';
                 if (isDarkMode) {
-                  e.currentTarget.style.backgroundColor = theme.colors.blue[2];
-                  e.currentTarget.style.color = theme.colors.blue[8];
+                  e.currentTarget.style.backgroundColor = theme.colors.red[2];
+                  e.currentTarget.style.color = theme.colors.red[8];
                 } else {
                   e.currentTarget.style.backgroundColor = '#f8f9ff';
                 }
@@ -114,10 +115,10 @@ export function LanguageSwitcher() {
               onMouseLeave={e => {
                 e.currentTarget.style.backgroundColor =
                   locale === language.code
-                    ? theme.colors.blue[1]
+                    ? theme.colors.red[1]
                     : 'transparent';
                 e.currentTarget.style.color =
-                  locale === language.code ? theme.colors.blue[6] : 'inherit';
+                  locale === language.code ? theme.colors.red[6] : 'inherit';
               }}
             >
               <Group justify='space-between'>

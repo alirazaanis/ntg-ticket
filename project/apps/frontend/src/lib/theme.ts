@@ -1,22 +1,22 @@
 import { createTheme, MantineColorsTuple } from '@mantine/core';
 
-const blue: MantineColorsTuple = [
-  '#f0f2ff', // Lightest - based on #667eea
-  '#e1e7ff', // Very light
-  '#c7d2fe', // Light
-  '#a5b4fc', // Lighter
-  '#8b9cf8', // Light-medium
-  '#667eea', // Primary color from landing page
-  '#5a67d8', // Medium
-  '#4c51bf', // Medium-dark
-  '#434190', // Dark
-  '#3c366b', // Darkest
+const red: MantineColorsTuple = [
+  '#fef2f2', // Lightest - based on #C52720
+  '#fee2e2', // Very light
+  '#fecaca', // Light
+  '#fca5a5', // Lighter
+  '#f87171', // Light-medium
+  '#C52720', // Primary color
+  '#b91c1c', // Medium
+  '#991b1b', // Medium-dark
+  '#7f1d1d', // Dark
+  '#450a0a', // Darkest
 ];
 
 export const theme = createTheme({
-  primaryColor: 'blue',
+  primaryColor: 'red',
   colors: {
-    blue,
+    red,
   },
   fontFamily:
     'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',

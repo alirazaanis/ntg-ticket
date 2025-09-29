@@ -28,7 +28,6 @@ import { AreaChart, BarChart } from '@mantine/charts';
 import {
   IconPlus,
   IconSearch,
-  IconFilter,
   IconTrendingUp,
   IconUsers,
   IconTicket,
@@ -44,8 +43,16 @@ import {
   IconPlug,
   IconShield,
   IconChartBar,
+  IconReport,
+  IconClock,
+  IconCheck,
+  IconAlertCircle,
 } from '@tabler/icons-react';
-import { useTickets } from '../../hooks/useTickets';
+import {
+  useTickets,
+  useTotalTicketsCount,
+  useAllTicketsForCounting,
+} from '../../hooks/useTickets';
 import {
   useUsers,
   useCreateUser,
@@ -58,21 +65,19 @@ import { User, CreateUserInput, UpdateUserInput } from '../../lib/apiClient';
 import { Ticket, UserRole } from '../../types/unified';
 import { notifications } from '@mantine/notifications';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { IntegrationsManagement } from '../admin/IntegrationsManagement';
 import { PermissionsManagement } from '../admin/PermissionsManagement';
 import { AuditTrail } from '../compliance/AuditTrail';
 import { AuditLogStats } from '../compliance/AuditLogStats';
-import {
-  PAGINATION_CONFIG,
-  PRIORITY_OPTIONS,
-  STATUS_FILTERS,
-} from '../../lib/constants';
+import { PAGINATION_CONFIG, PRIORITY_OPTIONS } from '../../lib/constants';
 
 export function AdminDashboard() {
   const t = useTranslations('common');
   const tAdmin = useTranslations('admin');
   const tHelp = useTranslations('help');
   const tSystem = useTranslations('system');
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [userModalOpened, setUserModalOpened] = useState(false);
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
@@ -88,6 +93,9 @@ export function AdminDashboard() {
   );
 
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
+  const { data: totalTicketsCount } = useTotalTicketsCount();
+  const { data: allTicketsForStats } = useAllTicketsForCounting();
+
   const { data: users, isLoading: usersLoading } = useUsers({
     limit: PAGINATION_CONFIG.LARGE_PAGE_SIZE,
   });
@@ -257,49 +265,55 @@ export function AdminDashboard() {
       ticket.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Calculate ticket stats similar to manager dashboard
+  const openTickets =
+    allTicketsForStats?.filter((ticket: Ticket) =>
+      ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
+    ) || [];
+  const resolvedTickets =
+    allTicketsForStats?.filter(
+      (ticket: Ticket) => ticket.status === 'RESOLVED'
+    ) || [];
+  const overdueTickets =
+    allTicketsForStats?.filter((ticket: Ticket) => {
+      if (!ticket.dueDate) return false;
+      return (
+        new Date(ticket.dueDate) < new Date() &&
+        !['RESOLVED', 'CLOSED'].includes(ticket.status)
+      );
+    }) || [];
+
   const stats = [
     {
       title: 'Total Tickets',
-      value: allTickets?.length || 0,
+      value: totalTicketsCount || 0,
       icon: IconTicket,
-      color: 'blue',
+      color: 'red',
     },
     {
-      title: 'Active Users',
-      value: users?.filter((u: User) => u.isActive).length || 0,
-      icon: IconUsers,
+      title: 'Open Tickets',
+      value: openTickets.length,
+      icon: IconClock,
+      color: 'orange',
+    },
+    {
+      title: 'Resolved Tickets',
+      value: resolvedTickets.length,
+      icon: IconCheck,
       color: 'green',
     },
     {
-      title: 'System Uptime',
-      value: systemMetrics?.uptime || '99.9%',
-      icon: IconServer,
-      color: 'blue',
-    },
-    {
-      title: 'Storage Used',
-      value: systemMetrics?.storageUsed || '2.4 GB',
-      icon: IconDatabase,
-      color: 'orange',
+      title: 'Overdue Tickets',
+      value: overdueTickets.length,
+      icon: IconAlertCircle,
+      color: 'red',
     },
   ];
 
   // Real data for charts
-  const systemMetricsData = systemMetrics?.metrics || [
-    { time: '00:00', cpu: 25, memory: 45, disk: 30 },
-    { time: '04:00', cpu: 30, memory: 50, disk: 32 },
-    { time: '08:00', cpu: 65, memory: 70, disk: 35 },
-    { time: '12:00', cpu: 80, memory: 85, disk: 38 },
-    { time: '16:00', cpu: 75, memory: 80, disk: 40 },
-    { time: '20:00', cpu: 45, memory: 60, disk: 42 },
-  ];
+  const systemMetricsData = systemMetrics?.metrics || [];
 
-  const userRoles = userDistribution || [
-    { role: 'End Users', count: 120, percentage: 77 },
-    { role: 'Support Staff', count: 25, percentage: 16 },
-    { role: 'Managers', count: 8, percentage: 5 },
-    { role: 'Admins', count: 3, percentage: 2 },
-  ];
+  const userRoles = userDistribution || [];
 
   if (ticketsLoading) {
     return (
@@ -320,6 +334,21 @@ export function AdminDashboard() {
             <Title order={2}>{tAdmin('systemAdministration')}</Title>
             <Text c='dimmed'>{tAdmin('manageSystemSettings')}</Text>
           </div>
+          <Group>
+            <Button
+              variant='outline'
+              leftSection={<IconSearch size={16} />}
+              onClick={() => router.push('/tickets')}
+            >
+              Search Tickets
+            </Button>
+            <Button
+              leftSection={<IconReport size={16} />}
+              onClick={() => router.push('/reports')}
+            >
+              Generate Report
+            </Button>
+          </Group>
         </Group>
 
         {/* Stats Cards */}
@@ -343,45 +372,6 @@ export function AdminDashboard() {
               </Card>
             </Grid.Col>
           ))}
-        </Grid>
-
-        {/* System Metrics */}
-        <Grid>
-          <Grid.Col span={{ base: 12, md: 8 }}>
-            <Paper withBorder p='md'>
-              <Title order={3} mb='md'>
-                System Performance
-              </Title>
-              <AreaChart
-                h={300}
-                data={systemMetricsData}
-                dataKey='time'
-                series={[
-                  { name: 'cpu', color: 'red.6' },
-                  { name: 'memory', color: 'blue.6' },
-                  { name: 'disk', color: 'green.6' },
-                ]}
-                curveType='linear'
-                unit='%'
-              />
-            </Paper>
-          </Grid.Col>
-
-          <Grid.Col span={{ base: 12, md: 4 }}>
-            <Paper withBorder p='md'>
-              <Title order={3} mb='md'>
-                User Distribution
-              </Title>
-              <BarChart
-                h={300}
-                data={userRoles}
-                dataKey='role'
-                series={[{ name: 'count', color: 'blue.6' }]}
-                orientation='vertical'
-                unit=' users'
-              />
-            </Paper>
-          </Grid.Col>
         </Grid>
 
         {/* Main Content */}
@@ -424,141 +414,238 @@ export function AdminDashboard() {
 
           <Tabs.Panel value='overview' pt='md'>
             <Grid>
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    Ticket Status Overview
-                  </Title>
+              <Grid.Col span={{ base: 12, md: 8 }}>
+                <Paper withBorder p='lg' style={{ height: 320 }}>
+                  <Group justify='space-between' mb='md'>
+                    <Title order={3}>Ticket Status Overview</Title>
+                    <Badge size='lg' variant='light' color='blue'>
+                      Real-time Status
+                    </Badge>
+                  </Group>
                   <Grid>
                     <Grid.Col span={6}>
-                      <div>
-                        <Text size='sm' c='dimmed' mb={4}>
-                          Open Tickets
-                        </Text>
-                        <Text size='xl' fw={600} c='blue'>
-                          {allTickets?.filter(t =>
-                            STATUS_FILTERS.ACTIVE.includes(
-                              t.status as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD'
-                            )
-                          ).length || 0}
-                        </Text>
-                      </div>
+                      <Card withBorder p='sm' style={{ height: '100%' }}>
+                        <Group>
+                          <Avatar color='purple' size='md'>
+                            <IconUsers size={16} />
+                          </Avatar>
+                          <div>
+                            <Text size='sm' c='dimmed' mb={2}>
+                              Assigned Tickets
+                            </Text>
+                            <Text size='xl' fw={700} c='purple'>
+                              {allTicketsForStats?.filter(t => t.assignedTo)
+                                .length || 0}
+                            </Text>
+                            <Text size='xs' c='dimmed'>
+                              With assignee
+                            </Text>
+                          </div>
+                        </Group>
+                      </Card>
                     </Grid.Col>
                     <Grid.Col span={6}>
-                      <div>
-                        <Text size='sm' c='dimmed' mb={4}>
-                          Resolved Today
-                        </Text>
-                        <Text size='xl' fw={600} c='green'>
-                          {allTickets?.filter(
-                            t =>
-                              STATUS_FILTERS.RESOLVED.includes(
-                                t.status as 'RESOLVED' | 'CLOSED'
-                              ) &&
-                              new Date(t.updatedAt).toDateString() ===
-                                new Date().toDateString()
-                          ).length || 0}
-                        </Text>
-                      </div>
+                      <Card withBorder p='sm' style={{ height: '100%' }}>
+                        <Group>
+                          <Avatar color='cyan' size='md'>
+                            <IconClock size={16} />
+                          </Avatar>
+                          <div>
+                            <Text size='sm' c='dimmed' mb={2}>
+                              Avg. Response Time
+                            </Text>
+                            <Text size='xl' fw={700} c='cyan'>
+                              {(() => {
+                                const resolvedTickets =
+                                  allTicketsForStats?.filter(
+                                    t =>
+                                      ['RESOLVED', 'CLOSED'].includes(
+                                        t.status
+                                      ) && t.responseTime
+                                  ) || [];
+                                if (resolvedTickets.length === 0) return '0h';
+
+                                const totalResponseTime =
+                                  resolvedTickets.reduce((acc, ticket) => {
+                                    return acc + (ticket.responseTime || 0);
+                                  }, 0);
+
+                                const avgHours =
+                                  totalResponseTime / resolvedTickets.length;
+                                return avgHours < 24
+                                  ? `${Math.round(avgHours)}h`
+                                  : `${Math.round(avgHours / 24)}d`;
+                              })()}
+                            </Text>
+                            <Text size='xs' c='dimmed'>
+                              Time to resolve
+                            </Text>
+                          </div>
+                        </Group>
+                      </Card>
                     </Grid.Col>
                     <Grid.Col span={6}>
-                      <div>
-                        <Text size='sm' c='dimmed' mb={4}>
-                          High Priority
-                        </Text>
-                        <Text size='xl' fw={600} c='red'>
-                          {allTickets?.filter(
-                            t =>
-                              t.priority === 'HIGH' || t.priority === 'CRITICAL'
-                          ).length || 0}
-                        </Text>
-                      </div>
+                      <Card withBorder p='sm' style={{ height: '100%' }}>
+                        <Group>
+                          <Avatar color='red' size='md'>
+                            <IconAlertCircle size={16} />
+                          </Avatar>
+                          <div>
+                            <Text size='sm' c='dimmed' mb={2}>
+                              High Priority
+                            </Text>
+                            <Text size='xl' fw={700} c='red'>
+                              {allTicketsForStats?.filter(
+                                t =>
+                                  t.priority === 'HIGH' ||
+                                  t.priority === 'CRITICAL'
+                              ).length || 0}
+                            </Text>
+                            <Text size='xs' c='dimmed'>
+                              Urgent tickets
+                            </Text>
+                          </div>
+                        </Group>
+                      </Card>
                     </Grid.Col>
                     <Grid.Col span={6}>
-                      <div>
-                        <Text size='sm' c='dimmed' mb={4}>
-                          Overdue
-                        </Text>
-                        <Text size='xl' fw={600} c='orange'>
-                          {allTickets?.filter(
-                            t =>
-                              t.dueDate &&
-                              new Date(t.dueDate) < new Date() &&
-                              STATUS_FILTERS.ACTIVE.includes(
-                                t.status as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD'
-                              )
-                          ).length || 0}
-                        </Text>
-                      </div>
+                      <Card withBorder p='sm' style={{ height: '100%' }}>
+                        <Group>
+                          <Avatar color='teal' size='md'>
+                            <IconTrendingUp size={16} />
+                          </Avatar>
+                          <div>
+                            <Text size='sm' c='dimmed' mb={2}>
+                              New This Week
+                            </Text>
+                            <Text size='xl' fw={700} c='teal'>
+                              {allTicketsForStats?.filter(t => {
+                                const created = new Date(t.createdAt);
+                                const now = new Date();
+                                const weekAgo = new Date(
+                                  now.getTime() - 7 * 24 * 60 * 60 * 1000
+                                );
+                                return created >= weekAgo;
+                              }).length || 0}
+                            </Text>
+                            <Text size='xs' c='dimmed'>
+                              Last 7 days
+                            </Text>
+                          </div>
+                        </Group>
+                      </Card>
                     </Grid.Col>
                   </Grid>
                 </Paper>
               </Grid.Col>
 
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    Recent Tickets
-                  </Title>
-                  <Stack gap='sm'>
-                    {allTickets?.slice(0, 5).map((ticket: Ticket) => (
-                      <Group key={ticket.id} justify='space-between'>
-                        <div>
-                          <Text size='sm' fw={500}>
-                            {ticket.ticketNumber}
-                          </Text>
-                          <Text size='xs' c='dimmed' lineClamp={1}>
-                            {ticket.title}
-                          </Text>
-                        </div>
-                        <Badge
-                          color={
-                            ticket.status === 'OPEN'
-                              ? 'blue'
-                              : ticket.status === 'IN_PROGRESS'
-                                ? 'yellow'
-                                : ticket.status === 'RESOLVED'
-                                  ? 'green'
-                                  : ticket.status === 'CLOSED'
-                                    ? 'gray'
-                                    : 'orange'
-                          }
-                          size='sm'
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Paper withBorder p='lg' style={{ height: 320 }}>
+                  <Group justify='space-between' mb='md'>
+                    <Title order={3}>Recent Tickets</Title>
+                    <Badge size='sm' variant='light' color='gray'>
+                      Latest 5
+                    </Badge>
+                  </Group>
+                  <div
+                    style={{ height: 'calc(100% - 60px)', overflowY: 'auto' }}
+                  >
+                    <Stack gap='sm'>
+                      {allTickets?.slice(0, 5).map((ticket: Ticket) => (
+                        <Card
+                          key={ticket.id}
+                          withBorder
+                          p='xs'
+                          style={{ cursor: 'pointer' }}
                         >
-                          {ticket.status.replace('_', ' ')}
-                        </Badge>
-                      </Group>
-                    ))}
-                    {(!allTickets || allTickets.length === 0) && (
-                      <Text size='sm' c='dimmed' ta='center' py='md'>
-                        No tickets found
-                      </Text>
-                    )}
-                  </Stack>
+                          <Group justify='space-between'>
+                            <div style={{ flex: 1 }}>
+                              <Text size='sm' fw={600} c='blue'>
+                                {ticket.ticketNumber}
+                              </Text>
+                              <Text size='xs' c='dimmed' lineClamp={1} mt={1}>
+                                {ticket.title}
+                              </Text>
+                              <Text size='xs' c='dimmed' mt={1}>
+                                {new Date(
+                                  ticket.createdAt
+                                ).toLocaleDateString()}
+                              </Text>
+                            </div>
+                            <Badge
+                              color={
+                                ticket.status === 'OPEN'
+                                  ? 'blue'
+                                  : ticket.status === 'IN_PROGRESS'
+                                    ? 'yellow'
+                                    : ticket.status === 'RESOLVED'
+                                      ? 'green'
+                                      : ticket.status === 'CLOSED'
+                                        ? 'gray'
+                                        : 'orange'
+                              }
+                              size='sm'
+                              variant='light'
+                            >
+                              {ticket.status.replace('_', ' ')}
+                            </Badge>
+                          </Group>
+                        </Card>
+                      ))}
+                      {(!allTickets || allTickets.length === 0) && (
+                        <Card withBorder p='md' style={{ textAlign: 'center' }}>
+                          <Text size='sm' c='dimmed'>
+                            No tickets found
+                          </Text>
+                        </Card>
+                      )}
+                    </Stack>
+                  </div>
                 </Paper>
               </Grid.Col>
 
               <Grid.Col span={{ base: 12, md: 6 }}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    Tickets by Priority
-                  </Title>
-                  <Stack gap='sm'>
+                <Paper withBorder p='lg' style={{ height: 320 }}>
+                  <Group justify='space-between' mb='md'>
+                    <Title order={3}>Tickets by Priority</Title>
+                    <Badge size='sm' variant='light' color='red'>
+                      Distribution
+                    </Badge>
+                  </Group>
+                  <Stack gap='md'>
                     {PRIORITY_OPTIONS.map(priority => {
                       const count =
-                        allTickets?.filter(t => t.priority === priority.value)
-                          .length || 0;
-                      const percentage = allTickets?.length
-                        ? (count / allTickets.length) * 100
+                        allTicketsForStats?.filter(
+                          t => t.priority === priority.value
+                        ).length || 0;
+                      const percentage = totalTicketsCount
+                        ? (count / totalTicketsCount) * 100
                         : 0;
                       return (
-                        <div key={priority.value}>
-                          <Group justify='space-between' mb={4}>
+                        <Card key={priority.value} withBorder p='sm'>
+                          <Group justify='space-between' mb={8}>
+                            <Group>
+                              <Badge
+                                color={
+                                  priority.value === 'CRITICAL'
+                                    ? 'red'
+                                    : priority.value === 'HIGH'
+                                      ? 'orange'
+                                      : priority.value === 'MEDIUM'
+                                        ? 'blue'
+                                        : 'green'
+                                }
+                                variant='light'
+                                size='sm'
+                              >
+                                {priority.label}
+                              </Badge>
+                              <Text size='sm' fw={600}>
+                                {count} tickets
+                              </Text>
+                            </Group>
                             <Text size='sm' c='dimmed'>
-                              {priority.label}
-                            </Text>
-                            <Text size='sm' fw={500}>
-                              {count}
+                              {percentage.toFixed(1)}%
                             </Text>
                           </Group>
                           <Progress
@@ -572,9 +659,10 @@ export function AdminDashboard() {
                                     ? 'blue'
                                     : 'green'
                             }
-                            size='sm'
+                            size='md'
+                            radius='xl'
                           />
-                        </div>
+                        </Card>
                       );
                     })}
                   </Stack>
@@ -582,11 +670,14 @@ export function AdminDashboard() {
               </Grid.Col>
 
               <Grid.Col span={{ base: 12, md: 6 }}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    Tickets by Category
-                  </Title>
-                  <Stack gap='sm'>
+                <Paper withBorder p='lg' style={{ height: 320 }}>
+                  <Group justify='space-between' mb='md'>
+                    <Title order={3}>Tickets by Category</Title>
+                    <Badge size='sm' variant='light' color='blue'>
+                      Top 4
+                    </Badge>
+                  </Group>
+                  <Stack gap='md'>
                     {allTickets?.reduce(
                       (acc: Record<string, number>, ticket: Ticket) => {
                         const category = ticket.category.name;
@@ -596,7 +687,7 @@ export function AdminDashboard() {
                       {}
                     ) &&
                       Object.entries(
-                        allTickets?.reduce(
+                        allTicketsForStats?.reduce(
                           (acc: Record<string, number>, ticket: Ticket) => {
                             const category = ticket.category.name;
                             acc[category] = (acc[category] || 0) + 1;
@@ -607,31 +698,39 @@ export function AdminDashboard() {
                       )
                         .slice(0, 4)
                         .map(([category, count]) => {
-                          const percentage = allTickets?.length
-                            ? (count / allTickets.length) * 100
+                          const percentage = totalTicketsCount
+                            ? (count / totalTicketsCount) * 100
                             : 0;
                           return (
-                            <div key={category}>
-                              <Group justify='space-between' mb={4}>
+                            <Card key={category} withBorder p='sm'>
+                              <Group justify='space-between' mb={8}>
+                                <Group>
+                                  <Badge color='blue' variant='light' size='sm'>
+                                    {category}
+                                  </Badge>
+                                  <Text size='sm' fw={600}>
+                                    {count} tickets
+                                  </Text>
+                                </Group>
                                 <Text size='sm' c='dimmed'>
-                                  {category}
-                                </Text>
-                                <Text size='sm' fw={500}>
-                                  {count}
+                                  {percentage.toFixed(1)}%
                                 </Text>
                               </Group>
                               <Progress
                                 value={percentage}
                                 color='blue'
-                                size='sm'
+                                size='md'
+                                radius='xl'
                               />
-                            </div>
+                            </Card>
                           );
                         })}
                     {(!allTickets || allTickets.length === 0) && (
-                      <Text size='sm' c='dimmed' ta='center' py='md'>
-                        No tickets found
-                      </Text>
+                      <Card withBorder p='lg' style={{ textAlign: 'center' }}>
+                        <Text size='sm' c='dimmed'>
+                          No tickets found
+                        </Text>
+                      </Card>
                     )}
                   </Stack>
                 </Paper>
@@ -708,7 +807,7 @@ export function AdminDashboard() {
                           </Table.Td>
                           <Table.Td>{user.email}</Table.Td>
                           <Table.Td>
-                            <Badge color='blue'>
+                            <Badge color='red'>
                               {user.role.replace('_', ' ')}
                             </Badge>
                           </Table.Td>
@@ -771,12 +870,6 @@ export function AdminDashboard() {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                   />
-                  <Button
-                    variant='outline'
-                    leftSection={<IconFilter size={16} />}
-                  >
-                    Filter
-                  </Button>
                 </Group>
               </Group>
 
@@ -791,6 +884,45 @@ export function AdminDashboard() {
           </Tabs.Panel>
 
           <Tabs.Panel value='system' pt='md'>
+            {/* System Performance Charts */}
+            <Grid mb='xl'>
+              <Grid.Col span={{ base: 12, md: 8 }}>
+                <Paper withBorder p='md'>
+                  <Title order={3} mb='md'>
+                    System Performance
+                  </Title>
+                  <AreaChart
+                    h={300}
+                    data={systemMetricsData}
+                    dataKey='time'
+                    series={[
+                      { name: 'cpu', color: 'red.6' },
+                      { name: 'memory', color: 'red.6' },
+                      { name: 'disk', color: 'green.6' },
+                    ]}
+                    curveType='linear'
+                    unit='%'
+                  />
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Paper withBorder p='md'>
+                  <Title order={3} mb='md'>
+                    User Distribution
+                  </Title>
+                  <BarChart
+                    h={300}
+                    data={userRoles}
+                    dataKey='role'
+                    series={[{ name: 'count', color: 'red.6' }]}
+                    orientation='vertical'
+                    unit=' users'
+                  />
+                </Paper>
+              </Grid.Col>
+            </Grid>
+
             <Grid>
               <Grid.Col span={{ base: 12, md: 4 }}>
                 <Paper withBorder p='md'>
@@ -851,23 +983,27 @@ export function AdminDashboard() {
                       <Group justify='space-between' mb={4}>
                         <Text size='sm'>CPU Usage</Text>
                         <Text size='sm' fw={500}>
-                          {systemMetrics?.cpuUsage || 65}%
+                          {systemMetrics?.cpuUsage
+                            ? `${systemMetrics.cpuUsage}%`
+                            : 'Loading...'}
                         </Text>
                       </Group>
                       <Progress
-                        value={systemMetrics?.cpuUsage || 65}
-                        color='blue'
+                        value={systemMetrics?.cpuUsage || 0}
+                        color='red'
                       />
                     </div>
                     <div>
                       <Group justify='space-between' mb={4}>
                         <Text size='sm'>{tSystem('memoryUsage')}</Text>
                         <Text size='sm' fw={500}>
-                          {systemMetrics?.memoryUsage || 78}%
+                          {systemMetrics?.memoryUsage
+                            ? `${systemMetrics.memoryUsage}%`
+                            : 'Loading...'}
                         </Text>
                       </Group>
                       <Progress
-                        value={systemMetrics?.memoryUsage || 78}
+                        value={systemMetrics?.memoryUsage || 0}
                         color='orange'
                       />
                     </div>
@@ -875,11 +1011,13 @@ export function AdminDashboard() {
                       <Group justify='space-between' mb={4}>
                         <Text size='sm'>{tSystem('diskUsage')}</Text>
                         <Text size='sm' fw={500}>
-                          {systemMetrics?.diskUsage || 42}%
+                          {systemMetrics?.diskUsage
+                            ? `${systemMetrics.diskUsage}%`
+                            : 'Loading...'}
                         </Text>
                       </Group>
                       <Progress
-                        value={systemMetrics?.diskUsage || 42}
+                        value={systemMetrics?.diskUsage || 0}
                         color='green'
                       />
                     </div>
@@ -899,18 +1037,52 @@ export function AdminDashboard() {
                     </Group>
                     <Group justify='space-between'>
                       <Text size='sm'>{tSystem('queryPerformance')}</Text>
-                      <Badge color='blue'>{tSystem('good')}</Badge>
+                      <Badge color='red'>{tSystem('good')}</Badge>
                     </Group>
                     <Group justify='space-between'>
                       <Text size='sm'>{tSystem('lastBackup')}</Text>
                       <Text size='sm'>
-                        {systemMetrics?.lastBackup || '2 hours ago'}
+                        {systemMetrics?.lastBackup || 'Loading...'}
                       </Text>
                     </Group>
                     <Group justify='space-between'>
                       <Text size='sm'>{tSystem('databaseSize')}</Text>
                       <Text size='sm'>
-                        {systemMetrics?.databaseSize || '1.2 GB'}
+                        {systemMetrics?.databaseSize || 'Loading...'}
+                      </Text>
+                    </Group>
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 4 }}>
+                <Paper withBorder p='md'>
+                  <Title order={3} mb='md'>
+                    System Information
+                  </Title>
+                  <Stack gap='sm'>
+                    <Group justify='space-between'>
+                      <Text size='sm'>System Uptime</Text>
+                      <Text size='sm' fw={500}>
+                        {systemMetrics?.uptime || 'Loading...'}
+                      </Text>
+                    </Group>
+                    <Group justify='space-between'>
+                      <Text size='sm'>Storage Used</Text>
+                      <Text size='sm' fw={500}>
+                        {systemMetrics?.storageUsed || 'Loading...'}
+                      </Text>
+                    </Group>
+                    <Group justify='space-between'>
+                      <Text size='sm'>Active Users</Text>
+                      <Text size='sm' fw={500}>
+                        {users?.filter((u: User) => u.isActive).length || 0}
+                      </Text>
+                    </Group>
+                    <Group justify='space-between'>
+                      <Text size='sm'>Total Users</Text>
+                      <Text size='sm' fw={500}>
+                        {users?.length || 0}
                       </Text>
                     </Group>
                   </Stack>

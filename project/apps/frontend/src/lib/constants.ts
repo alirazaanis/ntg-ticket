@@ -337,7 +337,7 @@ export const WEBSOCKET_CONFIG = {
     },
     TICKET_CREATED: {
       TITLE: 'New Ticket Created',
-      COLOR: 'blue',
+      COLOR: 'red',
     },
     TICKET_UPDATED: {
       TITLE: 'Ticket Updated',
@@ -349,7 +349,7 @@ export const WEBSOCKET_CONFIG = {
     },
     COMMENT_ADDED: {
       TITLE: 'New Comment',
-      COLOR: 'blue',
+      COLOR: 'purple',
     },
     SLA_WARNING: {
       TITLE: 'SLA Warning',
@@ -406,10 +406,11 @@ export const NOTIFICATION_ICONS = {
   SLA_BREACH: 'IconAlertCircle',
   TICKET_DUE: 'IconCalendar',
   TICKET_ESCALATED: 'IconAlertCircle',
+  SYSTEM_ANNOUNCEMENT: 'IconBell',
 } as const;
 
 export const NOTIFICATION_COLORS = {
-  TICKET_CREATED: 'blue',
+  TICKET_CREATED: 'red',
   TICKET_ASSIGNED: 'green',
   TICKET_STATUS_CHANGED: 'orange',
   COMMENT_ADDED: 'purple',
@@ -417,6 +418,7 @@ export const NOTIFICATION_COLORS = {
   SLA_BREACH: 'red',
   TICKET_DUE: 'orange',
   TICKET_ESCALATED: 'red',
+  SYSTEM_ANNOUNCEMENT: 'red',
 } as const;
 
 // Backup status options
@@ -454,8 +456,8 @@ export const UI_CONSTANTS = {
     SUCCESS: 'green',
     ERROR: 'red',
     WARNING: 'yellow',
-    INFO: 'blue',
-    PRIMARY: 'blue',
+    INFO: 'red',
+    PRIMARY: 'red',
     SECONDARY: 'orange',
   },
 } as const;

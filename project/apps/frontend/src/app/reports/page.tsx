@@ -232,7 +232,7 @@ export default function ReportsPage() {
                   <Grid.Col span={3}>
                     <Card padding='md'>
                       <Group>
-                        <IconTicket size={24} color='blue' />
+                        <IconTicket size={24} color='red' />
                         <div>
                           <Text size='sm' c='dimmed'>
                             Total Tickets

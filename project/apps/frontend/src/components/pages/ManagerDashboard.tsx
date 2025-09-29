@@ -26,7 +26,6 @@ import { AreaChart, BarChart } from '@mantine/charts';
 import {
   IconPlus,
   IconSearch,
-  IconFilter,
   IconClock,
   IconCheck,
   IconAlertCircle,
@@ -39,40 +38,49 @@ import {
   IconChartBar,
   IconReport,
 } from '@tabler/icons-react';
-import { useTickets } from '../../hooks/useTickets';
+import {
+  useTotalTicketsCount,
+  useAllTicketsForCounting,
+} from '../../hooks/useTickets';
 import { useTicketReport } from '../../hooks/useReports';
 import { TicketCard } from '../ui/TicketCard';
 import { Ticket } from '../../types/unified';
 import { TeamPerformanceData } from '../../lib/apiClient';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 export function ManagerDashboard() {
   const t = useTranslations('dashboard');
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  const { data: tickets, isLoading: ticketsLoading } = useTickets();
+  const { data: totalTicketsCount } = useTotalTicketsCount();
+  const { data: allTicketsForStats, isLoading: ticketsLoading } =
+    useAllTicketsForCounting();
   const { data: reportData } = useTicketReport();
-
-  const allTickets = tickets || [];
-  const openTickets = allTickets?.filter((ticket: Ticket) =>
-    ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
-  );
+  const openTickets =
+    allTicketsForStats?.filter((ticket: Ticket) =>
+      ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
+    ) || [];
   const resolvedTickets =
-    allTickets?.filter((ticket: Ticket) => ticket.status === 'RESOLVED') || [];
+    allTicketsForStats?.filter(
+      (ticket: Ticket) => ticket.status === 'RESOLVED'
+    ) || [];
 
-  const overdueTickets = allTickets?.filter((ticket: Ticket) => {
-    if (!ticket.dueDate) return false;
-    return (
-      new Date(ticket.dueDate) < new Date() &&
-      !['RESOLVED', 'CLOSED'].includes(ticket.status)
-    );
-  });
+  const overdueTickets =
+    allTicketsForStats?.filter((ticket: Ticket) => {
+      if (!ticket.dueDate) return false;
+      return (
+        new Date(ticket.dueDate) < new Date() &&
+        !['RESOLVED', 'CLOSED'].includes(ticket.status)
+      );
+    }) || [];
 
   const stats = [
     {
       title: t('totalTickets'),
-      value: allTickets?.length || 0,
+      value: totalTicketsCount || 0,
       icon: IconTicket,
-      color: 'blue',
+      color: 'red',
     },
     {
       title: t('openTickets'),
@@ -125,13 +133,17 @@ export function ManagerDashboard() {
             <Text c='dimmed'>Monitor team performance and ticket metrics</Text>
           </div>
           <Group>
-            <Button variant='outline' leftSection={<IconSearch size={16} />}>
+            <Button
+              variant='outline'
+              leftSection={<IconSearch size={16} />}
+              onClick={() => router.push('/tickets')}
+            >
               Search Tickets
             </Button>
-            <Button variant='outline' leftSection={<IconFilter size={16} />}>
-              Filter
-            </Button>
-            <Button leftSection={<IconReport size={16} />}>
+            <Button
+              leftSection={<IconReport size={16} />}
+              onClick={() => router.push('/reports')}
+            >
               Generate Report
             </Button>
           </Group>
@@ -178,13 +190,15 @@ export function ManagerDashboard() {
                       thickness={12}
                       sections={[
                         {
-                          value: reportData?.slaMetrics?.responseTime || 85,
+                          value: reportData?.slaMetrics?.responseTime || 0,
                           color: 'green',
                         },
                       ]}
                       label={
                         <Text ta='center' fw={700} size='lg'>
-                          {reportData?.slaMetrics?.responseTime || 85}%
+                          {reportData?.slaMetrics?.responseTime
+                            ? `${reportData.slaMetrics.responseTime}%`
+                            : 'Loading...'}
                         </Text>
                       }
                     />
@@ -200,13 +214,15 @@ export function ManagerDashboard() {
                       thickness={12}
                       sections={[
                         {
-                          value: reportData?.slaMetrics?.resolutionTime || 78,
+                          value: reportData?.slaMetrics?.resolutionTime || 0,
                           color: 'orange',
                         },
                       ]}
                       label={
                         <Text ta='center' fw={700} size='lg'>
-                          {reportData?.slaMetrics?.resolutionTime || 78}%
+                          {reportData?.slaMetrics?.resolutionTime
+                            ? `${reportData.slaMetrics.resolutionTime}%`
+                            : 'Loading...'}
                         </Text>
                       }
                     />
@@ -247,7 +263,7 @@ export function ManagerDashboard() {
                 data={ticketTrendData}
                 dataKey='month'
                 series={[
-                  { name: 'tickets', color: 'blue.6' },
+                  { name: 'tickets', color: 'red.6' },
                   { name: 'resolved', color: 'green.6' },
                 ]}
                 curveType='linear'
@@ -265,7 +281,7 @@ export function ManagerDashboard() {
                 h={300}
                 data={categoryData}
                 dataKey='category'
-                series={[{ name: 'count', color: 'blue.6' }]}
+                series={[{ name: 'count', color: 'red.6' }]}
                 orientation='vertical'
                 unit=' tickets'
               />
@@ -310,7 +326,7 @@ export function ManagerDashboard() {
                     Recent Activity
                   </Title>
                   <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                    {allTickets?.slice(0, 5).map((ticket: Ticket) => (
+                    {allTicketsForStats?.slice(0, 5).map((ticket: Ticket) => (
                       <Timeline.Item
                         key={ticket.id}
                         bullet={<IconTicket size={12} />}
@@ -320,7 +336,7 @@ export function ManagerDashboard() {
                           {ticket.status} •{' '}
                           {new Date(ticket.updatedAt).toLocaleDateString()}
                         </Text>
-                        <Badge color='blue' size='sm' mt={4}>
+                        <Badge color='red' size='sm' mt={4}>
                           {ticket.ticketNumber}
                         </Badge>
                       </Timeline.Item>
@@ -375,17 +391,11 @@ export function ManagerDashboard() {
                     leftSection={<IconSearch size={16} />}
                     style={{ width: 300 }}
                   />
-                  <Button
-                    variant='outline'
-                    leftSection={<IconFilter size={16} />}
-                  >
-                    Filter
-                  </Button>
                 </Group>
               </Group>
 
               <Grid>
-                {allTickets?.map((ticket: Ticket) => (
+                {allTicketsForStats?.map((ticket: Ticket) => (
                   <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
                     <TicketCard ticket={ticket} showActions />
                   </Grid.Col>

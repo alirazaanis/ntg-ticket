@@ -276,7 +276,7 @@ export function TicketForm({
         />
 
         {/* Auto-assign Information */}
-        <Alert icon={<IconInfoCircle size={16} />} color='blue' variant='light'>
+        <Alert icon={<IconInfoCircle size={16} />} color='red' variant='light'>
           <Text size='sm' fw={500} mb='xs'>
             System Settings
           </Text>

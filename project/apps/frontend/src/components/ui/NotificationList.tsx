@@ -79,7 +79,7 @@ export function NotificationList({
 
   const getNotificationColor = (type: string) => {
     return (
-      NOTIFICATION_COLORS[type as keyof typeof NOTIFICATION_COLORS] || 'blue'
+      NOTIFICATION_COLORS[type as keyof typeof NOTIFICATION_COLORS] || 'red'
     );
   };
 
@@ -134,7 +134,7 @@ export function NotificationList({
             <Text fw={600} size='lg'>
               {t('notifications')}
             </Text>
-            <Badge color='blue' variant='light'>
+            <Badge color='red' variant='light'>
               {notifications.filter(n => !n.isRead).length} {t('unread')}
             </Badge>
             <Text size='xs' c='dimmed'>
@@ -211,10 +211,10 @@ export function NotificationList({
                   style={{
                     backgroundColor: notification.isRead
                       ? 'transparent'
-                      : 'var(--mantine-color-blue-0)',
+                      : 'var(--mantine-color-red-0)',
                     borderLeft: notification.isRead
                       ? 'none'
-                      : '3px solid var(--mantine-color-blue-6)',
+                      : '3px solid var(--mantine-color-red-6)',
                   }}
                 >
                   <Group justify='space-between' align='flex-start'>
@@ -266,7 +266,7 @@ export function NotificationList({
                             </Group>
                           </div>
                           {!notification.isRead && (
-                            <Badge color='blue' size='xs' variant='filled'>
+                            <Badge color='red' size='xs' variant='filled'>
                               {t('new')}
                             </Badge>
                           )}

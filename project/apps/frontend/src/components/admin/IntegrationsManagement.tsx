@@ -48,13 +48,13 @@ interface IntegrationsManagementProps {
 }
 
 const integrationTypes = [
-  { value: 'webhook', label: 'Webhook', icon: IconWebhook, color: 'blue' },
+  { value: 'webhook', label: 'Webhook', icon: IconWebhook, color: 'red' },
   { value: 'api', label: 'API', icon: IconApi, color: 'green' },
   { value: 'sso', label: 'SSO', icon: IconShield, color: 'purple' },
   { value: 'email', label: 'Email', icon: IconMail, color: 'orange' },
   { value: 'slack', label: 'Slack', icon: IconBrandSlack, color: 'cyan' },
-  { value: 'teams', label: 'Teams', icon: IconBrandTeams, color: 'blue' },
-  { value: 'jira', label: 'Jira', icon: IconBrandX, color: 'blue' },
+  { value: 'teams', label: 'Teams', icon: IconBrandTeams, color: 'red' },
+  { value: 'jira', label: 'Jira', icon: IconBrandX, color: 'red' },
   {
     value: 'serviceNow',
     label: 'ServiceNow',

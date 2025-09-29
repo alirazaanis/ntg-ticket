@@ -50,7 +50,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       {/* Left Side - Colored Background (Hidden on Mobile) */}
       <Box
         style={{
-          background: `linear-gradient(135deg, ${theme.colors.blue[6]} 0%, ${theme.colors.violet[6]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.colors.red[6]} 0%, ${theme.colors.red[8]} 100%)`,
           position: 'relative',
           overflow: 'hidden',
           minHeight: '100vh',
@@ -67,9 +67,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             right: 0,
             bottom: 0,
             background: `
-              radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(197, 39, 32, 0.3) 0%, transparent 50%),
               radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%)
+              radial-gradient(circle at 40% 40%, rgba(197, 39, 32, 0.2) 0%, transparent 50%)
             `,
           }}
         />
@@ -374,7 +374,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 size='2.2rem'
                 fw={800}
                 style={{
-                  background: `linear-gradient(135deg, ${theme.colors.blue[6]} 0%, ${theme.colors.violet[6]} 100%)`,
+                  background: `linear-gradient(135deg, ${theme.colors.red[6]} 0%, ${theme.colors.red[8]} 100%)`,
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',

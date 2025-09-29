@@ -122,7 +122,7 @@ export default function MyTicketsPage() {
                   <Text size='sm' fw={500}>
                     Total Tickets
                   </Text>
-                  <Badge color='blue' variant='light'>
+                  <Badge color='red' variant='light'>
                     {myTickets.length}
                   </Badge>
                 </Group>

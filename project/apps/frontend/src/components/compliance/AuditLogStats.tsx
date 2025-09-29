@@ -187,7 +187,7 @@ export function AuditLogStats({ opened, onClose }: AuditLogStatsProps) {
                       </div>
                       <IconActivity
                         size={48}
-                        color='var(--mantine-color-blue-6)'
+                        color='var(--mantine-color-red-6)'
                       />
                     </Group>
                   </Card>
@@ -226,7 +226,7 @@ export function AuditLogStats({ opened, onClose }: AuditLogStatsProps) {
                         .map(([resource, count]) => (
                           <Group key={resource} justify='space-between'>
                             <Text size='sm'>{resource}</Text>
-                            <Badge color='blue'>{count}</Badge>
+                            <Badge color='red'>{count}</Badge>
                           </Group>
                         ))}
                     </Stack>
@@ -310,7 +310,7 @@ export function AuditLogStats({ opened, onClose }: AuditLogStatsProps) {
                             </Text>
                           </Table.Td>
                           <Table.Td>
-                            <Badge color='blue'>{user.count}</Badge>
+                            <Badge color='red'>{user.count}</Badge>
                           </Table.Td>
                           <Table.Td>
                             <Text size='sm'>{percentage.toFixed(1)}%</Text>

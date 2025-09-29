@@ -69,7 +69,7 @@ export function EndUserDashboard() {
       title: t('totalTickets'),
       value: myTickets.length,
       icon: IconTicket,
-      color: 'blue',
+      color: 'red',
     },
     {
       title: t('openTickets'),
@@ -184,7 +184,7 @@ export function EndUserDashboard() {
                           {ticket.status} •{' '}
                           {new Date(ticket.updatedAt).toLocaleDateString()}
                         </Text>
-                        <Badge color='blue' size='sm' mt={4}>
+                        <Badge color='red' size='sm' mt={4}>
                           {ticket.ticketNumber}
                         </Badge>
                       </Timeline.Item>
@@ -209,6 +209,7 @@ export function EndUserDashboard() {
                     <Button
                       variant='light'
                       leftSection={<IconSearch size={16} />}
+                      onClick={() => router.push('/tickets')}
                     >
                       {tTickets('searchTickets')}
                     </Button>

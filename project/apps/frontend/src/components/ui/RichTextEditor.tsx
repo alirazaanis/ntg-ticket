@@ -29,8 +29,6 @@ import {
   IconStrikethrough,
   IconQuote,
   IconMinus,
-  IconArrowBack,
-  IconArrowForward,
   IconClearFormatting,
   IconH1,
   IconH2,
@@ -45,6 +43,7 @@ import {
   IconHighlight,
   IconLink,
 } from '@tabler/icons-react';
+import { RTLArrowLeft, RTLArrowRight } from './RTLIcon';
 import {
   Group,
   Stack,
@@ -252,7 +251,7 @@ export const RichTextEditorComponent: React.FC<RichTextEditorProps> = ({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-500 underline cursor-pointer',
+          class: 'text-red-500 underline cursor-pointer',
         },
       }),
     ],
@@ -886,7 +885,7 @@ export const RichTextEditorComponent: React.FC<RichTextEditorProps> = ({
                       onClick={handleUndo}
                       disabled={disabled || !editor.can().undo()}
                     >
-                      <IconArrowBack size={16} />
+                      <RTLArrowLeft size={16} />
                     </ActionIcon>
                   </Tooltip>
                 );
@@ -897,7 +896,7 @@ export const RichTextEditorComponent: React.FC<RichTextEditorProps> = ({
                       onClick={handleRedo}
                       disabled={disabled || !editor.can().redo()}
                     >
-                      <IconArrowForward size={16} />
+                      <RTLArrowRight size={16} />
                     </ActionIcon>
                   </Tooltip>
                 );

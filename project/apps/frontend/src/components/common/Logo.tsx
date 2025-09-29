@@ -72,21 +72,21 @@ export function Logo({ size = 40, variant = 'full', className }: LogoProps) {
             <linearGradient id='gradient1' x1='0%' y1='0%' x2='100%' y2='100%'>
               <stop
                 offset='0%'
-                style={{ stopColor: '#667eea', stopOpacity: 1 }}
+                style={{ stopColor: '#C52720', stopOpacity: 1 }}
               />
               <stop
                 offset='100%'
-                style={{ stopColor: '#764ba2', stopOpacity: 1 }}
+                style={{ stopColor: '#991b1b', stopOpacity: 1 }}
               />
             </linearGradient>
             <linearGradient id='gradient2' x1='0%' y1='0%' x2='100%' y2='100%'>
               <stop
                 offset='0%'
-                style={{ stopColor: '#667eea', stopOpacity: 0.8 }}
+                style={{ stopColor: '#C52720', stopOpacity: 0.8 }}
               />
               <stop
                 offset='100%'
-                style={{ stopColor: '#764ba2', stopOpacity: 0.8 }}
+                style={{ stopColor: '#991b1b', stopOpacity: 0.8 }}
               />
             </linearGradient>
           </defs>
@@ -106,7 +106,7 @@ export function Logo({ size = 40, variant = 'full', className }: LogoProps) {
           style={{
             fontSize: `${size * 0.6}px`,
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -130,7 +130,7 @@ export function Logo({ size = 40, variant = 'full', className }: LogoProps) {
           style={{
             fontSize: `${size * 0.5}px`,
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',

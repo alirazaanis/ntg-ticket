@@ -359,7 +359,7 @@ export default function SettingsPage() {
                   {...form.getInputProps('profileVisibility')}
                 />
 
-                <Alert icon={<IconAlertCircle size={16} />} color='blue'>
+                <Alert icon={<IconAlertCircle size={16} />} color='red'>
                   <Text size='sm'>
                     These settings control how your information is displayed to
                     other users. Changes may take a few minutes to take effect.

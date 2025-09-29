@@ -276,7 +276,7 @@ export default function BackupPage() {
                             </Stack>
                           </Table.Td>
                           <Table.Td>
-                            <Badge color='blue' variant='light' size='sm'>
+                            <Badge color='red' variant='light' size='sm'>
                               Full
                             </Badge>
                           </Table.Td>
@@ -285,7 +285,7 @@ export default function BackupPage() {
                               <ActionIcon
                                 variant='light'
                                 size='sm'
-                                color='blue'
+                                color='red'
                                 onClick={() =>
                                   handleDownloadBackup({
                                     id: backup.id,
@@ -355,7 +355,7 @@ export default function BackupPage() {
               <Card>
                 <Stack>
                   <Title order={4}>Backup Settings</Title>
-                  <Alert color='blue' title='Automatic Backups'>
+                  <Alert color='red' title='Automatic Backups'>
                     Configure automatic backup schedules and retention policies.
                   </Alert>
                   <Stack>
@@ -398,7 +398,7 @@ export default function BackupPage() {
                   <Grid>
                     <Grid.Col span={6}>
                       <Stack align='center'>
-                        <IconDatabase size={32} color='blue' />
+                        <IconDatabase size={32} color='red' />
                         <Text size='xl' fw={700}>
                           {backups?.length || 0}
                         </Text>
@@ -472,9 +472,9 @@ export default function BackupPage() {
                 <Grid.Col span={4}>
                   <Card padding='md'>
                     <Stack align='center'>
-                      <IconCloud size={32} color='blue' />
+                      <IconCloud size={32} color='red' />
                       <Text fw={500}>Cloud Storage</Text>
-                      <Badge color='blue' variant='light'>
+                      <Badge color='red' variant='light'>
                         Connected
                       </Badge>
                     </Stack>

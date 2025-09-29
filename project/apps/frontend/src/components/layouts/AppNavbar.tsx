@@ -32,9 +32,8 @@ import {
   IconSearch,
   IconClock,
   IconExclamationMark,
-  IconChevronDown,
-  IconChevronRight,
 } from '@tabler/icons-react';
+import { RTLChevronDown, RTLChevronRight } from '../ui/RTLIcon';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useTicketsStore } from '../../stores/useTicketsStore';
 import { useNotificationsStore } from '../../stores/useNotificationsStore';
@@ -274,7 +273,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   // Helper function to render navigation items
   const renderNavItems = (
     items: typeof essentialItems,
-    color: string = 'blue'
+    color: string = 'red'
   ) => {
     return items.map(item => {
       if (!item.show) return null;
@@ -321,9 +320,9 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                 variant='subtle'
                 leftSection={
                   ticketsExpanded ? (
-                    <IconChevronDown size={14} />
+                    <RTLChevronDown size={14} />
                   ) : (
-                    <IconChevronRight size={14} />
+                    <RTLChevronRight size={14} />
                   )
                 }
                 onClick={toggleTickets}
@@ -349,9 +348,9 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                 variant='subtle'
                 leftSection={
                   statsExpanded ? (
-                    <IconChevronDown size={14} />
+                    <RTLChevronDown size={14} />
                   ) : (
-                    <IconChevronRight size={14} />
+                    <RTLChevronRight size={14} />
                   )
                 }
                 onClick={toggleStats}
@@ -367,7 +366,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                     <Text size='sm' c='dimmed'>
                       {tTickets('openTickets')}
                     </Text>
-                    <Badge size='sm' color='blue' variant='light'>
+                    <Badge size='sm' color='red' variant='light'>
                       {isLoading ? '...' : openTickets.length}
                     </Badge>
                   </Group>
@@ -393,9 +392,9 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                 variant='subtle'
                 leftSection={
                   adminExpanded ? (
-                    <IconChevronDown size={14} />
+                    <RTLChevronDown size={14} />
                   ) : (
-                    <IconChevronRight size={14} />
+                    <RTLChevronRight size={14} />
                   )
                 }
                 onClick={toggleAdmin}

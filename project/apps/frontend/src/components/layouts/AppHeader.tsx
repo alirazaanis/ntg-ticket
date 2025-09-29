@@ -19,9 +19,9 @@ import {
   IconLogout,
   IconSettings,
   IconUser,
-  IconChevronDown,
   IconHelp,
 } from '@tabler/icons-react';
+import { RTLChevronDown } from '../ui/RTLIcon';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useNotificationsStore } from '../../stores/useNotificationsStore';
 import { useSiteBranding } from '../../hooks/useSiteBranding';
@@ -77,7 +77,7 @@ export function AppHeader({
       case 'SUPPORT_MANAGER':
         return 'orange';
       case 'SUPPORT_STAFF':
-        return 'blue';
+        return 'cyan';
       case 'END_USER':
         return 'green';
       default:
@@ -125,7 +125,7 @@ export function AppHeader({
               style={{ objectFit: 'contain' }}
             />
             {!isMobile && (
-              <Text fw={700} size='lg' c='blue'>
+              <Text fw={700} size='lg' c='red'>
                 {siteName}
               </Text>
             )}
@@ -135,14 +135,9 @@ export function AppHeader({
         {/* Right side - Actions */}
         <Group gap='xs'>
           {/* Notifications - Always visible (most important) */}
-          <Menu shadow='md' width={280}>
+          <Menu shadow='md' width={400}>
             <Menu.Target>
-              <ActionIcon
-                variant='subtle'
-                color='blue'
-                size='lg'
-                pos='relative'
-              >
+              <ActionIcon variant='subtle' color='red' size='lg' pos='relative'>
                 <IconBell size={20} />
                 {unreadCount > 0 && (
                   <Badge
@@ -180,7 +175,7 @@ export function AppHeader({
                       marginBottom: '4px',
                       backgroundColor: notification.isRead
                         ? 'transparent'
-                        : theme.colors.blue[0],
+                        : theme.colors.red[0],
                     }}
                     onMouseEnter={e => {
                       // Use theme-aware hover: light for light mode, dark for dark mode
@@ -190,18 +185,19 @@ export function AppHeader({
                         ) === 'dark';
                       if (isDarkMode) {
                         e.currentTarget.style.backgroundColor =
-                          'var(--mantine-color-blue-2)';
+                          'var(--mantine-color-red-2)';
                         e.currentTarget.style.color =
-                          'var(--mantine-color-blue-8)';
+                          'var(--mantine-color-red-8)';
                       } else {
-                        e.currentTarget.style.backgroundColor = '#f8f9ff';
+                        e.currentTarget.style.backgroundColor =
+                          'var(--mantine-color-red-0)';
                       }
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.backgroundColor =
                         notification.isRead
                           ? 'transparent'
-                          : theme.colors.blue[0];
+                          : theme.colors.red[0];
                       e.currentTarget.style.color = 'inherit';
                     }}
                   >
@@ -211,7 +207,7 @@ export function AppHeader({
                           {notification.title}
                         </Text>
                         {!notification.isRead && (
-                          <Badge size='xs' color='blue' variant='filled'>
+                          <Badge size='xs' color='red' variant='filled'>
                             New
                           </Badge>
                         )}
@@ -250,10 +246,11 @@ export function AppHeader({
                     ) === 'dark';
                   if (isDarkMode) {
                     e.currentTarget.style.backgroundColor =
-                      'var(--mantine-color-blue-2)';
-                    e.currentTarget.style.color = 'var(--mantine-color-blue-8)';
+                      'var(--mantine-color-red-2)';
+                    e.currentTarget.style.color = 'var(--mantine-color-red-8)';
                   } else {
-                    e.currentTarget.style.backgroundColor = '#f8f9ff';
+                    e.currentTarget.style.backgroundColor =
+                      'var(--mantine-color-red-0)';
                   }
                 }}
                 onMouseLeave={e => {
@@ -277,13 +274,13 @@ export function AppHeader({
           <Menu shadow='md' width={isMobile ? 200 : 250}>
             <Menu.Target>
               {isMobile ? (
-                <ActionIcon variant='subtle' color='blue' size='lg'>
+                <ActionIcon variant='subtle' color='red' size='lg'>
                   <Avatar size='sm' src={user?.avatar} />
                 </ActionIcon>
               ) : (
                 <Button
                   variant='subtle'
-                  color='blue'
+                  color='red'
                   leftSection={<Avatar size='sm' src={user?.avatar} />}
                 >
                   <Group gap='xs'>
@@ -298,7 +295,7 @@ export function AppHeader({
                         {getRoleLabel(user?.role || 'END_USER')}
                       </Badge>
                     </div>
-                    <IconChevronDown size={14} />
+                    <RTLChevronDown size={14} />
                   </Group>
                 </Button>
               )}
@@ -333,10 +330,11 @@ export function AppHeader({
                     ) === 'dark';
                   if (isDarkMode) {
                     e.currentTarget.style.backgroundColor =
-                      'var(--mantine-color-blue-2)';
-                    e.currentTarget.style.color = 'var(--mantine-color-blue-8)';
+                      'var(--mantine-color-red-2)';
+                    e.currentTarget.style.color = 'var(--mantine-color-red-8)';
                   } else {
-                    e.currentTarget.style.backgroundColor = '#f8f9ff';
+                    e.currentTarget.style.backgroundColor =
+                      'var(--mantine-color-red-0)';
                   }
                 }}
                 onMouseLeave={e => {
@@ -361,10 +359,11 @@ export function AppHeader({
                     ) === 'dark';
                   if (isDarkMode) {
                     e.currentTarget.style.backgroundColor =
-                      'var(--mantine-color-blue-2)';
-                    e.currentTarget.style.color = 'var(--mantine-color-blue-8)';
+                      'var(--mantine-color-red-2)';
+                    e.currentTarget.style.color = 'var(--mantine-color-red-8)';
                   } else {
-                    e.currentTarget.style.backgroundColor = '#f8f9ff';
+                    e.currentTarget.style.backgroundColor =
+                      'var(--mantine-color-red-0)';
                   }
                 }}
                 onMouseLeave={e => {
@@ -392,11 +391,12 @@ export function AppHeader({
                         ) === 'dark';
                       if (isDarkMode) {
                         e.currentTarget.style.backgroundColor =
-                          'var(--mantine-color-blue-2)';
+                          'var(--mantine-color-red-2)';
                         e.currentTarget.style.color =
-                          'var(--mantine-color-blue-8)';
+                          'var(--mantine-color-red-8)';
                       } else {
-                        e.currentTarget.style.backgroundColor = '#f8f9ff';
+                        e.currentTarget.style.backgroundColor =
+                          'var(--mantine-color-red-0)';
                       }
                     }}
                     onMouseLeave={e => {
@@ -430,7 +430,7 @@ export function AppHeader({
               {/* Help & Support */}
               <ActionIcon
                 variant='subtle'
-                color='blue'
+                color='red'
                 size='lg'
                 onClick={onHelpClick}
                 title='Help & Support'

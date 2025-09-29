@@ -11,7 +11,8 @@ import {
   Center,
   Flex,
 } from '@mantine/core';
-import { IconArrowRight, IconRocket } from '@tabler/icons-react';
+import { IconRocket } from '@tabler/icons-react';
+import { RTLArrowRight } from '../ui/RTLIcon';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { LanguageSwitcher } from '../language/LanguageSwitcher';
@@ -26,7 +27,7 @@ export function LandingPage() {
       style={{
         minHeight: '100vh',
         background:
-          'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)',
+          'linear-gradient(135deg, #1a0f0f 0%, #2e1a1a 50%, #3e1616 100%)',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -40,9 +41,9 @@ export function LandingPage() {
           right: 0,
           bottom: 0,
           background: `
-            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 20% 80%, rgba(197, 39, 32, 0.1) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.08) 0%, transparent 50%)
+            radial-gradient(circle at 40% 40%, rgba(197, 39, 32, 0.08) 0%, transparent 50%)
           `,
         }}
       />
@@ -66,7 +67,7 @@ export function LandingPage() {
                 fw={900}
                 style={{
                   background:
-                    'linear-gradient(135deg, #ffffff 0%, #a8a8ff 100%)',
+                    'linear-gradient(135deg, #ffffff 0%, #ffa8a8 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -99,7 +100,7 @@ export function LandingPage() {
                   rightSection={<IconRocket size={20} />}
                   style={{
                     background:
-                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      'linear-gradient(135deg, #C52720 0%, #991b1b 100%)',
                     border: 'none',
                     fontWeight: 600,
                     padding: '16px 32px',
@@ -113,7 +114,7 @@ export function LandingPage() {
                   variant='outline'
                   size='xl'
                   radius='xl'
-                  rightSection={<IconArrowRight size={20} />}
+                  rightSection={<RTLArrowRight size={20} />}
                   style={{
                     border: '2px solid rgba(255, 255, 255, 0.3)',
                     color: 'white',

@@ -18,7 +18,7 @@ export function ThemeToggle() {
     return (
       <ActionIcon
         variant='subtle'
-        color='blue'
+        color='red'
         size='lg'
         aria-label='Toggle theme'
       >
@@ -45,7 +45,7 @@ export function ThemeToggle() {
       <Menu.Target>
         <ActionIcon
           variant='subtle'
-          color='blue'
+          color='red'
           size='lg'
           aria-label='Toggle theme'
         >
@@ -59,8 +59,8 @@ export function ThemeToggle() {
           onClick={() => setTheme('light')}
           style={{
             backgroundColor:
-              theme === 'light' ? mantineTheme.colors.blue[1] : 'transparent',
-            color: theme === 'light' ? mantineTheme.colors.blue[6] : 'inherit',
+              theme === 'light' ? mantineTheme.colors.red[1] : 'transparent',
+            color: theme === 'light' ? mantineTheme.colors.red[6] : 'inherit',
             fontWeight: theme === 'light' ? 600 : 400,
             transition: 'background-color 0.2s ease',
             marginBottom: '4px',
@@ -73,17 +73,17 @@ export function ThemeToggle() {
               ) === 'dark';
             if (isDarkMode) {
               e.currentTarget.style.backgroundColor =
-                mantineTheme.colors.blue[2];
-              e.currentTarget.style.color = mantineTheme.colors.blue[8];
+                mantineTheme.colors.red[2];
+              e.currentTarget.style.color = mantineTheme.colors.red[8];
             } else {
               e.currentTarget.style.backgroundColor = '#f8f9ff';
             }
           }}
           onMouseLeave={e => {
             e.currentTarget.style.backgroundColor =
-              theme === 'light' ? mantineTheme.colors.blue[1] : 'transparent';
+              theme === 'light' ? mantineTheme.colors.red[1] : 'transparent';
             e.currentTarget.style.color =
-              theme === 'light' ? mantineTheme.colors.blue[6] : 'inherit';
+              theme === 'light' ? mantineTheme.colors.red[6] : 'inherit';
           }}
         >
           <Group justify='space-between'>
@@ -100,8 +100,8 @@ export function ThemeToggle() {
           onClick={() => setTheme('dark')}
           style={{
             backgroundColor:
-              theme === 'dark' ? mantineTheme.colors.blue[1] : 'transparent',
-            color: theme === 'dark' ? mantineTheme.colors.blue[6] : 'inherit',
+              theme === 'dark' ? mantineTheme.colors.red[1] : 'transparent',
+            color: theme === 'dark' ? mantineTheme.colors.red[6] : 'inherit',
             fontWeight: theme === 'dark' ? 600 : 400,
             transition: 'background-color 0.2s ease',
             marginBottom: '4px',
@@ -114,17 +114,17 @@ export function ThemeToggle() {
               ) === 'dark';
             if (isDarkMode) {
               e.currentTarget.style.backgroundColor =
-                mantineTheme.colors.blue[2];
-              e.currentTarget.style.color = mantineTheme.colors.blue[8];
+                mantineTheme.colors.red[2];
+              e.currentTarget.style.color = mantineTheme.colors.red[8];
             } else {
               e.currentTarget.style.backgroundColor = '#f8f9ff';
             }
           }}
           onMouseLeave={e => {
             e.currentTarget.style.backgroundColor =
-              theme === 'dark' ? mantineTheme.colors.blue[1] : 'transparent';
+              theme === 'dark' ? mantineTheme.colors.red[1] : 'transparent';
             e.currentTarget.style.color =
-              theme === 'dark' ? mantineTheme.colors.blue[6] : 'inherit';
+              theme === 'dark' ? mantineTheme.colors.red[6] : 'inherit';
           }}
         >
           <Group justify='space-between'>
@@ -141,8 +141,8 @@ export function ThemeToggle() {
           onClick={() => setTheme('auto')}
           style={{
             backgroundColor:
-              theme === 'auto' ? mantineTheme.colors.blue[1] : 'transparent',
-            color: theme === 'auto' ? mantineTheme.colors.blue[6] : 'inherit',
+              theme === 'auto' ? mantineTheme.colors.red[1] : 'transparent',
+            color: theme === 'auto' ? mantineTheme.colors.red[6] : 'inherit',
             fontWeight: theme === 'auto' ? 600 : 400,
             transition: 'background-color 0.2s ease',
             marginBottom: '4px',
@@ -155,17 +155,17 @@ export function ThemeToggle() {
               ) === 'dark';
             if (isDarkMode) {
               e.currentTarget.style.backgroundColor =
-                mantineTheme.colors.blue[2];
-              e.currentTarget.style.color = mantineTheme.colors.blue[8];
+                mantineTheme.colors.red[2];
+              e.currentTarget.style.color = mantineTheme.colors.red[8];
             } else {
               e.currentTarget.style.backgroundColor = '#f8f9ff';
             }
           }}
           onMouseLeave={e => {
             e.currentTarget.style.backgroundColor =
-              theme === 'auto' ? mantineTheme.colors.blue[1] : 'transparent';
+              theme === 'auto' ? mantineTheme.colors.red[1] : 'transparent';
             e.currentTarget.style.color =
-              theme === 'auto' ? mantineTheme.colors.blue[6] : 'inherit';
+              theme === 'auto' ? mantineTheme.colors.red[6] : 'inherit';
           }}
         >
           <Group justify='space-between'>

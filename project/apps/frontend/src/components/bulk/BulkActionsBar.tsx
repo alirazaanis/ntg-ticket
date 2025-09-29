@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   TicketStatus,
   TicketPriority,
@@ -87,6 +88,7 @@ export function BulkActionsBar({
 
   const selectedCount = selectedTickets.length;
   const isAllSelected = selectedCount === totalTickets;
+  const t = useTranslations('tickets');
 
   const statusOptions = STATUS_OPTIONS;
 
@@ -185,12 +187,12 @@ export function BulkActionsBar({
         withBorder
         p='md'
         mb='md'
-        style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}
+        style={{ backgroundColor: 'var(--mantine-color-red-0)' }}
       >
         <Group justify='space-between'>
           <Group>
-            <Badge size='lg' variant='filled' color='blue'>
-              {selectedCount} selected
+            <Badge size='lg' variant='filled' color='red'>
+              {t('selectedCount', { count: selectedCount })}
             </Badge>
             {isAllSelected && (
               <Badge size='sm' variant='light' color='green'>
@@ -198,7 +200,7 @@ export function BulkActionsBar({
               </Badge>
             )}
             <Text size='sm' c='dimmed'>
-              {selectedCount} of {totalTickets} tickets selected
+              {selectedCount} of {totalTickets} tickets
             </Text>
           </Group>
 
@@ -306,7 +308,7 @@ export function BulkActionsBar({
         centered
       >
         <Stack gap='md'>
-          <Alert icon={<IconAlertCircle size={16} />} color='blue'>
+          <Alert icon={<IconAlertCircle size={16} />} color='red'>
             This will update the status of {selectedCount} selected tickets to "
             {newStatus.replace('_', ' ')}".
           </Alert>
@@ -359,7 +361,7 @@ export function BulkActionsBar({
         centered
       >
         <Stack gap='md'>
-          <Alert icon={<IconAlertCircle size={16} />} color='blue'>
+          <Alert icon={<IconAlertCircle size={16} />} color='red'>
             This will assign {selectedCount} selected tickets to the chosen
             user.
           </Alert>
@@ -415,7 +417,7 @@ export function BulkActionsBar({
         centered
       >
         <Stack gap='md'>
-          <Alert icon={<IconAlertCircle size={16} />} color='blue'>
+          <Alert icon={<IconAlertCircle size={16} />} color='red'>
             This will update the priority of {selectedCount} selected tickets to
             "{newPriority}".
           </Alert>
@@ -487,7 +489,7 @@ export function BulkActionsBar({
         centered
       >
         <Stack gap='md'>
-          <Alert icon={<IconAlertCircle size={16} />} color='blue'>
+          <Alert icon={<IconAlertCircle size={16} />} color='red'>
             This will send a notification to the requesters of {selectedCount}{' '}
             selected tickets.
           </Alert>

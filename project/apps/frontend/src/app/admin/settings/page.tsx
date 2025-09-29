@@ -442,7 +442,7 @@ export default function SettingsPage() {
             <Alert
               icon={<IconAlertCircle size={16} />}
               title='SMTP Configuration'
-              color='blue'
+              color='red'
               mb='md'
             >
               Configure your SMTP settings to enable email notifications and

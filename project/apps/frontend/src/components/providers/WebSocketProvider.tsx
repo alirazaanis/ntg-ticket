@@ -102,7 +102,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
           mantineNotifications.show({
             title: 'New Comment',
             message: `A new comment was added to ticket ${data.ticket.ticketNumber}`,
-            color: 'blue',
+            color: 'red',
           });
         }
       );
@@ -171,7 +171,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
           mantineNotifications.show({
             title: 'Ticket Assigned',
             message: `Ticket "${data.ticketTitle}" has been assigned to ${data.assigneeName}`,
-            color: 'blue',
+            color: 'red',
           });
 
           addNotification({

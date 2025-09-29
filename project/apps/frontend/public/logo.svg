@@ -54,12 +54,12 @@
   <!-- Gradient Definitions -->
   <defs>
     <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#C52720;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
     </linearGradient>
     <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.8" />
-      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.8" />
+      <stop offset="0%" style="stop-color:#C52720;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#991b1b;stop-opacity:0.8" />
     </linearGradient>
   </defs>
 </svg>

@@ -11,7 +11,8 @@ import {
   Alert,
   Loader,
 } from '@mantine/core';
-import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
+import { RTLArrowLeft } from '../../../../components/ui/RTLIcon';
 import { notifications } from '@mantine/notifications';
 import { UserForm } from '../../../../components/forms/UserForm';
 import { useUser, useUpdateUser } from '../../../../hooks/useUsers';
@@ -73,7 +74,7 @@ export default function EditUserPage() {
         <Group mt='md'>
           <Button
             variant='outline'
-            leftSection={<IconArrowLeft size={16} />}
+            leftSection={<RTLArrowLeft size={16} />}
             onClick={() => router.back()}
           >
             Go Back
@@ -88,7 +89,7 @@ export default function EditUserPage() {
       <Group mb='xl'>
         <Button
           variant='subtle'
-          leftSection={<IconArrowLeft size={16} />}
+          leftSection={<RTLArrowLeft size={16} />}
           onClick={handleCancel}
         >
           Back to User

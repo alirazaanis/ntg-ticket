@@ -1,9 +1,8 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTicketsStore } from '../stores/useTicketsStore';
 import { ticketApi } from '../lib/apiClient';
 import { Ticket } from '../types/unified';
-import { PAGINATION_CONFIG, TIMING_CONFIG } from '../lib/constants';
 
 /**
  * Hook to sync the tickets store with API data
@@ -14,16 +13,22 @@ export function useTicketsStoreSync() {
   const { data: session, status } = useSession();
   const { setTickets, setLoading } = useTicketsStore();
 
+  // Only initialize once on authentication, not on every change
+  const [hasInitialized, setHasInitialized] = React.useState(false);
+
   useEffect(() => {
     const initializeTickets = async () => {
-      if (status === 'authenticated' && session?.accessToken) {
+      if (
+        status === 'authenticated' &&
+        session?.accessToken &&
+        !hasInitialized
+      ) {
         try {
           setLoading(true);
 
-          // Fetch tickets from API
+          // Fetch tickets from API - explicitly set high limit to get all tickets
           const response = await ticketApi.getTickets({
-            page: 1,
-            limit: PAGINATION_CONFIG.STORE_SYNC_LIMIT, // Get a large number to populate the store
+            limit: 10000, // Set a very high limit to get all tickets
           });
 
           // Set tickets in store - handle different response structures
@@ -37,10 +42,11 @@ export function useTicketsStoreSync() {
             tickets = response.data.data;
           } else if (response.data && Array.isArray(response.data)) {
             tickets = response.data;
+          } else {
           }
 
           setTickets(tickets);
-          // Initialized tickets store
+          setHasInitialized(true);
         } catch (error) {
           // Don't throw error, just log it - store will remain empty
         } finally {
@@ -50,39 +56,49 @@ export function useTicketsStoreSync() {
     };
 
     initializeTickets();
-  }, [status, session?.accessToken, setTickets, setLoading]);
+  }, [status, session?.accessToken, hasInitialized, setTickets, setLoading]);
 
   // Optional: Set up periodic refresh to keep data in sync
-  useEffect(() => {
-    if (status === 'authenticated' && session?.accessToken) {
-      const interval = setInterval(async () => {
-        try {
-          const response = await ticketApi.getTickets({
-            page: 1,
-            limit: PAGINATION_CONFIG.STORE_SYNC_LIMIT,
-          });
+  // Note: Disabled to prevent duplication with WebSocket real-time updates
+  // The store will be updated via WebSocket events instead of periodic polling
+  // useEffect(() => {
+  //   if (status === 'authenticated' && session?.accessToken) {
+  //     const interval = setInterval(async () => {
+  //       try {
+  //         // Fetch tickets from API - explicitly set high limit to get all tickets
+  //         const response = await ticketApi.getTickets({
+  //           limit: 10000, // Set a very high limit to get all tickets
+  //         });
 
-          // Use the same data structure handling as initial load
-          let tickets: Ticket[] = [];
-          if (
-            response.data?.data?.data &&
-            Array.isArray(response.data.data.data)
-          ) {
-            tickets = response.data.data.data;
-          } else if (response.data?.data && Array.isArray(response.data.data)) {
-            tickets = response.data.data;
-          } else if (response.data && Array.isArray(response.data)) {
-            tickets = response.data;
-          }
+  //         // Use the same data structure handling as initial load
+  //         let tickets: Ticket[] = [];
+  //         console.log('🔄 Refresh - Raw API Response:', response);
 
-          setTickets(tickets);
-          // Refreshed tickets store
-        } catch (error) {
-          // Don't clear existing tickets on error - keep current state
-        }
-      }, TIMING_CONFIG.STORE_SYNC_INTERVAL); // Refresh every minute
+  //         if (
+  //           response.data?.data?.data &&
+  //           Array.isArray(response.data.data.data)
+  //         ) {
+  //           tickets = response.data.data.data;
+  //           console.log('✅ Refresh - Using response.data.data.data structure');
+  //         } else if (response.data?.data && Array.isArray(response.data.data)) {
+  //           tickets = response.data.data;
+  //           console.log('✅ Refresh - Using response.data.data structure');
+  //         } else if (response.data && Array.isArray(response.data)) {
+  //           tickets = response.data;
+  //           console.log('✅ Refresh - Using response.data structure');
+  //         } else {
+  //           console.warn('⚠️ Refresh - No valid ticket data found in response');
+  //         }
 
-      return () => clearInterval(interval);
-    }
-  }, [status, session?.accessToken, setTickets]);
+  //         setTickets(tickets);
+  //         console.log('🔄 Tickets Store Sync - Refreshed:', tickets.length, 'tickets');
+  //       } catch (error) {
+  //         console.error('❌ Tickets Store Sync Refresh Error:', error);
+  //         // Don't clear existing tickets on error - keep current state
+  //       }
+  //     }, TIMING_CONFIG.STORE_SYNC_INTERVAL); // Refresh every minute
+
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [status, session?.accessToken, setTickets]);
 }

@@ -20,7 +20,6 @@ import {
 } from '@mantine/core';
 import {
   IconSearch,
-  IconFilter,
   IconBell,
   IconClock,
   IconCheck,
@@ -36,9 +35,11 @@ import { NotificationList } from '../ui/NotificationList';
 import { Ticket } from '../../types/unified';
 import { Notification } from '../../types/notification';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 export function SupportStaffDashboard() {
   const t = useTranslations('dashboard');
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('assigned');
   const { user } = useAuthStore();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
@@ -67,7 +68,7 @@ export function SupportStaffDashboard() {
       title: t('assignedTickets'),
       value: assignedTickets.length,
       icon: IconTicket,
-      color: 'blue',
+      color: 'red',
     },
     {
       title: t('openTickets'),
@@ -111,10 +112,13 @@ export function SupportStaffDashboard() {
             </Text>
           </div>
           <Group>
-            <Button variant='outline' leftSection={<IconSearch size={16} />}>
+            <Button
+              variant='outline'
+              leftSection={<IconSearch size={16} />}
+              onClick={() => router.push('/tickets')}
+            >
               Search Tickets
             </Button>
-            <Button leftSection={<IconFilter size={16} />}>Filter</Button>
           </Group>
         </Group>
 
@@ -153,12 +157,15 @@ export function SupportStaffDashboard() {
                   Response Time (Last 30 days)
                 </Text>
                 <Progress
-                  value={reportData?.slaMetrics?.responseTime || 85}
+                  value={reportData?.slaMetrics?.responseTime || 0}
                   color='green'
                   size='lg'
                 />
                 <Text size='sm' mt={4}>
-                  {reportData?.slaMetrics?.responseTime || 85}% within SLA
+                  {reportData?.slaMetrics?.responseTime
+                    ? `${reportData.slaMetrics.responseTime}%`
+                    : 'Loading...'}{' '}
+                  within SLA
                 </Text>
               </div>
             </Grid.Col>
@@ -168,12 +175,15 @@ export function SupportStaffDashboard() {
                   Resolution Time (Last 30 days)
                 </Text>
                 <Progress
-                  value={reportData?.slaMetrics?.resolutionTime || 78}
+                  value={reportData?.slaMetrics?.resolutionTime || 0}
                   color='orange'
                   size='lg'
                 />
                 <Text size='sm' mt={4}>
-                  {reportData?.slaMetrics?.resolutionTime || 78}% within SLA
+                  {reportData?.slaMetrics?.resolutionTime
+                    ? `${reportData.slaMetrics.resolutionTime}%`
+                    : 'Loading...'}{' '}
+                  within SLA
                 </Text>
               </div>
             </Grid.Col>
@@ -184,7 +194,7 @@ export function SupportStaffDashboard() {
                 </Text>
                 <Progress
                   value={reportData?.slaMetrics?.customerSatisfaction || 92}
-                  color='blue'
+                  color='red'
                   size='lg'
                 />
                 <Text size='sm' mt={4}>
@@ -234,12 +244,6 @@ export function SupportStaffDashboard() {
                     leftSection={<IconSearch size={16} />}
                     style={{ width: 300 }}
                   />
-                  <Button
-                    variant='outline'
-                    leftSection={<IconFilter size={16} />}
-                  >
-                    Filter
-                  </Button>
                 </Group>
               </Group>
 

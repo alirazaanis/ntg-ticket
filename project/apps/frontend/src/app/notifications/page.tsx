@@ -54,12 +54,12 @@ const notificationIcons: Record<
 };
 
 const notificationColors: Record<string, string> = {
-  ticket: 'blue',
+  ticket: 'red',
   user: 'green',
   system: 'gray',
   warning: 'orange',
   error: 'red',
-  default: 'blue',
+  default: 'red',
 };
 
 export default function NotificationsPage() {

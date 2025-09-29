@@ -210,7 +210,9 @@ export function AuditTrail({
         {/* Actions */}
         <Group justify='space-between'>
           <Text size='sm' c='dimmed'>
-            {auditLogs?.pagination?.total || 0} {tAdmin('auditEntriesFound')}
+            {tAdmin('auditEntriesFound', {
+              count: auditLogs?.pagination?.total || 0,
+            })}
           </Text>
           <Button
             variant='outline'

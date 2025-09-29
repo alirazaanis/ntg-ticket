@@ -8,10 +8,18 @@ export function useNotificationSettings() {
 
   // Only use system settings if user is admin, otherwise use defaults
   const isAdmin = user?.role === 'ADMIN';
-  const emailNotifications = isAdmin ? (settings?.emailNotifications || false) : true;
-  const pushNotifications = isAdmin ? (settings?.pushNotifications || false) : true;
-  const smsNotifications = isAdmin ? (settings?.smsNotifications || false) : false;
-  const notificationFrequency = isAdmin ? (settings?.notificationFrequency || 'immediate') : 'immediate';
+  const emailNotifications = isAdmin
+    ? settings?.emailNotifications || false
+    : true;
+  const pushNotifications = isAdmin
+    ? settings?.pushNotifications || false
+    : true;
+  const smsNotifications = isAdmin
+    ? settings?.smsNotifications || false
+    : false;
+  const notificationFrequency = isAdmin
+    ? settings?.notificationFrequency || 'immediate'
+    : 'immediate';
 
   // Request notification permission if push notifications are enabled
   useEffect(() => {
