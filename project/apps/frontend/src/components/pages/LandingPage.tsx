@@ -15,6 +15,7 @@ import { IconArrowRight, IconRocket } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { LanguageSwitcher } from '../language/LanguageSwitcher';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 export function LandingPage() {
   const t = useTranslations('HomePage');
@@ -47,9 +48,10 @@ export function LandingPage() {
       />
 
       <Container size='xl' py='xl' style={{ position: 'relative', zIndex: 1 }}>
-        {/* Language Switcher - Top Right */}
-        <Flex justify='flex-end' mb='md'>
+        {/* Language Switcher and Theme Toggle - Top Right */}
+        <Flex justify='flex-end' mb='md' gap='md'>
           <LanguageSwitcher />
+          <ThemeToggle />
         </Flex>
 
         <Stack gap='xl'>

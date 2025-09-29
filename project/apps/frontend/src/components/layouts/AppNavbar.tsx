@@ -63,7 +63,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
 
   // Navigation state for collapsible sections
   const [adminExpanded, { toggle: toggleAdmin }] = useDisclosure(false); // Start collapsed
-  const [ticketsExpanded, { toggle: toggleTickets }] = useDisclosure(false); // Start collapsed
+  const [ticketsExpanded, { toggle: toggleTickets }] = useDisclosure(true); // Start expanded
   const [statsExpanded, { toggle: toggleStats }] = useDisclosure(true); // Start expanded
 
   // Defensive programming: ensure tickets is always an array
@@ -108,19 +108,6 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       show: true,
     },
     {
-      label: tTickets('allTickets'),
-      icon: IconTicket,
-      href: '/tickets',
-      show: true,
-      badge: safeTickets.length,
-    },
-    {
-      label: tTickets('createTicket'),
-      icon: IconPlus,
-      href: '/tickets/create',
-      show: true,
-    },
-    {
       label: t('reports'),
       icon: IconChartBar,
       href: '/reports',
@@ -144,6 +131,20 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
     badge?: number;
   }> = [
     {
+      label: tTickets('allTickets'),
+      icon: IconTicket,
+      href: '/tickets',
+      show: true,
+      badge: safeTickets.length,
+    },
+    {
+      label: tTickets('myTickets'),
+      icon: IconFileText,
+      href: '/tickets/my',
+      show: true,
+      badge: myTickets.length,
+    },
+    {
       label: tTickets('assignedTickets'),
       icon: IconUserCheck,
       href: '/tickets/assigned',
@@ -165,11 +166,10 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       badge: slaBreachedTickets.length,
     },
     {
-      label: tTickets('myTickets'),
-      icon: IconFileText,
-      href: '/tickets/my',
+      label: tTickets('createTicket'),
+      icon: IconPlus,
+      href: '/tickets/create',
       show: true,
-      badge: myTickets.length,
     },
   ];
 
@@ -341,35 +341,6 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
             </>
           )}
 
-          {/* Admin Section - Collapsible on all devices */}
-          {adminItems.some(item => item.show) && (
-            <>
-              <Divider my='sm' />
-              <Button
-                variant='subtle'
-                leftSection={
-                  adminExpanded ? (
-                    <IconChevronDown size={14} />
-                  ) : (
-                    <IconChevronRight size={14} />
-                  )
-                }
-                onClick={toggleAdmin}
-                size='sm'
-                justify='flex-start'
-                fullWidth
-              >
-                {tAdmin('title')}
-              </Button>
-              <Collapse in={adminExpanded}>
-                <Stack gap='xs' pl='md'>
-                  {renderNavItems(adminItems, 'red')}
-                  {renderNavItems(additionalAdminItems, 'red')}
-                </Stack>
-              </Collapse>
-            </>
-          )}
-
           {/* Quick Stats - Collapsible on all devices */}
           {!isMobile && (
             <>
@@ -409,6 +380,35 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                       {isLoading ? '...' : overdueTickets.length}
                     </Badge>
                   </Group>
+                </Stack>
+              </Collapse>
+            </>
+          )}
+
+          {/* Admin Section - Collapsible on all devices */}
+          {adminItems.some(item => item.show) && (
+            <>
+              <Divider my='sm' />
+              <Button
+                variant='subtle'
+                leftSection={
+                  adminExpanded ? (
+                    <IconChevronDown size={14} />
+                  ) : (
+                    <IconChevronRight size={14} />
+                  )
+                }
+                onClick={toggleAdmin}
+                size='sm'
+                justify='flex-start'
+                fullWidth
+              >
+                {tAdmin('title')}
+              </Button>
+              <Collapse in={adminExpanded}>
+                <Stack gap='xs' pl='md'>
+                  {renderNavItems(adminItems, 'red')}
+                  {renderNavItems(additionalAdminItems, 'red')}
                 </Stack>
               </Collapse>
             </>

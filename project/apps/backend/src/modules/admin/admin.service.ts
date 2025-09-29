@@ -125,6 +125,18 @@ export class AdminService {
     return this.systemConfigService.getConfig();
   }
 
+  async getPublicConfiguration() {
+    const config = this.systemConfigService.getConfig();
+    // Return only public settings that don't require admin access
+    return {
+      siteName: config.siteName,
+      siteDescription: config.siteDescription,
+      timezone: config.timezone,
+      language: config.language,
+      dateFormat: config.dateFormat,
+    };
+  }
+
   async updateSystemConfiguration(config: Record<string, unknown>) {
     await this.systemConfigService.updateConfig(config);
     return {

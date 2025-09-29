@@ -9,7 +9,12 @@ interface RTLProviderProps {
 
 export function RTLProvider({ children }: RTLProviderProps) {
   // This hook will automatically handle RTL direction updates
-  useRTL();
+  const { mounted } = useRTL();
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return <>{children}</>;
 }

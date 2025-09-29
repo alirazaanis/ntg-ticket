@@ -181,7 +181,7 @@ export default function SignUpPage() {
         return (
           <Stack gap='lg'>
             <Box>
-              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+              <Title order={2} size='1.8rem' fw={700} mb='xs'>
                 {tAuth('personalInfo')}
               </Title>
               <Text c='dimmed' size='sm'>
@@ -214,16 +214,18 @@ export default function SignUpPage() {
                 name='name'
                 id='name'
                 dir='auto'
-                styles={{
+                styles={theme => ({
                   input: {
                     border: formData.name.trim()
-                      ? '2px solid #51cf66'
-                      : '2px solid #e9ecef',
+                      ? `2px solid ${theme.colors.green[5]}`
+                      : `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: formData.name.trim() ? '#51cf66' : '#667eea',
+                      borderColor: formData.name.trim()
+                        ? theme.colors.green[5]
+                        : theme.colors.blue[5],
                     },
                   },
-                }}
+                })}
               />
 
               <TextInput
@@ -243,16 +245,18 @@ export default function SignUpPage() {
                 error={
                   formData.email && !emailValid ? tAuth('emailInvalid') : ''
                 }
-                styles={{
+                styles={theme => ({
                   input: {
                     border: emailValid
-                      ? '2px solid #51cf66'
-                      : '2px solid #e9ecef',
+                      ? `2px solid ${theme.colors.green[5]}`
+                      : `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: emailValid ? '#51cf66' : '#667eea',
+                      borderColor: emailValid
+                        ? theme.colors.green[5]
+                        : theme.colors.blue[5],
                     },
                   },
-                }}
+                })}
               />
             </Stack>
 
@@ -263,15 +267,18 @@ export default function SignUpPage() {
               size='lg'
               radius='md'
               rightSection={<IconArrowRight size={18} />}
-              style={{
+              style={theme => ({
                 background:
                   formData.name.trim() && emailValid
                     ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    : '#e9ecef',
+                    : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
-                color: formData.name.trim() && emailValid ? 'white' : '#adb5bd',
-              }}
+                color:
+                  formData.name.trim() && emailValid
+                    ? 'white'
+                    : theme.colors.gray[6],
+              })}
             >
               {t('next')}
             </Button>
@@ -283,10 +290,10 @@ export default function SignUpPage() {
                   component={Link}
                   href='/auth/signin'
                   fw={600}
-                  style={{
-                    color: '#667eea',
+                  style={theme => ({
+                    color: theme.colors.blue[5],
                     textDecoration: 'none',
-                  }}
+                  })}
                 >
                   {tAuth('signIn')}
                 </Anchor>
@@ -314,7 +321,7 @@ export default function SignUpPage() {
               >
                 {t('back')}
               </Button>
-              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+              <Title order={2} size='1.8rem' fw={700} mb='xs'>
                 {tAuth('createPassword')}
               </Title>
               <Text c='dimmed' size='sm'>
@@ -353,16 +360,18 @@ export default function SignUpPage() {
                     ? validatePassword(formData.password)
                     : ''
                 }
-                styles={{
+                styles={theme => ({
                   input: {
                     border: passwordValid
-                      ? '2px solid #51cf66'
-                      : '2px solid #e9ecef',
+                      ? `2px solid ${theme.colors.green[5]}`
+                      : `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: passwordValid ? '#51cf66' : '#667eea',
+                      borderColor: passwordValid
+                        ? theme.colors.green[5]
+                        : theme.colors.blue[5],
                     },
                   },
-                }}
+                })}
               />
 
               <PasswordInput
@@ -386,22 +395,22 @@ export default function SignUpPage() {
                     ? tAuth('passwordMismatch')
                     : ''
                 }
-                styles={{
+                styles={theme => ({
                   input: {
                     border:
                       formData.confirmPassword &&
                       formData.password === formData.confirmPassword
-                        ? '2px solid #51cf66'
-                        : '2px solid #e9ecef',
+                        ? `2px solid ${theme.colors.green[5]}`
+                        : `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
                       borderColor:
                         formData.confirmPassword &&
                         formData.password === formData.confirmPassword
-                          ? '#51cf66'
-                          : '#667eea',
+                          ? theme.colors.green[5]
+                          : theme.colors.blue[5],
                     },
                   },
-                }}
+                })}
               />
             </Stack>
 
@@ -414,20 +423,20 @@ export default function SignUpPage() {
               size='lg'
               radius='md'
               rightSection={<IconArrowRight size={18} />}
-              style={{
+              style={theme => ({
                 background:
                   passwordValid &&
                   formData.password === formData.confirmPassword
                     ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    : '#e9ecef',
+                    : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
                 color:
                   passwordValid &&
                   formData.password === formData.confirmPassword
                     ? 'white'
-                    : '#adb5bd',
-              }}
+                    : theme.colors.gray[6],
+              })}
             >
               {t('next')}
             </Button>
@@ -453,7 +462,7 @@ export default function SignUpPage() {
               >
                 {t('back')}
               </Button>
-              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+              <Title order={2} size='1.8rem' fw={700} mb='xs'>
                 {tAuth('selectRole')}
               </Title>
               <Text c='dimmed' size='sm'>
@@ -495,14 +504,14 @@ export default function SignUpPage() {
               size='lg'
               radius='md'
               dir='auto'
-              styles={{
+              styles={theme => ({
                 input: {
-                  border: '2px solid #e9ecef',
+                  border: `2px solid ${theme.colors.gray[3]}`,
                   '&:focus': {
-                    borderColor: '#667eea',
+                    borderColor: theme.colors.blue[5],
                   },
                 },
-              }}
+              })}
             />
 
             <Button
@@ -522,12 +531,12 @@ export default function SignUpPage() {
             </Button>
 
             <Box
-              style={{
-                background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%)',
+              style={theme => ({
+                background: `linear-gradient(135deg, ${theme.colors.blue[0]} 0%, ${theme.colors.blue[1]} 100%)`,
                 borderRadius: '12px',
                 padding: '16px',
-                border: '1px solid #e0e7ff',
-              }}
+                border: `1px solid ${theme.colors.blue[2]}`,
+              })}
             >
               <Group gap='sm'>
                 <ThemeIcon size='sm' variant='light' color='blue'>
@@ -554,7 +563,7 @@ export default function SignUpPage() {
               >
                 <IconCheck size={30} />
               </ThemeIcon>
-              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+              <Title order={2} size='1.8rem' fw={700} mb='xs'>
                 {tAuth('accountCreated')}
               </Title>
               <Text c='dimmed' size='sm'>

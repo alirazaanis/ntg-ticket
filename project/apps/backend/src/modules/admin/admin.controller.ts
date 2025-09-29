@@ -114,6 +114,20 @@ export class AdminController {
     return result;
   }
 
+  @Get('public-config')
+  @ApiOperation({ summary: 'Get public system configuration' })
+  @ApiResponse({
+    status: 200,
+    description: 'Public system configuration retrieved successfully',
+  })
+  async getPublicConfiguration() {
+    const config = await this.adminService.getPublicConfiguration();
+    return {
+      data: config,
+      message: 'Public system configuration retrieved successfully',
+    };
+  }
+
   @Get('field-config')
   @ApiOperation({ summary: 'Get field configuration options (Admin only)' })
   @ApiResponse({

@@ -1,7 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Box, Title, Text } from '@mantine/core';
+import { Box, Title, Text, Card, useMantineTheme } from '@mantine/core';
+import Link from 'next/link';
 import {
   IconTicket,
   IconHeadset,
@@ -11,6 +12,7 @@ import {
   IconSettings,
 } from '@tabler/icons-react';
 import { LanguageSwitcher } from '../language/LanguageSwitcher';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -20,6 +22,8 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children }: AuthLayoutProps) {
+  const theme = useMantineTheme();
+
   return (
     <Box
       dir='auto'
@@ -28,22 +32,25 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         display: 'flex',
       }}
     >
-      {/* Language Switcher - Overlay */}
+      {/* Language Switcher and Theme Toggle - Overlay */}
       <Box
         style={{
           position: 'fixed',
           top: '20px',
           right: '20px',
           zIndex: 1000,
+          display: 'flex',
+          gap: '8px',
         }}
       >
         <LanguageSwitcher />
+        <ThemeToggle />
       </Box>
 
       {/* Left Side - Colored Background (Hidden on Mobile) */}
       <Box
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: `linear-gradient(135deg, ${theme.colors.blue[6]} 0%, ${theme.colors.violet[6]} 100%)`,
           position: 'relative',
           overflow: 'hidden',
           minHeight: '100vh',
@@ -335,7 +342,6 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       {/* Right Side - Form Container */}
       <Box
         style={{
-          background: 'white',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -345,14 +351,13 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         }}
         flex={1}
       >
-        <Box
+        <Card
+          shadow='xl'
+          radius='xl'
+          padding='xl'
+          withBorder
           style={{
-            background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '40px',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
             maxWidth: '480px',
             width: '100%',
             minHeight: '500px',
@@ -363,27 +368,37 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         >
           {/* App Name Header */}
           <Box ta='center' mb='xl'>
-            <Title
-              order={1}
-              size='2.2rem'
-              fw={800}
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                marginBottom: '8px',
-              }}
-            >
-              NTG Ticket
-            </Title>
+            <Link href='/' style={{ textDecoration: 'none' }}>
+              <Title
+                order={1}
+                size='2.2rem'
+                fw={800}
+                style={{
+                  background: `linear-gradient(135deg, ${theme.colors.blue[6]} 0%, ${theme.colors.violet[6]} 100%)`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  marginBottom: '8px',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                NTG Ticket
+              </Title>
+            </Link>
             <Text c='dimmed' size='sm' fw={500}>
               IT Support - Ticket Management System
             </Text>
           </Box>
 
           {children}
-        </Box>
+        </Card>
       </Box>
     </Box>
   );

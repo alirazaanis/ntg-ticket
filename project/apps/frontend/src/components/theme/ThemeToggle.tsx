@@ -3,10 +3,29 @@
 import { ActionIcon, Menu, Group, Text, useMantineTheme } from '@mantine/core';
 import { IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-react';
 import { useTheme } from '../../hooks/useTheme';
+import { useState, useEffect } from 'react';
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const mantineTheme = useMantineTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <ActionIcon
+        variant='subtle'
+        color='blue'
+        size='lg'
+        aria-label='Toggle theme'
+      >
+        <IconSun size={16} />
+      </ActionIcon>
+    );
+  }
 
   const getIcon = () => {
     switch (theme) {

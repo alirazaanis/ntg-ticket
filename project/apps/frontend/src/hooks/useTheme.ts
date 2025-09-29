@@ -4,33 +4,24 @@ import { STORAGE_KEYS } from '../lib/constants';
 export type Theme = 'light' | 'dark' | 'auto';
 
 export const useTheme = () => {
-  // Initialize theme from localStorage immediately to prevent hydration mismatch
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as Theme;
-      if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
-        return savedTheme;
-      }
-    }
-    return 'auto';
-  });
-
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as Theme;
-      if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
-        if (savedTheme === 'auto') {
-          return window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light';
-        }
-        return savedTheme;
-      }
-    }
-    return 'light';
-  });
+  // Initialize with default values to prevent hydration mismatch
+  const [theme, setTheme] = useState<Theme>('auto');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
+    // Load theme from localStorage after mount
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) as Theme;
+    if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     // Save theme to localStorage
     localStorage.setItem(STORAGE_KEYS.THEME, theme);
 
@@ -73,7 +64,7 @@ export const useTheme = () => {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
-  }, [theme]);
+  }, [theme, mounted]);
 
   const toggleTheme = () => {
     setTheme(prev => {

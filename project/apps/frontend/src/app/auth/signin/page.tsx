@@ -132,7 +132,7 @@ export default function SignInPage() {
         return (
           <Stack gap='lg'>
             <Box>
-              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+              <Title order={2} size='1.8rem' fw={700} mb='xs'>
                 {t('welcome')}
               </Title>
               <Text c='dimmed' size='sm'>
@@ -166,16 +166,18 @@ export default function SignInPage() {
               id='email'
               dir='auto'
               error={email && !emailValid ? t('emailInvalid') : ''}
-              styles={{
+              styles={theme => ({
                 input: {
                   border: emailValid
-                    ? '2px solid #51cf66'
-                    : '2px solid #e9ecef',
+                    ? `2px solid ${theme.colors.green[5]}`
+                    : `2px solid ${theme.colors.gray[3]}`,
                   '&:focus': {
-                    borderColor: emailValid ? '#51cf66' : '#667eea',
+                    borderColor: emailValid
+                      ? theme.colors.green[5]
+                      : theme.colors.blue[5],
                   },
                 },
-              }}
+              })}
             />
 
             <Button
@@ -185,14 +187,14 @@ export default function SignInPage() {
               size='lg'
               radius='md'
               rightSection={<IconArrowRight size={18} />}
-              style={{
+              style={theme => ({
                 background: emailValid
                   ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                  : '#e9ecef',
+                  : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
-                color: emailValid ? 'white' : '#adb5bd',
-              }}
+                color: emailValid ? 'white' : theme.colors.gray[6],
+              })}
             >
               {tCommon('next')}
             </Button>
@@ -204,10 +206,10 @@ export default function SignInPage() {
                   component={Link}
                   href='/auth/signup'
                   fw={600}
-                  style={{
-                    color: '#667eea',
+                  style={theme => ({
+                    color: theme.colors.blue[5],
                     textDecoration: 'none',
-                  }}
+                  })}
                 >
                   {t('signUp')}
                 </Anchor>
@@ -236,7 +238,7 @@ export default function SignInPage() {
                 >
                   {tCommon('back')}
                 </Button>
-                <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+                <Title order={2} size='1.8rem' fw={700} mb='xs'>
                   {t('password')}
                 </Title>
                 <Text c='dimmed' size='sm'>
@@ -293,14 +295,14 @@ export default function SignInPage() {
                 name='password'
                 id='password'
                 dir='auto'
-                styles={{
+                styles={theme => ({
                   input: {
-                    border: '2px solid #e9ecef',
+                    border: `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: '#667eea',
+                      borderColor: theme.colors.blue[5],
                     },
                   },
-                }}
+                })}
               />
 
               <Button
@@ -325,10 +327,10 @@ export default function SignInPage() {
                   <Anchor
                     href='#'
                     fw={600}
-                    style={{
-                      color: '#667eea',
+                    style={theme => ({
+                      color: theme.colors.blue[5],
                       textDecoration: 'none',
-                    }}
+                    })}
                   >
                     {t('resetPassword')}
                   </Anchor>
@@ -351,7 +353,7 @@ export default function SignInPage() {
               >
                 <IconCheck size={30} />
               </ThemeIcon>
-              <Title order={2} size='1.8rem' fw={700} c='dark.8' mb='xs'>
+              <Title order={2} size='1.8rem' fw={700} mb='xs'>
                 {t('welcome')}!
               </Title>
               <Text c='dimmed' size='sm'>

@@ -3,8 +3,9 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { Button, Menu, Group, Text, useMantineTheme } from '@mantine/core';
 import { IconChevronDown, IconWorld } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRTL } from '../../hooks/useRTL';
+import { useRouter } from 'next/navigation';
 
 const languages: Array<{ code: string; name: string; flag: string }> = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -16,17 +17,40 @@ export function LanguageSwitcher() {
   const t = useTranslations('common');
   const { direction } = useRTL();
   const [opened, setOpened] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const theme = useMantineTheme();
+  const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const currentLanguage =
     languages.find(lang => lang.code === locale) || languages[0];
 
   const handleLanguageChange = (newLocale: string) => {
-    // Set cookie and reload page
+    // Set cookie and refresh page
     document.cookie = `locale=${newLocale}; path=/; max-age=31536000`; // 1 year
-    window.location.reload();
+    router.refresh();
     setOpened(false);
   };
+
+  if (!mounted) {
+    return (
+      <Button
+        variant='outline'
+        color='blue'
+        leftSection={<IconWorld size={16} />}
+        rightSection={<IconChevronDown size={16} />}
+        style={{ minWidth: 120 }}
+      >
+        <Group gap='xs'>
+          <Text size='sm'>🇺🇸</Text>
+          <Text size='sm'>English</Text>
+        </Group>
+      </Button>
+    );
+  }
 
   return (
     <div dir={direction}>

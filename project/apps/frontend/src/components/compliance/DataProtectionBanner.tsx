@@ -158,7 +158,7 @@ export function DataProtectionBanner({
             <Text>{tCompliance('cookiePreferences')}</Text>
           </Group>
         }
-        size='md'
+        size='lg'
       >
         <Stack gap='md'>
           <Text size='sm' c='dimmed'>
@@ -198,7 +198,7 @@ export function DataProtectionBanner({
                 onChange={event =>
                   setPreferences(prev => ({
                     ...prev,
-                    analytics: event.currentTarget.checked,
+                    analytics: event.target.checked,
                   }))
                 }
               />
@@ -221,7 +221,7 @@ export function DataProtectionBanner({
                 onChange={event =>
                   setPreferences(prev => ({
                     ...prev,
-                    functional: event.currentTarget.checked,
+                    functional: event.target.checked,
                   }))
                 }
               />
@@ -244,7 +244,7 @@ export function DataProtectionBanner({
                 onChange={event =>
                   setPreferences(prev => ({
                     ...prev,
-                    marketing: event.currentTarget.checked,
+                    marketing: event.target.checked,
                   }))
                 }
               />

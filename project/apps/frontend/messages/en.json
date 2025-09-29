@@ -205,7 +205,7 @@
     "notificationFrequency": "Notification Frequency"
   },
   "admin": {
-    "title": "Admin Panel",
+    "title": "Administration",
     "users": "Users",
     "customFields": "Custom Fields",
     "emailTemplates": "Email Templates",

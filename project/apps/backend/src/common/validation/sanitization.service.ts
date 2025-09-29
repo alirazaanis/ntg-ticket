@@ -42,7 +42,7 @@ export class SanitizationService {
       ''
     );
 
-    if (sanitized.length < 8) {
+    if (sanitized.length < 6) {
       throw new Error('Password too short');
     }
 

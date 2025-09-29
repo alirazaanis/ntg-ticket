@@ -1,11 +1,15 @@
 import { useSystemSettings } from './useSystemSettings';
+import { useAuthStore } from '../stores/useAuthStore';
 
 export function useAutoAssignSettings() {
+  const { user } = useAuthStore();
   const { data: settings } = useSystemSettings();
 
-  const isAutoAssignEnabled = settings?.autoAssignTickets || false;
-  const autoCloseEnabled = settings?.autoCloseResolved || false;
-  const autoCloseDays = settings?.autoCloseDays || 7;
+  // Only use system settings if user is admin, otherwise use defaults
+  const isAdmin = user?.role === 'ADMIN';
+  const isAutoAssignEnabled = isAdmin ? (settings?.autoAssignTickets || false) : true;
+  const autoCloseEnabled = isAdmin ? (settings?.autoCloseResolved || false) : false;
+  const autoCloseDays = isAdmin ? (settings?.autoCloseDays || 7) : 7;
 
   const getAutoAssignMessage = () => {
     if (isAutoAssignEnabled) {

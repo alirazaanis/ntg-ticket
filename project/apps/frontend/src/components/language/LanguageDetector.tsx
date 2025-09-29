@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const supportedLocales = ['en', 'ar'];
 
 export function LanguageDetector() {
+  const router = useRouter();
+
   useEffect(() => {
     // Check if locale cookie already exists
     const existingLocale = document.cookie
@@ -29,9 +32,9 @@ export function LanguageDetector() {
     // Set the cookie
     document.cookie = `locale=${locale}; path=/; max-age=31536000`; // 1 year
 
-    // Reload page to apply the detected language
-    window.location.reload();
-  }, []);
+    // Use router.refresh() instead of window.location.reload() to prevent hydration issues
+    router.refresh();
+  }, [router]);
 
   return null; // This component doesn't render anything
 }

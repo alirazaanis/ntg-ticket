@@ -258,7 +258,7 @@ const getQuickActions = (
     title: tTickets('createTicket'),
     description: tHelp('submitNewRequest'),
     action: 'navigate',
-    target: '/tickets/new',
+    target: '/tickets/create',
   },
   {
     title: tTickets('myTickets'),
@@ -361,9 +361,9 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
             <Text size='sm' fw={500} c='dimmed' mb='xs'>
               Quick Actions
             </Text>
-            {quickActions.map(action => (
+            {quickActions.map((action) => (
               <Card
-                key={`quick-action-${action.action}`}
+                key={`quick-action-${action.title}-${action.target}`}
                 withBorder
                 p='sm'
                 radius='md'
@@ -490,7 +490,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
                       <Stack gap='sm'>
                         {section.content.stages?.map(stage => (
                           <Card
-                            key={`stage-${stage}`}
+                            key={`stage-${stage.status}`}
                             withBorder
                             p='md'
                             radius='md'

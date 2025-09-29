@@ -1,13 +1,17 @@
 import { useSystemSettings } from './useSystemSettings';
+import { useAuthStore } from '../stores/useAuthStore';
 import { useEffect } from 'react';
 
 export function useNotificationSettings() {
+  const { user } = useAuthStore();
   const { data: settings } = useSystemSettings();
 
-  const emailNotifications = settings?.emailNotifications || false;
-  const pushNotifications = settings?.pushNotifications || false;
-  const smsNotifications = settings?.smsNotifications || false;
-  const notificationFrequency = settings?.notificationFrequency || 'immediate';
+  // Only use system settings if user is admin, otherwise use defaults
+  const isAdmin = user?.role === 'ADMIN';
+  const emailNotifications = isAdmin ? (settings?.emailNotifications || false) : true;
+  const pushNotifications = isAdmin ? (settings?.pushNotifications || false) : true;
+  const smsNotifications = isAdmin ? (settings?.smsNotifications || false) : false;
+  const notificationFrequency = isAdmin ? (settings?.notificationFrequency || 'immediate') : 'immediate';
 
   // Request notification permission if push notifications are enabled
   useEffect(() => {

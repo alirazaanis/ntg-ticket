@@ -42,6 +42,9 @@ import { useRouter } from 'next/navigation';
 
 export function EndUserDashboard() {
   const t = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
+  const tTickets = useTranslations('tickets');
+  const tReports = useTranslations('help');
   const [createTicketOpened, setCreateTicketOpened] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuthStore();
@@ -159,7 +162,7 @@ export function EndUserDashboard() {
               value='notifications'
               leftSection={<IconBell size={16} />}
             >
-              {t('notifications')}
+              {tCommon('notifications')}
             </Tabs.Tab>
           </Tabs.List>
 
@@ -201,19 +204,19 @@ export function EndUserDashboard() {
                       leftSection={<IconPlus size={16} />}
                       onClick={() => setCreateTicketOpened(true)}
                     >
-                      Create New Ticket
+                      {t('createTicket')}
                     </Button>
                     <Button
                       variant='light'
                       leftSection={<IconSearch size={16} />}
                     >
-                      Search Tickets
+                      {tTickets('searchTickets')}
                     </Button>
                     <Button
                       variant='light'
                       leftSection={<IconFileText size={16} />}
                     >
-                      View Reports
+                      {tReports('viewReports')}
                     </Button>
                   </Stack>
                 </Paper>
@@ -258,7 +261,7 @@ export function EndUserDashboard() {
       <Modal
         opened={createTicketOpened}
         onClose={() => setCreateTicketOpened(false)}
-        title='Create New Ticket'
+        title={t('createTicket')}
         size='lg'
         fullScreen
       >

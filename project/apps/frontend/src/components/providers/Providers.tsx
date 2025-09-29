@@ -34,7 +34,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // During SSR, use light theme as default
+  // During SSR and initial hydration, use light theme as default
   if (!mounted) {
     return (
       <MantineProvider theme={theme} defaultColorScheme='light'>

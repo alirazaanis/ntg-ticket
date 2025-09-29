@@ -1,7 +1,7 @@
-import { useSystemSettings } from './useSystemSettings';
+import { usePublicSettings } from './usePublicSettings';
 
 export function useSiteBranding() {
-  const { data: settings } = useSystemSettings();
+  const { data: settings } = usePublicSettings();
 
   const siteName = settings?.siteName || 'NTG Ticket';
   const siteDescription =

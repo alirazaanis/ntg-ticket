@@ -1,10 +1,10 @@
 'use client';
 
-import { useSystemSettings } from '../../hooks/useSystemSettings';
+import { usePublicSettings } from '../../hooks/usePublicSettings';
 import { useEffect } from 'react';
 
 export function DynamicMetadata() {
-  const { data: settings } = useSystemSettings();
+  const { data: settings } = usePublicSettings();
 
   useEffect(() => {
     if (settings) {

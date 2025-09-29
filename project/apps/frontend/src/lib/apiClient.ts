@@ -371,6 +371,15 @@ export const systemApi = {
   getSettings: () =>
     apiClient.get<ApiResponse<SystemSettings>>('/admin/config'),
 
+  getPublicSettings: () =>
+    apiClient.get<ApiResponse<{
+      siteName: string;
+      siteDescription: string;
+      timezone: string;
+      language: string;
+      dateFormat: string;
+    }>>('/admin/public-config'),
+
   updateSettings: (data: Partial<SystemSettings>) =>
     apiClient.patch<ApiResponse<SystemSettings>>('/admin/config', data),
 

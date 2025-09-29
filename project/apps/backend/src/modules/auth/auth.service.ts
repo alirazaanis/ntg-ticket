@@ -278,19 +278,25 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<{ id: string; email: string; name: string; role: string } | null> {
-    this.logger.log(`Validating credentials for user: ${email}`, 'AuthService');
-
     try {
       const user = await this.prisma.user.findUnique({
         where: { email },
       });
 
-      if (!user || !user.isActive) {
+      if (!user) {
+        this.logger.error(`User not found in database: ${email}`);
+        return null;
+      }
+
+      if (!user.isActive) {
+        this.logger.error(`User is inactive: ${email}`);
         return null;
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
+
       if (!isPasswordValid) {
+        this.logger.error(`Password validation failed for: ${email}`);
         return null;
       }
 
