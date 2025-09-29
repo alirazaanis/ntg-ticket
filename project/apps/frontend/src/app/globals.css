@@ -99,6 +99,516 @@
   animation: pulse 2s infinite;
 }
 
+/* RTL Support */
+[dir='rtl'] {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Stack-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Group-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Button-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-TextInput-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-PasswordInput-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Textarea-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Select-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-MultiSelect-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-NumberInput-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-DateInput-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-TimeInput-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Textarea-root textarea {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-TextInput-root input {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-PasswordInput-root input {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-NumberInput-root input {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-DateInput-root input {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-TimeInput-root input {
+  text-align: right;
+}
+
+/* RTL Navigation */
+[dir='rtl'] .mantine-NavLink-root {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-NavLink-label {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-NavLink-icon {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+/* RTL Tables */
+[dir='rtl'] .data-table th,
+[dir='rtl'] .data-table td {
+  text-align: right;
+}
+
+/* RTL Forms */
+[dir='rtl'] .mantine-InputWrapper-label {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-InputWrapper-description {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-InputWrapper-error {
+  text-align: right;
+}
+
+/* RTL Modals */
+[dir='rtl'] .mantine-Modal-header {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Modal-title {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Modal-body {
+  text-align: right;
+}
+
+/* RTL Cards */
+[dir='rtl'] .mantine-Card-root {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Card-header {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Card-title {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Card-body {
+  text-align: right;
+}
+
+/* RTL Alerts */
+[dir='rtl'] .mantine-Alert-root {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Alert-title {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Alert-message {
+  text-align: right;
+}
+
+/* RTL Notifications */
+[dir='rtl'] .mantine-Notification-root {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Notification-title {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Notification-message {
+  text-align: right;
+}
+
+/* RTL Badges */
+[dir='rtl'] .mantine-Badge-root {
+  direction: rtl;
+}
+
+/* RTL Tooltips */
+[dir='rtl'] .mantine-Tooltip-root {
+  text-align: right;
+}
+
+/* RTL Popover */
+[dir='rtl'] .mantine-Popover-dropdown {
+  text-align: right;
+}
+
+/* RTL Dropdown */
+[dir='rtl'] .mantine-Dropdown-root {
+  text-align: right;
+}
+
+/* RTL Menu */
+[dir='rtl'] .mantine-Menu-dropdown {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Menu-item {
+  text-align: right;
+}
+
+/* RTL Pagination */
+[dir='rtl'] .mantine-Pagination-root {
+  direction: rtl;
+}
+
+/* RTL Breadcrumbs */
+[dir='rtl'] .mantine-Breadcrumbs-root {
+  direction: rtl;
+}
+
+/* RTL Tabs */
+[dir='rtl'] .mantine-Tabs-list {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Tabs-panel {
+  text-align: right;
+}
+
+/* RTL Accordion */
+[dir='rtl'] .mantine-Accordion-root {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Accordion-control {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Accordion-content {
+  text-align: right;
+}
+
+/* RTL Collapse */
+[dir='rtl'] .mantine-Collapse-root {
+  text-align: right;
+}
+
+/* RTL Timeline */
+[dir='rtl'] .mantine-Timeline-root {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Timeline-item {
+  text-align: right;
+}
+
+/* RTL Stepper */
+[dir='rtl'] .mantine-Stepper-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Stepper-step {
+  text-align: right;
+}
+
+/* RTL Progress */
+[dir='rtl'] .mantine-Progress-root {
+  direction: rtl;
+}
+
+/* RTL Slider */
+[dir='rtl'] .mantine-Slider-root {
+  direction: rtl;
+}
+
+/* RTL RangeSlider */
+[dir='rtl'] .mantine-RangeSlider-root {
+  direction: rtl;
+}
+
+/* RTL Switch */
+[dir='rtl'] .mantine-Switch-root {
+  direction: rtl;
+}
+
+/* RTL Checkbox */
+[dir='rtl'] .mantine-Checkbox-root {
+  direction: rtl;
+}
+
+/* RTL Radio */
+[dir='rtl'] .mantine-Radio-root {
+  direction: rtl;
+}
+
+/* RTL SegmentedControl */
+[dir='rtl'] .mantine-SegmentedControl-root {
+  direction: rtl;
+}
+
+/* RTL Toggle */
+[dir='rtl'] .mantine-Toggle-root {
+  direction: rtl;
+}
+
+/* RTL Chip */
+[dir='rtl'] .mantine-Chip-root {
+  direction: rtl;
+}
+
+/* RTL TagsInput */
+[dir='rtl'] .mantine-TagsInput-root {
+  direction: rtl;
+}
+
+/* RTL MultiSelect */
+[dir='rtl'] .mantine-MultiSelect-root {
+  direction: rtl;
+}
+
+/* RTL Combobox */
+[dir='rtl'] .mantine-Combobox-root {
+  direction: rtl;
+}
+
+/* RTL Autocomplete */
+[dir='rtl'] .mantine-Autocomplete-root {
+  direction: rtl;
+}
+
+/* RTL Spotlight */
+[dir='rtl'] .mantine-Spotlight-root {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Spotlight-search {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Spotlight-actions {
+  text-align: right;
+}
+
+/* RTL Drawer */
+[dir='rtl'] .mantine-Drawer-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Drawer-header {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Drawer-body {
+  text-align: right;
+}
+
+/* RTL AppShell */
+[dir='rtl'] .mantine-AppShell-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-AppShell-navbar {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-AppShell-header {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-AppShell-main {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-AppShell-aside {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-AppShell-footer {
+  text-align: right;
+}
+
+/* RTL Grid */
+[dir='rtl'] .mantine-Grid-root {
+  direction: rtl;
+}
+
+/* RTL SimpleGrid */
+[dir='rtl'] .mantine-SimpleGrid-root {
+  direction: rtl;
+}
+
+/* RTL Flex */
+[dir='rtl'] .mantine-Flex-root {
+  direction: rtl;
+}
+
+/* RTL Stack */
+[dir='rtl'] .mantine-Stack-root {
+  direction: rtl;
+}
+
+/* RTL Group */
+[dir='rtl'] .mantine-Group-root {
+  direction: rtl;
+}
+
+/* RTL Center */
+[dir='rtl'] .mantine-Center-root {
+  text-align: right;
+}
+
+/* RTL Container */
+[dir='rtl'] .mantine-Container-root {
+  text-align: right;
+}
+
+/* RTL Paper */
+[dir='rtl'] .mantine-Paper-root {
+  text-align: right;
+}
+
+/* RTL ScrollArea */
+[dir='rtl'] .mantine-ScrollArea-root {
+  direction: rtl;
+}
+
+/* RTL Skeleton */
+[dir='rtl'] .mantine-Skeleton-root {
+  direction: rtl;
+}
+
+/* RTL LoadingOverlay */
+[dir='rtl'] .mantine-LoadingOverlay-root {
+  text-align: right;
+}
+
+/* RTL Overlay */
+[dir='rtl'] .mantine-Overlay-root {
+  text-align: right;
+}
+
+/* RTL Transition */
+[dir='rtl'] .mantine-Transition-root {
+  direction: rtl;
+}
+
+/* RTL Affix */
+[dir='rtl'] .mantine-Affix-root {
+  direction: rtl;
+}
+
+/* RTL Anchor */
+[dir='rtl'] .mantine-Anchor-root {
+  text-align: right;
+}
+
+/* RTL BackgroundImage */
+[dir='rtl'] .mantine-BackgroundImage-root {
+  text-align: right;
+}
+
+/* RTL Blockquote */
+[dir='rtl'] .mantine-Blockquote-root {
+  text-align: right;
+}
+
+/* RTL Code */
+[dir='rtl'] .mantine-Code-root {
+  direction: rtl;
+}
+
+/* RTL Highlight */
+[dir='rtl'] .mantine-Highlight-root {
+  text-align: right;
+}
+
+/* RTL Kbd */
+[dir='rtl'] .mantine-Kbd-root {
+  direction: rtl;
+}
+
+/* RTL List */
+[dir='rtl'] .mantine-List-root {
+  text-align: right;
+}
+
+/* RTL Mark */
+[dir='rtl'] .mantine-Mark-root {
+  text-align: right;
+}
+
+/* RTL Spoiler */
+[dir='rtl'] .mantine-Spoiler-root {
+  text-align: right;
+}
+
+/* RTL Table */
+[dir='rtl'] .mantine-Table-root {
+  direction: rtl;
+}
+
+[dir='rtl'] .mantine-Table-th {
+  text-align: right;
+}
+
+[dir='rtl'] .mantine-Table-td {
+  text-align: right;
+}
+
+/* RTL Title */
+[dir='rtl'] .mantine-Title-root {
+  text-align: right;
+}
+
+/* RTL TypographyStylesProvider */
+[dir='rtl'] .mantine-TypographyStylesProvider-root {
+  text-align: right;
+}
+
+/* RTL UnstyledButton */
+[dir='rtl'] .mantine-UnstyledButton-root {
+  text-align: right;
+}
+
+/* RTL VisuallyHidden */
+[dir='rtl'] .mantine-VisuallyHidden-root {
+  text-align: right;
+}
+
 /* Custom utility classes */
 .text-gradient {
   background: linear-gradient(

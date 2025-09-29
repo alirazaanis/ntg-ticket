@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import {
+  TicketStatus,
+  TicketPriority,
+  BulkUpdateData,
+  User,
+} from '../../types/unified';
+import {
   Paper,
   Group,
   Button,
@@ -27,13 +33,13 @@ import {
   IconAlertCircle,
   IconInfoCircle,
 } from '@tabler/icons-react';
-import {
-  TicketStatus,
-  TicketPriority,
-  BulkUpdateData,
-  User,
-} from '../../types/unified';
+
 import { useUsers } from '../../hooks/useUsers';
+import {
+  PAGINATION_CONFIG,
+  ROLE_GROUPS,
+  STATUS_OPTIONS,
+} from '../../lib/constants';
 import {
   isValidStatusTransition,
   getStatusTransitionErrorMessage,
@@ -75,15 +81,14 @@ export function BulkActionsBar({
   const [bulkNote, setBulkNote] = useState('');
 
   // Fetch users for assignment
-  const { data: users, isLoading: usersLoading } = useUsers({ limit: 100 });
+  const { data: users, isLoading: usersLoading } = useUsers({
+    limit: PAGINATION_CONFIG.BULK_ACTIONS_LIMIT,
+  });
 
   const selectedCount = selectedTickets.length;
   const isAllSelected = selectedCount === totalTickets;
 
-  const statusOptions = Object.values(TicketStatus).map(status => ({
-    value: status,
-    label: status.replace('_', ' '),
-  }));
+  const statusOptions = STATUS_OPTIONS;
 
   const priorityOptions = Object.values(TicketPriority).map(priority => ({
     value: priority,
@@ -364,8 +369,8 @@ export function BulkActionsBar({
             data={
               users
                 ?.filter((user: User) =>
-                  ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(
-                    user.role
+                  ROLE_GROUPS.SUPPORT_TEAM.includes(
+                    user.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
                   )
                 )
                 .map((user: User) => ({

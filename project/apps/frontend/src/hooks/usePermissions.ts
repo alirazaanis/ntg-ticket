@@ -33,7 +33,6 @@ export function usePermissions() {
       setError(null);
     } catch (err) {
       setError('Failed to fetch role permissions');
-      console.error('Error fetching role permissions:', err);
     } finally {
       setLoading(false);
     }
@@ -141,7 +140,6 @@ export function usePermissionCheck() {
       setPermissionCache(prev => ({ ...prev, [cacheKey]: hasPermission }));
       return hasPermission;
     } catch (err) {
-      console.error('Error checking permission:', err);
       return false;
     }
   };
@@ -164,7 +162,6 @@ export function usePermissionCheck() {
       setPermissionCache(prev => ({ ...prev, [cacheKey]: canAccess }));
       return canAccess;
     } catch (err) {
-      console.error('Error checking ticket access:', err);
       return false;
     }
   };
@@ -187,7 +184,6 @@ export function usePermissionCheck() {
       setPermissionCache(prev => ({ ...prev, [cacheKey]: canAccess }));
       return canAccess;
     } catch (err) {
-      console.error('Error checking user access:', err);
       return false;
     }
   };

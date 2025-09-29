@@ -37,6 +37,11 @@ import {
 } from '../../../hooks/useBackup';
 import { notifications } from '@mantine/notifications';
 import { Backup } from '../../../types/unified';
+import {
+  FILE_CONSTANTS,
+  FILE_SIZE_UNITS,
+  BACKUP_STATUS_OPTIONS,
+} from '../../../lib/constants';
 
 export default function BackupsPage() {
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
@@ -119,8 +124,8 @@ export default function BackupsPage() {
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const k = FILE_CONSTANTS.BYTES_PER_KB;
+    const sizes = FILE_SIZE_UNITS;
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -159,10 +164,7 @@ export default function BackupsPage() {
                   placeholder='Filter by status'
                   data={[
                     { value: 'all', label: 'All Status' },
-                    { value: 'COMPLETED', label: 'Completed' },
-                    { value: 'IN_PROGRESS', label: 'In Progress' },
-                    { value: 'FAILED', label: 'Failed' },
-                    { value: 'PENDING', label: 'Pending' },
+                    ...BACKUP_STATUS_OPTIONS,
                   ]}
                   value={statusFilter}
                   onChange={value => setStatusFilter(value || 'all')}

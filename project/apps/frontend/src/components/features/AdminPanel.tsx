@@ -350,7 +350,7 @@ export function AdminPanel() {
   return (
     <Container size='xl'>
       <Stack gap='md'>
-        <Title order={2}>System Administration</Title>
+        <Title order={2}>{t('systemAdministration')}</Title>
 
         <Tabs
           value={activeTab}
@@ -389,8 +389,10 @@ export function AdminPanel() {
           <Tabs.Panel value='users' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>User Management</Title>
-                <Button onClick={() => setShowUserForm(true)}>Add User</Button>
+                <Title order={3}>{t('userManagement')}</Title>
+                <Button onClick={() => setShowUserForm(true)}>
+                  {t('addUser')}
+                </Button>
               </Group>
 
               {usersError && (
@@ -448,7 +450,7 @@ export function AdminPanel() {
           <Tabs.Panel value='custom-fields' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>Custom Fields</Title>
+                <Title order={3}>{t('customFields')}</Title>
                 <Button onClick={() => setShowCustomFieldForm(true)}>
                   Add Custom Field
                 </Button>
@@ -514,7 +516,7 @@ export function AdminPanel() {
           <Tabs.Panel value='email-templates' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>Email Templates</Title>
+                <Title order={3}>{t('emailTemplates')}</Title>
                 <Button onClick={() => setShowEmailTemplateForm(true)}>
                   Add Template
                 </Button>
@@ -579,7 +581,7 @@ export function AdminPanel() {
           <Tabs.Panel value='system-settings' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>System Settings</Title>
+                <Title order={3}>{t('systemSettings')}</Title>
                 <Button onClick={() => setShowSystemSettingsForm(true)}>
                   Edit Settings
                 </Button>
@@ -643,12 +645,12 @@ export function AdminPanel() {
 
           <Tabs.Panel value='analytics' pt='md'>
             <Stack gap='md'>
-              <Title order={3}>System Analytics</Title>
+              <Title order={3}>{t('systemAnalytics')}</Title>
 
               <Grid>
                 <Grid.Col span={6}>
                   <Card>
-                    <Title order={4}>System Health</Title>
+                    <Title order={4}>{t('systemHealth')}</Title>
                     <Text size='sm' color='dimmed' mt='xs'>
                       System health metrics would be displayed here
                     </Text>
@@ -656,7 +658,7 @@ export function AdminPanel() {
                 </Grid.Col>
                 <Grid.Col span={6}>
                   <Card>
-                    <Title order={4}>Performance</Title>
+                    <Title order={4}>{t('performance')}</Title>
                     <Text size='sm' color='dimmed' mt='xs'>
                       Performance metrics would be displayed here
                     </Text>

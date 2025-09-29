@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SYSTEM_DEFAULTS, STORAGE_KEYS } from '../lib/constants';
 
 export function useLoginAttempts() {
   const [attempts, setAttempts] = useState(0);
@@ -6,7 +7,7 @@ export function useLoginAttempts() {
   const [lockoutTime, setLockoutTime] = useState<Date | null>(null);
 
   // Default values for login attempts (can be configured later)
-  const maxLoginAttempts = 5;
+  const maxLoginAttempts = SYSTEM_DEFAULTS.SECURITY.MAX_LOGIN_ATTEMPTS;
 
   const checkLoginAttempts = (attempts: number): boolean => {
     return attempts < maxLoginAttempts;
@@ -18,8 +19,10 @@ export function useLoginAttempts() {
 
   // Load attempts from localStorage on mount
   useEffect(() => {
-    const savedAttempts = localStorage.getItem('login-attempts');
-    const savedLockoutTime = localStorage.getItem('login-lockout-time');
+    const savedAttempts = localStorage.getItem(STORAGE_KEYS.LOGIN_ATTEMPTS);
+    const savedLockoutTime = localStorage.getItem(
+      STORAGE_KEYS.LOGIN_LOCKOUT_TIME
+    );
 
     if (savedAttempts) {
       setAttempts(parseInt(savedAttempts));
@@ -40,14 +43,19 @@ export function useLoginAttempts() {
   const incrementAttempts = () => {
     const newAttempts = attempts + 1;
     setAttempts(newAttempts);
-    localStorage.setItem('login-attempts', newAttempts.toString());
+    localStorage.setItem(STORAGE_KEYS.LOGIN_ATTEMPTS, newAttempts.toString());
 
     if (newAttempts >= maxLoginAttempts) {
       const lockout = new Date();
-      lockout.setMinutes(lockout.getMinutes() + 15); // 15 minute lockout
+      lockout.setMinutes(
+        lockout.getMinutes() + SYSTEM_DEFAULTS.SECURITY.LOCKOUT_DURATION_MINUTES
+      ); // lockout duration
       setLockoutTime(lockout);
       setIsLocked(true);
-      localStorage.setItem('login-lockout-time', lockout.toISOString());
+      localStorage.setItem(
+        STORAGE_KEYS.LOGIN_LOCKOUT_TIME,
+        lockout.toISOString()
+      );
     }
   };
 
@@ -55,8 +63,8 @@ export function useLoginAttempts() {
     setAttempts(0);
     setIsLocked(false);
     setLockoutTime(null);
-    localStorage.removeItem('login-attempts');
-    localStorage.removeItem('login-lockout-time');
+    localStorage.removeItem(STORAGE_KEYS.LOGIN_ATTEMPTS);
+    localStorage.removeItem(STORAGE_KEYS.LOGIN_LOCKOUT_TIME);
   };
 
   const canAttemptLogin = () => {

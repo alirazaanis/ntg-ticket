@@ -772,7 +772,7 @@ export interface AuditLog {
   fieldName?: string;
   oldValue?: string;
   newValue?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;

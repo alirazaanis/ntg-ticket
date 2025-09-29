@@ -25,6 +25,7 @@ import {
   IconAlertCircle,
 } from '@tabler/icons-react';
 import { useTicketAuditLogs } from '../../hooks/useAuditLogs';
+import { PAGINATION_CONFIG } from '../../lib/constants';
 
 interface TicketAuditLogsProps {
   opened: boolean;
@@ -39,7 +40,7 @@ export function TicketAuditLogs({
 }: TicketAuditLogsProps) {
   const t = useTranslations('common');
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const limit = PAGINATION_CONFIG.COMPLIANCE_PAGE_SIZE;
 
   const {
     data: auditLogs,

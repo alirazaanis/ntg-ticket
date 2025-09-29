@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { integrationsApi } from '../lib/apiClient';
 import {
   Integration,
@@ -16,13 +16,12 @@ export function useIntegrations() {
   const fetchIntegrations = async () => {
     try {
       setLoading(true);
-      console.log('Fetching integrations...');
+      // Fetching integrations
       const response = await integrationsApi.getIntegrations();
-      console.log('Integrations response:', response.data);
+      // Integrations response received
       setIntegrations(response.data.data || []);
       setError(null);
     } catch (err) {
-      console.error('Error fetching integrations:', err);
       setError('Failed to fetch integrations');
     } finally {
       setLoading(false);
@@ -114,7 +113,7 @@ export function useIntegration(id: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchIntegration = async () => {
+  const fetchIntegration = useCallback(async () => {
     try {
       setLoading(true);
       const response = await integrationsApi.getIntegration(id);
@@ -122,17 +121,16 @@ export function useIntegration(id: string) {
       setError(null);
     } catch (err) {
       setError('Failed to fetch integration');
-      console.error('Error fetching integration:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       fetchIntegration();
     }
-  }, [id]);
+  }, [id, fetchIntegration]);
 
   return {
     integration,

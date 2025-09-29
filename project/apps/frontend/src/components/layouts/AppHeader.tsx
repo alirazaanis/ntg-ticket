@@ -32,6 +32,7 @@ import { ThemeToggle } from '../theme/ThemeToggle';
 import { LanguageSwitcher } from '../language/LanguageSwitcher';
 import { authApi } from '../../lib/apiClient';
 import { useMediaQuery } from '@mantine/hooks';
+import { useTranslations } from 'next-intl';
 
 interface AppHeaderProps {
   onHelpClick?: () => void;
@@ -44,6 +45,7 @@ export function AppHeader({
   mobileOpened,
   toggleMobile,
 }: AppHeaderProps) {
+  const t = useTranslations('common');
   const { user, logout } = useAuthStore();
   const { unreadCount, getRecentNotifications } = useNotificationsStore();
   const { siteName } = useSiteBranding();
@@ -86,15 +88,15 @@ export function AppHeader({
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'Administrator';
+        return t('administrator');
       case 'SUPPORT_MANAGER':
-        return 'Support Manager';
+        return t('supportManager');
       case 'SUPPORT_STAFF':
-        return 'Support Staff';
+        return t('supportStaff');
       case 'END_USER':
-        return 'End User';
+        return t('endUser');
       default:
-        return 'User';
+        return t('user');
     }
   };
 
@@ -157,7 +159,7 @@ export function AppHeader({
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Label>Notifications</Menu.Label>
+              <Menu.Label>{t('notifications')}</Menu.Label>
 
               {/* Show recent notifications (up to 5) */}
               {getRecentNotifications(5).length > 0 ? (
@@ -260,7 +262,7 @@ export function AppHeader({
                 }}
               >
                 <Group justify='space-between'>
-                  <Text size='sm'>View all notifications</Text>
+                  <Text size='sm'>{t('viewAllNotifications')}</Text>
                   {unreadCount > 0 && (
                     <Badge size='xs' color='red' variant='filled'>
                       {unreadCount > 99 ? '99+' : unreadCount}
@@ -302,7 +304,7 @@ export function AppHeader({
               )}
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Label>Account</Menu.Label>
+              <Menu.Label>{t('account')}</Menu.Label>
               {isMobile && (
                 <Menu.Item>
                   <Text size='sm' fw={500}>
@@ -342,7 +344,7 @@ export function AppHeader({
                   e.currentTarget.style.color = 'inherit';
                 }}
               >
-                <Text size='sm'>Profile</Text>
+                <Text size='sm'>{t('profile')}</Text>
               </Menu.Item>
               <Menu.Item
                 leftSection={<IconSettings size={14} />}
@@ -370,7 +372,7 @@ export function AppHeader({
                   e.currentTarget.style.color = 'inherit';
                 }}
               >
-                <Text size='sm'>Settings</Text>
+                <Text size='sm'>{t('settings')}</Text>
               </Menu.Item>
               {isMobile && (
                 <>
@@ -402,7 +404,7 @@ export function AppHeader({
                       e.currentTarget.style.color = 'inherit';
                     }}
                   >
-                    <Text size='sm'>Help & Support</Text>
+                    <Text size='sm'>{t('helpSupport')}</Text>
                   </Menu.Item>
                 </>
               )}

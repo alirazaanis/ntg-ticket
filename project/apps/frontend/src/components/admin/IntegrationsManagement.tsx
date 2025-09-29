@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Card,
   Text,
@@ -98,20 +98,13 @@ export function IntegrationsManagement({
     tenantId: '',
   });
 
-  // Debug form data changes
-  useEffect(() => {
-    console.log('Form data updated:', formData);
-  }, [formData]);
-
   const handleCreate = async () => {
     try {
-      console.log('Creating integration with data:', formData);
+      // Creating integration with data
       await createIntegration(formData);
       setShowCreateModal(false);
       resetForm();
-    } catch (error) {
-      console.error('Error creating integration:', error);
-    }
+    } catch (error) {}
   };
 
   const handleUpdate = async () => {
@@ -121,18 +114,14 @@ export function IntegrationsManagement({
       setShowEditModal(false);
       setSelectedIntegration(null);
       resetForm();
-    } catch (error) {
-      console.error('Error updating integration:', error);
-    }
+    } catch (error) {}
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this integration?')) {
       try {
         await deleteIntegration(id);
-      } catch (error) {
-        console.error('Error deleting integration:', error);
-      }
+      } catch (error) {}
     }
   };
 
@@ -141,9 +130,7 @@ export function IntegrationsManagement({
       const result = await testIntegration(integration.id);
       setTestResult(result);
       setShowTestModal(true);
-    } catch (error) {
-      console.error('Error testing integration:', error);
-    }
+    } catch (error) {}
   };
 
   const resetForm = () => {
@@ -157,7 +144,7 @@ export function IntegrationsManagement({
       clientSecret: '',
       tenantId: '',
     };
-    console.log('Resetting form with data:', defaultFormData);
+    // Resetting form with data
     setFormData(defaultFormData);
   };
 

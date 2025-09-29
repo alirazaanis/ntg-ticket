@@ -23,6 +23,7 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { FILE_CONSTANTS, TIMING_CONFIG } from '../../lib/constants';
 
 interface FileUploadProps {
   onFilesChange: (files: FileWithPath[]) => void;
@@ -81,8 +82,14 @@ export function FileUpload({
   const simulateUpload = async (fileUpload: UploadedFile) => {
     try {
       // Simulate upload progress
-      for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      for (
+        let progress = 0;
+        progress <= 100;
+        progress += TIMING_CONFIG.PROGRESS_SIMULATION_INCREMENT
+      ) {
+        await new Promise(resolve =>
+          setTimeout(resolve, TIMING_CONFIG.PROGRESS_SIMULATION_DELAY)
+        );
 
         setFiles(prev =>
           prev.map(f => (f.id === fileUpload.id ? { ...f, progress } : f))
@@ -138,7 +145,7 @@ export function FileUpload({
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
-    const k = 1024;
+    const k = FILE_CONSTANTS.BYTES_PER_KB;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];

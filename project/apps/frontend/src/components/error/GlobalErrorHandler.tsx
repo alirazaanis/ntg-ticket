@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
 import { IconAlertTriangle, IconWifiOff } from '@tabler/icons-react';
+import { UI_CONFIG } from '@/lib/constants';
 
 export const GlobalErrorHandler = () => {
   useEffect(() => {
@@ -37,7 +38,7 @@ export const GlobalErrorHandler = () => {
           message: 'An unexpected error occurred. Please refresh the page.',
           color: 'red',
           icon: <IconAlertTriangle size={16} />,
-          autoClose: 5000,
+          autoClose: UI_CONFIG.TOAST_DURATION.ERROR,
         });
       }
     };
@@ -48,7 +49,7 @@ export const GlobalErrorHandler = () => {
         title: 'Connection Restored',
         message: 'You are back online.',
         color: 'green',
-        autoClose: 3000,
+        autoClose: UI_CONFIG.TOAST_DURATION.SUCCESS,
       });
     };
 

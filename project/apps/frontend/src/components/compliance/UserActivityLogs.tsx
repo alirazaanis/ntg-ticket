@@ -30,6 +30,7 @@ import {
   IconSearch,
 } from '@tabler/icons-react';
 import { useUserActivityLogs } from '../../hooks/useAuditLogs';
+import { PAGINATION_CONFIG } from '../../lib/constants';
 
 interface UserActivityLogsProps {
   opened: boolean;
@@ -47,7 +48,7 @@ export function UserActivityLogs({
   const [searchUserId, setSearchUserId] = useState(userId || '');
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
-  const limit = 10;
+  const limit = PAGINATION_CONFIG.COMPLIANCE_PAGE_SIZE;
 
   const {
     data: activityLogs,

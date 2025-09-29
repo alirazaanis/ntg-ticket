@@ -1,88 +1,3 @@
-// Application Constants
-export const APP_CONFIG = {
-  name: 'NTG Ticket',
-  version: '1.0.0',
-  description: 'IT Support - Ticket Management System',
-  author: 'NTG Development Team',
-  supportEmail: 'support@ntg-ticket.com',
-  website: 'https://ntg-ticket.com',
-} as const;
-
-// API Configuration
-export const API_CONFIG = {
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
-  wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000',
-  timeout: 10000,
-  retryAttempts: 3,
-} as const;
-
-// Authentication Configuration
-export const AUTH_CONFIG = {
-  tokenKey: 'ntg-ticket-token',
-  refreshTokenKey: 'ntg-ticket-refresh-token',
-  tokenExpiry: 7 * 24 * 60 * 60 * 1000, // 7 days
-  refreshTokenExpiry: 30 * 24 * 60 * 60 * 1000, // 30 days
-} as const;
-
-// User Roles
-export const USER_ROLES = {
-  END_USER: 'END_USER',
-  SUPPORT_STAFF: 'SUPPORT_STAFF',
-  SUPPORT_MANAGER: 'SUPPORT_MANAGER',
-  ADMIN: 'ADMIN',
-} as const;
-
-// Ticket Status
-export const TICKET_STATUS = {
-  NEW: 'NEW',
-  OPEN: 'OPEN',
-  IN_PROGRESS: 'IN_PROGRESS',
-  ON_HOLD: 'ON_HOLD',
-  RESOLVED: 'RESOLVED',
-  CLOSED: 'CLOSED',
-  REOPENED: 'REOPENED',
-} as const;
-
-// Ticket Priority
-export const TICKET_PRIORITY = {
-  LOW: 'LOW',
-  MEDIUM: 'MEDIUM',
-  HIGH: 'HIGH',
-  CRITICAL: 'CRITICAL',
-} as const;
-
-// Ticket Category
-export const TICKET_CATEGORY = {
-  HARDWARE: 'HARDWARE',
-  SOFTWARE: 'SOFTWARE',
-  NETWORK: 'NETWORK',
-  ACCESS: 'ACCESS',
-  OTHER: 'OTHER',
-} as const;
-
-// Ticket Impact
-export const TICKET_IMPACT = {
-  MINOR: 'MINOR',
-  MODERATE: 'MODERATE',
-  MAJOR: 'MAJOR',
-  CRITICAL: 'CRITICAL',
-} as const;
-
-// Ticket Urgency
-export const TICKET_URGENCY = {
-  LOW: 'LOW',
-  NORMAL: 'NORMAL',
-  HIGH: 'HIGH',
-  IMMEDIATE: 'IMMEDIATE',
-} as const;
-
-// SLA Levels
-export const SLA_LEVEL = {
-  STANDARD: 'STANDARD',
-  PREMIUM: 'PREMIUM',
-  CRITICAL_SUPPORT: 'CRITICAL_SUPPORT',
-} as const;
-
 // Notification Types
 export const NOTIFICATION_TYPE = {
   TICKET_CREATED: 'TICKET_CREATED',
@@ -96,127 +11,6 @@ export const NOTIFICATION_TYPE = {
   SYSTEM_ANNOUNCEMENT: 'SYSTEM_ANNOUNCEMENT',
 } as const;
 
-// Custom Field Types
-export const CUSTOM_FIELD_TYPE = {
-  TEXT: 'TEXT',
-  NUMBER: 'NUMBER',
-  DATE: 'DATE',
-  SELECT: 'SELECT',
-  BOOLEAN: 'BOOLEAN',
-} as const;
-
-// File Upload Configuration
-export const FILE_CONFIG = {
-  maxSize: 10 * 1024 * 1024, // 10MB
-  maxFiles: 10,
-  allowedTypes: [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain',
-    'text/csv',
-    'application/zip',
-    'application/x-rar-compressed',
-  ],
-} as const;
-
-// Pagination Configuration
-export const PAGINATION_CONFIG = {
-  defaultPageSize: 20,
-  pageSizeOptions: [10, 20, 50, 100],
-  maxPageSize: 100,
-} as const;
-
-// Cache Configuration
-export const CACHE_CONFIG = {
-  defaultTTL: 5 * 60 * 1000, // 5 minutes
-  maxTTL: 60 * 60 * 1000, // 1 hour
-  staleTime: 2 * 60 * 1000, // 2 minutes
-} as const;
-
-// Theme Configuration
-export const THEME_CONFIG = {
-  primaryColor: 'blue',
-  fontFamily:
-    'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
-  fontFamilyMonospace: 'Monaco, Courier, monospace',
-  defaultRadius: 'md',
-  defaultSpacing: 'md',
-} as const;
-
-// Breakpoints
-export const BREAKPOINTS = {
-  xs: '36em',
-  sm: '48em',
-  md: '62em',
-  lg: '75em',
-  xl: '88em',
-} as const;
-
-// Animation Durations
-export const ANIMATION_DURATION = {
-  fast: 150,
-  normal: 300,
-  slow: 500,
-} as const;
-
-// Error Messages
-export const ERROR_MESSAGES = {
-  NETWORK_ERROR: 'Network error. Please check your connection and try again.',
-  UNAUTHORIZED: 'You are not authorized to perform this action.',
-  FORBIDDEN:
-    'Access denied. You do not have permission to access this resource.',
-  NOT_FOUND: 'The requested resource was not found.',
-  VALIDATION_ERROR: 'Please check your input and try again.',
-  SERVER_ERROR: 'An unexpected error occurred. Please try again later.',
-  TIMEOUT_ERROR: 'Request timed out. Please try again.',
-  UNKNOWN_ERROR: 'An unknown error occurred.',
-} as const;
-
-// Success Messages
-export const SUCCESS_MESSAGES = {
-  TICKET_CREATED: 'Ticket created successfully!',
-  TICKET_UPDATED: 'Ticket updated successfully!',
-  TICKET_DELETED: 'Ticket deleted successfully!',
-  TICKET_ASSIGNED: 'Ticket assigned successfully!',
-  STATUS_UPDATED: 'Status updated successfully!',
-  COMMENT_ADDED: 'Comment added successfully!',
-  FILE_UPLOADED: 'File uploaded successfully!',
-  SETTINGS_SAVED: 'Settings saved successfully!',
-  USER_CREATED: 'User created successfully!',
-  USER_UPDATED: 'User updated successfully!',
-  USER_DELETED: 'User deleted successfully!',
-} as const;
-
-// Validation Rules
-export const VALIDATION_RULES = {
-  TITLE_MIN_LENGTH: 5,
-  TITLE_MAX_LENGTH: 200,
-  DESCRIPTION_MIN_LENGTH: 10,
-  DESCRIPTION_MAX_LENGTH: 5000,
-  COMMENT_MIN_LENGTH: 1,
-  COMMENT_MAX_LENGTH: 1000,
-  PASSWORD_MIN_LENGTH: 8,
-  PASSWORD_MAX_LENGTH: 128,
-  NAME_MIN_LENGTH: 2,
-  NAME_MAX_LENGTH: 100,
-  EMAIL_MAX_LENGTH: 255,
-} as const;
-
-// Date Formats
-export const DATE_FORMATS = {
-  SHORT: 'MMM DD, YYYY',
-  LONG: 'MMMM DD, YYYY',
-  DATETIME: 'MMM DD, YYYY HH:mm',
-  TIME: 'HH:mm',
-  ISO: 'YYYY-MM-DDTHH:mm:ss.SSSZ',
-} as const;
-
 // Local Storage Keys
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'ntg-ticket-auth-token',
@@ -227,104 +21,441 @@ export const STORAGE_KEYS = {
   NOTIFICATIONS: 'ntg-ticket-notifications',
   TICKET_FILTERS: 'ntg-ticket-filters',
   DASHBOARD_LAYOUT: 'ntg-ticket-dashboard-layout',
+  LOGIN_ATTEMPTS: 'login-attempts',
+  LOGIN_LOCKOUT_TIME: 'login-lockout-time',
+  SAVED_SEARCHES: 'saved-searches',
+  RECENT_SEARCHES: 'recent-searches',
+  DATA_PROTECTION_CONSENT: 'data-protection-consent',
 } as const;
 
-// API Endpoints
-export const API_ENDPOINTS = {
-  AUTH: {
-    LOGIN: '/auth/login',
-    LOGOUT: '/auth/logout',
-    REFRESH: '/auth/refresh',
-    PROFILE: '/auth/profile',
+// Form Options - Centralized constants for dropdowns and form fields
+export const STATUS_OPTIONS = [
+  { value: 'NEW', label: 'New' },
+  { value: 'OPEN', label: 'Open' },
+  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'ON_HOLD', label: 'On Hold' },
+  { value: 'RESOLVED', label: 'Resolved' },
+  { value: 'CLOSED', label: 'Closed' },
+  { value: 'REOPENED', label: 'Reopened' },
+] as const;
+
+export const PRIORITY_OPTIONS = [
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' },
+  { value: 'CRITICAL', label: 'Critical' },
+] as const;
+
+export const CATEGORY_OPTIONS = [
+  { value: 'HARDWARE', label: 'Hardware' },
+  { value: 'SOFTWARE', label: 'Software' },
+  { value: 'NETWORK', label: 'Network' },
+  { value: 'ACCESS', label: 'Access' },
+  { value: 'OTHER', label: 'Other' },
+] as const;
+
+export const IMPACT_OPTIONS = [
+  { value: 'MINOR', label: 'Minor' },
+  { value: 'MODERATE', label: 'Moderate' },
+  { value: 'MAJOR', label: 'Major' },
+  { value: 'CRITICAL', label: 'Critical' },
+] as const;
+
+export const URGENCY_OPTIONS = [
+  { value: 'LOW', label: 'Low' },
+  { value: 'NORMAL', label: 'Normal' },
+  { value: 'HIGH', label: 'High' },
+  { value: 'IMMEDIATE', label: 'Immediate' },
+] as const;
+
+export const SLA_LEVEL_OPTIONS = [
+  { value: 'STANDARD', label: 'Standard' },
+  { value: 'PREMIUM', label: 'Premium' },
+  { value: 'CRITICAL_SUPPORT', label: 'Critical Support' },
+] as const;
+
+// Subcategories for each ticket category
+export const SUBCATEGORY_OPTIONS = {
+  HARDWARE: [
+    { value: 'desktop', label: 'Desktop Computer' },
+    { value: 'laptop', label: 'Laptop' },
+    { value: 'printer', label: 'Printer' },
+    { value: 'monitor', label: 'Monitor' },
+    { value: 'keyboard', label: 'Keyboard/Mouse' },
+    { value: 'other', label: 'Other Hardware' },
+  ],
+  SOFTWARE: [
+    { value: 'operating_system', label: 'Operating System' },
+    { value: 'email_client', label: 'Email Client' },
+    { value: 'browser', label: 'Web Browser' },
+    { value: 'office_suite', label: 'Office Suite' },
+    { value: 'antivirus', label: 'Antivirus' },
+    { value: 'other', label: 'Other Software' },
+  ],
+  NETWORK: [
+    { value: 'internet', label: 'Internet Connection' },
+    { value: 'wifi', label: 'WiFi' },
+    { value: 'vpn', label: 'VPN' },
+    { value: 'email_server', label: 'Email Server' },
+    { value: 'file_server', label: 'File Server' },
+    { value: 'other', label: 'Other Network' },
+  ],
+  ACCESS: [
+    { value: 'user_account', label: 'User Account' },
+    { value: 'password_reset', label: 'Password Reset' },
+    { value: 'permissions', label: 'Permissions' },
+    { value: 'application_access', label: 'Application Access' },
+    { value: 'other', label: 'Other Access' },
+  ],
+  OTHER: [
+    { value: 'general', label: 'General Inquiry' },
+    { value: 'training', label: 'Training Request' },
+    { value: 'other', label: 'Other' },
+  ],
+} as const;
+
+// API Configuration
+export const API_CONFIG = {
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+  WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:4000',
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
+  TIMEOUT: 10000,
+  RETRY_DELAY: 1000,
+  MAX_RETRY_DELAY: 30000,
+} as const;
+
+// UI Configuration
+export const UI_CONFIG = {
+  TOAST_DURATION: {
+    SUCCESS: 3000,
+    ERROR: 5000,
+    INFO: 5000,
   },
-  TICKETS: {
-    LIST: '/tickets',
-    CREATE: '/tickets',
-    GET: '/tickets/:id',
-    UPDATE: '/tickets/:id',
-    DELETE: '/tickets/:id',
-    ASSIGN: '/tickets/:id/assign',
-    STATUS: '/tickets/:id/status',
-    COMMENTS: '/tickets/:id/comments',
-    ATTACHMENTS: '/tickets/:id/attachments',
+  SAVE_FEEDBACK_DURATION: 3000,
+  NOTIFICATION_REFRESH_INTERVAL: 30000,
+  WEBSOCKET_RECONNECT_DELAY: 5000,
+} as const;
+
+// Validation Rules
+export const VALIDATION_RULES = {
+  PASSWORD: {
+    MIN_LENGTH: 8,
+    REQUIRE_UPPERCASE: true,
+    REQUIRE_LOWERCASE: true,
+    REQUIRE_NUMBER: true,
+    REQUIRE_SPECIAL: true,
+    SPECIAL_CHARS: /[!@#$%^&*(),.?":{}|<>]/,
   },
-  USERS: {
-    LIST: '/users',
-    CREATE: '/users',
-    GET: '/users/:id',
-    UPDATE: '/users/:id',
-    DELETE: '/users/:id',
-    ROLES: '/users/roles',
+  FILE: {
+    MAX_SIZE: 10, // MB
+  },
+} as const;
+
+// File & Storage Constants
+export const FILE_CONSTANTS = {
+  BYTES_PER_KB: 1024,
+  MAX_FILE_SIZE_MB: 10,
+  MAX_FILES_PER_TICKET: 10,
+} as const;
+
+// Cache Configuration
+export const CACHE_CONFIG = {
+  DEFAULT_TTL: 5 * 60 * 1000, // 5 minutes
+  MAX_SIZE: 50,
+  EVICTION_RATIO: 0.25,
+} as const;
+
+// Email Template Constants
+export const EMAIL_TEMPLATE_TYPES = [
+  { value: 'ticket_created', label: 'Ticket Created' },
+  { value: 'ticket_updated', label: 'Ticket Updated' },
+  { value: 'ticket_assigned', label: 'Ticket Assigned' },
+  { value: 'ticket_resolved', label: 'Ticket Resolved' },
+  { value: 'ticket_closed', label: 'Ticket Closed' },
+  { value: 'comment_added', label: 'Comment Added' },
+  { value: 'sla_warning', label: 'SLA Warning' },
+  { value: 'sla_breach', label: 'SLA Breach' },
+  { value: 'welcome', label: 'Welcome Email' },
+  { value: 'password_reset', label: 'Password Reset' },
+] as const;
+
+export const EMAIL_TEMPLATE_VARIABLES = [
+  { value: '{{user.name}}', label: 'User Name' },
+  { value: '{{user.email}}', label: 'User Email' },
+  { value: '{{ticket.title}}', label: 'Ticket Title' },
+  { value: '{{ticket.number}}', label: 'Ticket Number' },
+  { value: '{{ticket.status}}', label: 'Ticket Status' },
+  { value: '{{ticket.priority}}', label: 'Ticket Priority' },
+  { value: '{{ticket.category}}', label: 'Ticket Category' },
+  { value: '{{ticket.description}}', label: 'Ticket Description' },
+  { value: '{{ticket.url}}', label: 'Ticket URL' },
+  { value: '{{assignedTo.name}}', label: 'Assigned To Name' },
+] as const;
+
+// Audit Log Constants
+export const AUDIT_LOG_ACTIONS = [
+  { value: 'CREATE', label: 'Create' },
+  { value: 'UPDATE', label: 'Update' },
+  { value: 'DELETE', label: 'Delete' },
+  { value: 'LOGIN', label: 'Login' },
+  { value: 'LOGOUT', label: 'Logout' },
+  { value: 'ASSIGN', label: 'Assign' },
+  { value: 'STATUS_CHANGE', label: 'Status Change' },
+  { value: 'COMMENT', label: 'Comment' },
+  { value: 'ATTACHMENT', label: 'Attachment' },
+] as const;
+
+export const AUDIT_LOG_FIELDS = [
+  { value: 'title', label: 'Title' },
+  { value: 'description', label: 'Description' },
+  { value: 'status', label: 'Status' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'category', label: 'Category' },
+  { value: 'assignedTo', label: 'Assigned To' },
+] as const;
+
+// Query Configuration - Centralized cache settings for React Query
+export const QUERY_CONFIG = {
+  STALE_TIME: {
+    SHORT: 30 * 1000, // 30 seconds
+    MEDIUM: 1 * 60 * 1000, // 1 minute
+    LONG: 2 * 60 * 1000, // 2 minutes
+    EXTRA_LONG: 5 * 60 * 1000, // 5 minutes
+    VERY_LONG: 10 * 60 * 1000, // 10 minutes
+  },
+  REFETCH_INTERVALS: {
+    FREQUENT: 10 * 1000, // 10 seconds
+    NORMAL: 30 * 1000, // 30 seconds
+    SLOW: 60 * 1000, // 1 minute
+  },
+  GC_TIME: {
+    SHORT: 5 * 60 * 1000, // 5 minutes
+    LONG: 10 * 60 * 1000, // 10 minutes
+  },
+} as const;
+
+// Pagination Configuration
+export const PAGINATION_CONFIG = {
+  DEFAULT_PAGE_SIZE: 10,
+  ADMIN_PAGE_SIZE: 20,
+  LARGE_PAGE_SIZE: 100,
+  MAX_PAGE_SIZE: 1000,
+  DEFAULT_PAGE: 1,
+  COMPLIANCE_PAGE_SIZE: 10,
+  NOTIFICATION_PAGE_SIZE: 10,
+  STORE_SYNC_LIMIT: 1000,
+  BULK_ACTIONS_LIMIT: 100,
+} as const;
+
+// Authentication & Session Configuration
+export const AUTH_CONFIG = {
+  SESSION: {
+    MAX_AGE: 7 * 24 * 60 * 60, // 7 days
+    UPDATE_AGE: 30 * 60, // 30 minutes
+  },
+  TOKEN: {
+    ACCESS_TOKEN_EXPIRY: 30 * 60 * 1000, // 30 minutes
+  },
+  COOKIES: {
+    SESSION_TOKEN_NAME: 'next-auth.session-token',
+  },
+} as const;
+
+// User Role Constants
+export const USER_ROLES = [
+  { value: 'END_USER', label: 'End User' },
+  { value: 'SUPPORT_STAFF', label: 'Support Staff' },
+  { value: 'SUPPORT_MANAGER', label: 'Support Manager' },
+  { value: 'ADMIN', label: 'Administrator' },
+] as const;
+
+// System Settings Defaults
+export const SYSTEM_DEFAULTS = {
+  SITE: {
+    NAME: 'NTG Ticket System',
+    DESCRIPTION: 'IT Support - Ticket Management System',
+    TIMEZONE: 'UTC',
+    LANGUAGE: 'en',
+  },
+  TICKET: {
+    AUTO_ASSIGN: true,
+    AUTO_CLOSE: true,
+    AUTO_CLOSE_DAYS: 5,
+    MAX_FILE_SIZE: 10, // MB
+    MAX_FILES_PER_TICKET: 10,
+  },
+  SLA: {
+    STANDARD_RESPONSE: 8, // hours
+    STANDARD_RESOLUTION: 40, // hours
+    PREMIUM_RESPONSE: 4, // hours
+    PREMIUM_RESOLUTION: 16, // hours
+    CRITICAL_RESPONSE: 0, // hours
+    CRITICAL_RESOLUTION: 4, // hours
+  },
+  SECURITY: {
+    PASSWORD_MIN_LENGTH: 8,
+    SESSION_TIMEOUT: 24, // hours
+    MAX_LOGIN_ATTEMPTS: 5,
+    LOCKOUT_DURATION: 30, // minutes
+    LOCKOUT_DURATION_MINUTES: 15, // minutes for failed login attempts
+  },
+  EMAIL: {
+    SMTP_HOST: 'smtp.gmail.com',
+    SMTP_PORT: 587,
+    SMTP_SECURE: false,
+    FROM_EMAIL: 'noreply@ntg-ticket.com',
+    FROM_NAME: 'NTG Ticket',
   },
   NOTIFICATIONS: {
-    LIST: '/notifications',
-    MARK_READ: '/notifications/:id/read',
-    MARK_ALL_READ: '/notifications/read-all',
-    DELETE: '/notifications/:id',
-  },
-  REPORTS: {
-    DASHBOARD: '/reports/dashboard',
-    TICKETS: '/reports/tickets',
-    PERFORMANCE: '/reports/performance',
-    EXPORT: '/reports/export',
-  },
-  ADMIN: {
-    SETTINGS: '/admin/settings',
-    BACKUP: '/admin/backup',
-    RESTORE: '/admin/restore',
-    AUDIT_LOGS: '/admin/audit-logs',
+    EMAIL_ENABLED: true,
+    IN_APP_ENABLED: true,
+    PUSH_ENABLED: false,
+    SLA_WARNINGS: true,
+    AUTO_CLOSE_WARNINGS: true,
   },
 } as const;
 
-// WebSocket Events
-export const WS_EVENTS = {
-  CONNECT: 'connect',
-  DISCONNECT: 'disconnect',
-  NOTIFICATION: 'notification',
-  TICKET_UPDATE: 'ticket_update',
-  TICKET_STATUS_CHANGE: 'ticket_status_change',
-  COMMENT_ADDED: 'comment_added',
-  USER_ONLINE: 'user_online',
-  USER_OFFLINE: 'user_offline',
-  SYSTEM_ANNOUNCEMENT: 'system_announcement',
+// WebSocket Configuration
+export const WEBSOCKET_CONFIG = {
+  RECONNECT_DELAY: 5000, // 5 seconds
+  TRANSPORTS: ['websocket'],
+  NOTIFICATIONS: {
+    CONNECTION_LOST: {
+      TITLE: 'Connection Lost',
+      MESSAGE: 'Lost connection to server. Attempting to reconnect...',
+      COLOR: 'yellow',
+    },
+    CONNECTION_ERROR: {
+      TITLE: 'Connection Error',
+      MESSAGE: 'Failed to connect to server. Please check your connection.',
+      COLOR: 'red',
+    },
+    CONNECTED: {
+      TITLE: 'Connected',
+      MESSAGE: 'Successfully connected to server',
+      COLOR: 'green',
+    },
+    TICKET_CREATED: {
+      TITLE: 'New Ticket Created',
+      COLOR: 'blue',
+    },
+    TICKET_UPDATED: {
+      TITLE: 'Ticket Updated',
+      COLOR: 'green',
+    },
+    TICKET_ASSIGNED: {
+      TITLE: 'Ticket Assigned',
+      COLOR: 'orange',
+    },
+    COMMENT_ADDED: {
+      TITLE: 'New Comment',
+      COLOR: 'blue',
+    },
+    SLA_WARNING: {
+      TITLE: 'SLA Warning',
+      COLOR: 'yellow',
+    },
+    SLA_BREACH: {
+      TITLE: 'SLA Breach',
+      COLOR: 'red',
+    },
+  },
 } as const;
 
-// Chart Colors
-export const CHART_COLORS = {
-  PRIMARY: '#228be6',
-  SUCCESS: '#51cf66',
-  WARNING: '#ffd43b',
-  ERROR: '#ff6b6b',
-  INFO: '#74c0fc',
-  PURPLE: '#9775fa',
-  PINK: '#f783ac',
-  ORANGE: '#ffa94d',
-  TEAL: '#20c997',
-  INDIGO: '#5c7cfa',
+// Timing Constants
+export const TIMING_CONFIG = {
+  DEBOUNCE_DELAY: 300,
+  WEBSOCKET_RECONNECT_DELAY: 5000,
+  STORE_SYNC_INTERVAL: 30000,
+  PROGRESS_SIMULATION_DELAY: 100,
+  PROGRESS_SIMULATION_INCREMENT: 10,
 } as const;
 
-// Status Colors
-export const STATUS_COLORS = {
-  NEW: 'blue',
-  OPEN: 'orange',
-  IN_PROGRESS: 'yellow',
-  ON_HOLD: 'gray',
-  RESOLVED: 'green',
-  CLOSED: 'dark',
-  REOPENED: 'red',
+// File size units
+export const FILE_SIZE_UNITS = ['Bytes', 'KB', 'MB', 'GB', 'TB'] as const;
+
+// Status filter groups
+export const STATUS_FILTERS = {
+  ACTIVE: ['OPEN', 'IN_PROGRESS', 'ON_HOLD'] as const,
+  RESOLVED: ['RESOLVED', 'CLOSED'] as const,
+  ALL: [
+    'NEW',
+    'OPEN',
+    'IN_PROGRESS',
+    'ON_HOLD',
+    'RESOLVED',
+    'CLOSED',
+    'REOPENED',
+  ] as const,
 } as const;
 
-// Priority Colors
-export const PRIORITY_COLORS = {
-  LOW: 'green',
-  MEDIUM: 'blue',
-  HIGH: 'orange',
-  CRITICAL: 'red',
+// Role groups for permissions
+export const ROLE_GROUPS = {
+  SUPPORT_TEAM: ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'] as const,
+  MANAGEMENT: ['SUPPORT_MANAGER', 'ADMIN'] as const,
+  ADMIN_ONLY: ['ADMIN'] as const,
 } as const;
 
-// SLA Colors
-export const SLA_COLORS = {
-  STANDARD: 'blue',
-  PREMIUM: 'green',
-  CRITICAL_SUPPORT: 'red',
+// Notification type mappings
+export const NOTIFICATION_ICONS = {
+  TICKET_CREATED: 'IconTicket',
+  TICKET_ASSIGNED: 'IconUser',
+  TICKET_STATUS_CHANGED: 'IconAlertCircle',
+  COMMENT_ADDED: 'IconMessage',
+  SLA_WARNING: 'IconClock',
+  SLA_BREACH: 'IconAlertCircle',
+  TICKET_DUE: 'IconCalendar',
+  TICKET_ESCALATED: 'IconAlertCircle',
+} as const;
+
+export const NOTIFICATION_COLORS = {
+  TICKET_CREATED: 'blue',
+  TICKET_ASSIGNED: 'green',
+  TICKET_STATUS_CHANGED: 'orange',
+  COMMENT_ADDED: 'purple',
+  SLA_WARNING: 'yellow',
+  SLA_BREACH: 'red',
+  TICKET_DUE: 'orange',
+  TICKET_ESCALATED: 'red',
+} as const;
+
+// Backup status options
+export const BACKUP_STATUS_OPTIONS = [
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'FAILED', label: 'Failed' },
+  { value: 'PENDING', label: 'Pending' },
+] as const;
+
+// Extended audit log actions
+export const EXTENDED_AUDIT_LOG_ACTIONS = [
+  { value: 'CREATE', label: 'Create' },
+  { value: 'UPDATE', label: 'Update' },
+  { value: 'DELETE', label: 'Delete' },
+  { value: 'LOGIN', label: 'Login' },
+  { value: 'LOGOUT', label: 'Logout' },
+  { value: 'ASSIGN', label: 'Assign' },
+  { value: 'ESCALATE', label: 'Escalate' },
+  { value: 'COMMENT', label: 'Comment' },
+  { value: 'ATTACH', label: 'Attach' },
+  { value: 'STATUS_CHANGE', label: 'Status Change' },
+  { value: 'PRIORITY_CHANGE', label: 'Priority Change' },
+  { value: 'CATEGORY_CHANGE', label: 'Category Change' },
+] as const;
+
+// UI Constants
+export const UI_CONSTANTS = {
+  ICON_SIZES: {
+    SMALL: 16,
+    MEDIUM: 20,
+    LARGE: 24,
+  },
+  COLORS: {
+    SUCCESS: 'green',
+    ERROR: 'red',
+    WARNING: 'yellow',
+    INFO: 'blue',
+    PRIMARY: 'blue',
+    SECONDARY: 'orange',
+  },
 } as const;

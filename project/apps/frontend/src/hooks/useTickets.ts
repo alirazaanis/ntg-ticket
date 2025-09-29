@@ -8,6 +8,7 @@ import {
 } from '../lib/apiClient';
 import { validateStatusUpdate } from '../lib/statusValidation';
 import { TicketStatus } from '../types/unified';
+import { QUERY_CONFIG, PAGINATION_CONFIG } from '../lib/constants';
 
 export function useTickets(filters?: TicketFilters) {
   return useQuery<Ticket[]>({
@@ -30,7 +31,7 @@ export function useTickets(filters?: TicketFilters) {
         throw error;
       }
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: QUERY_CONFIG.STALE_TIME.MEDIUM,
   });
 }
 
@@ -60,7 +61,7 @@ export function useAllTicketsForCounting(filters?: TicketFilters) {
         throw error;
       }
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: QUERY_CONFIG.STALE_TIME.MEDIUM,
   });
 }
 
@@ -85,7 +86,7 @@ export function useTotalTicketsCount() {
         throw error;
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: QUERY_CONFIG.STALE_TIME.LONG,
   });
 }
 
@@ -127,15 +128,20 @@ export function useTicketsWithPagination(filters?: TicketFilters) {
         } else {
           return {
             tickets: [],
-            pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+            pagination: {
+              page: 1,
+              limit: PAGINATION_CONFIG.DEFAULT_PAGE_SIZE,
+              total: 0,
+              totalPages: 0,
+            },
           };
         }
       } catch (error) {
         throw error;
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes - increased for better performance
-    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection time
+    staleTime: QUERY_CONFIG.STALE_TIME.LONG, // increased for better performance
+    gcTime: QUERY_CONFIG.GC_TIME.SHORT,
     refetchOnWindowFocus: false, // Prevent unnecessary refetches
     retry: (failureCount, error) => {
       // Retry up to 3 times for network errors
@@ -272,7 +278,7 @@ export function useMyTickets(filters?: TicketFilters) {
       const response = await ticketApi.getMyTickets(filters);
       return response.data.data.data;
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: QUERY_CONFIG.STALE_TIME.MEDIUM,
   });
 }
 
@@ -283,7 +289,7 @@ export function useAssignedTickets(filters?: TicketFilters) {
       const response = await ticketApi.getAssignedTickets(filters);
       return response.data.data.data;
     },
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: QUERY_CONFIG.STALE_TIME.MEDIUM,
   });
 }
 
@@ -294,8 +300,8 @@ export function useOverdueTickets() {
       const response = await ticketApi.getOverdueTickets();
       return response.data.data;
     },
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refetch every minute
+    staleTime: QUERY_CONFIG.STALE_TIME.SHORT,
+    refetchInterval: QUERY_CONFIG.REFETCH_INTERVALS.SLOW,
   });
 }
 
@@ -306,8 +312,8 @@ export function useTicketsApproachingSLA() {
       const response = await ticketApi.getTicketsApproachingSLA();
       return response.data.data;
     },
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refetch every minute
+    staleTime: QUERY_CONFIG.STALE_TIME.SHORT,
+    refetchInterval: QUERY_CONFIG.REFETCH_INTERVALS.SLOW,
   });
 }
 
@@ -318,7 +324,7 @@ export function useBreachedSLATickets() {
       const response = await ticketApi.getBreachedSLATickets();
       return response.data.data;
     },
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refetch every minute
+    staleTime: QUERY_CONFIG.STALE_TIME.SHORT,
+    refetchInterval: QUERY_CONFIG.REFETCH_INTERVALS.SLOW,
   });
 }

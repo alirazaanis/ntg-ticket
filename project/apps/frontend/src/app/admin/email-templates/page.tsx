@@ -42,6 +42,10 @@ import {
 } from '../../../hooks/useEmailTemplates';
 import { notifications } from '@mantine/notifications';
 import { EmailTemplateType } from '../../../types/unified';
+import {
+  EMAIL_TEMPLATE_TYPES,
+  EMAIL_TEMPLATE_VARIABLES,
+} from '@/lib/constants';
 
 interface EmailTemplateFormData {
   name: string;
@@ -53,36 +57,9 @@ interface EmailTemplateFormData {
   variables: string[];
 }
 
-const TEMPLATE_TYPES = [
-  { value: 'ticket_created', label: 'Ticket Created' },
-  { value: 'ticket_updated', label: 'Ticket Updated' },
-  { value: 'ticket_assigned', label: 'Ticket Assigned' },
-  { value: 'ticket_resolved', label: 'Ticket Resolved' },
-  { value: 'ticket_closed', label: 'Ticket Closed' },
-  { value: 'comment_added', label: 'Comment Added' },
-  { value: 'sla_warning', label: 'SLA Warning' },
-  { value: 'sla_breach', label: 'SLA Breach' },
-  { value: 'welcome', label: 'Welcome Email' },
-  { value: 'password_reset', label: 'Password Reset' },
-];
-
-const AVAILABLE_VARIABLES = [
-  { value: '{{user.name}}', label: 'User Name' },
-  { value: '{{user.email}}', label: 'User Email' },
-  { value: '{{ticket.title}}', label: 'Ticket Title' },
-  { value: '{{ticket.number}}', label: 'Ticket Number' },
-  { value: '{{ticket.status}}', label: 'Ticket Status' },
-  { value: '{{ticket.priority}}', label: 'Ticket Priority' },
-  { value: '{{ticket.category}}', label: 'Ticket Category' },
-  { value: '{{ticket.description}}', label: 'Ticket Description' },
-  { value: '{{ticket.url}}', label: 'Ticket URL' },
-  { value: '{{assignedTo.name}}', label: 'Assigned To Name' },
-  { value: '{{assignedTo.email}}', label: 'Assigned To Email' },
-  { value: '{{comment.content}}', label: 'Comment Content' },
-  { value: '{{comment.author}}', label: 'Comment Author' },
-  { value: '{{system.name}}', label: 'System Name' },
-  { value: '{{system.url}}', label: 'System URL' },
-];
+// Using centralized constants from lib/constants.ts
+const TEMPLATE_TYPES = EMAIL_TEMPLATE_TYPES;
+const AVAILABLE_VARIABLES = EMAIL_TEMPLATE_VARIABLES;
 
 export default function EmailTemplatesPage() {
   const [searchQuery, setSearchQuery] = useState('');

@@ -40,6 +40,11 @@ import { useAuditLogs } from '../../../hooks/useAuditLogs';
 import { notifications } from '@mantine/notifications';
 
 import { DatePickerInput } from '@mantine/dates';
+import {
+  AUDIT_LOG_ACTIONS,
+  AUDIT_LOG_FIELDS,
+  PAGINATION_CONFIG,
+} from '@/lib/constants';
 
 interface AuditLogFilters {
   userId?: string;
@@ -52,34 +57,15 @@ interface AuditLogFilters {
   limit?: number;
 }
 
-const ACTION_OPTIONS = [
-  { value: 'CREATE', label: 'Create' },
-  { value: 'UPDATE', label: 'Update' },
-  { value: 'DELETE', label: 'Delete' },
-  { value: 'LOGIN', label: 'Login' },
-  { value: 'LOGOUT', label: 'Logout' },
-  { value: 'ASSIGN', label: 'Assign' },
-  { value: 'STATUS_CHANGE', label: 'Status Change' },
-  { value: 'COMMENT', label: 'Comment' },
-  { value: 'ATTACHMENT', label: 'Attachment' },
-];
-
-const FIELD_OPTIONS = [
-  { value: 'title', label: 'Title' },
-  { value: 'description', label: 'Description' },
-  { value: 'status', label: 'Status' },
-  { value: 'priority', label: 'Priority' },
-  { value: 'assignedTo', label: 'Assigned To' },
-  { value: 'category', label: 'Category' },
-  { value: 'email', label: 'Email' },
-  { value: 'role', label: 'Role' },
-];
+// Using centralized constants from lib/constants.ts
+const ACTION_OPTIONS = AUDIT_LOG_ACTIONS;
+const FIELD_OPTIONS = AUDIT_LOG_FIELDS;
 
 export default function AuditLogsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<AuditLogFilters>({
     page: 1,
-    limit: 20,
+    limit: PAGINATION_CONFIG.ADMIN_PAGE_SIZE,
   });
   const [selectedLog, setSelectedLog] = useState<{
     id: string;

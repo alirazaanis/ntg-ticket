@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
+  TicketStatus,
+  TicketPriority,
+  Comment,
+  Attachment,
+} from '../../../types/unified';
+import {
   Container,
   Title,
   Text,
@@ -53,14 +59,14 @@ import {
 import { useCreateComment } from '../../../hooks/useComments';
 import { useUsers } from '../../../hooks/useUsers';
 import { useAuthStore } from '../../../stores/useAuthStore';
-import {
-  TicketStatus,
-  TicketPriority,
-  Comment,
-  Attachment,
-} from '../../../types/unified';
+
 import { notifications } from '@mantine/notifications';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  PAGINATION_CONFIG,
+  ROLE_GROUPS,
+  STATUS_FILTERS,
+} from '../../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
   NEW: 'blue',
@@ -97,20 +103,23 @@ export default function TicketDetailPage() {
   const [activeTab, setActiveTab] = useState<string | null>('details');
 
   const { data: ticket, isLoading, error } = useTicket(ticketId);
-  const { data: users, isLoading: usersLoading } = useUsers({ limit: 100 });
+  const { data: users, isLoading: usersLoading } = useUsers({
+    limit: PAGINATION_CONFIG.BULK_ACTIONS_LIMIT,
+  });
   const updateStatusMutation = useUpdateTicketStatus();
   const assignTicketMutation = useAssignTicket();
   const addCommentMutation = useCreateComment();
 
   const canEdit =
-    user?.role === 'ADMIN' ||
-    user?.role === 'SUPPORT_MANAGER' ||
+    ROLE_GROUPS.ADMIN_ONLY.includes(user?.role as 'ADMIN') ||
+    ROLE_GROUPS.MANAGEMENT.includes(
+      user?.role as 'SUPPORT_MANAGER' | 'ADMIN'
+    ) ||
     (user?.role === 'SUPPORT_STAFF' && ticket?.assignedTo?.id === user?.id);
-  const canAssign =
-    user?.role === 'ADMIN' ||
-    user?.role === 'SUPPORT_MANAGER' ||
-    user?.role === 'SUPPORT_STAFF';
-  const canDelete = user?.role === 'ADMIN';
+  const canAssign = ROLE_GROUPS.SUPPORT_TEAM.includes(
+    user?.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
+  );
+  const canDelete = ROLE_GROUPS.ADMIN_ONLY.includes(user?.role as 'ADMIN');
 
   const handleStatusUpdate = async () => {
     try {
@@ -698,7 +707,9 @@ export default function TicketDetailPage() {
             value={newStatus}
             onChange={value => setNewStatus(value as TicketStatus)}
           />
-          {(newStatus === 'RESOLVED' || newStatus === 'CLOSED') && (
+          {STATUS_FILTERS.RESOLVED.includes(
+            newStatus as 'RESOLVED' | 'CLOSED'
+          ) && (
             <Textarea
               label='Resolution Notes'
               placeholder='Describe how the issue was resolved...'
@@ -735,8 +746,8 @@ export default function TicketDetailPage() {
             data={
               users
                 ?.filter(user =>
-                  ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(
-                    user.role
+                  ROLE_GROUPS.SUPPORT_TEAM.includes(
+                    user.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
                   )
                 )
                 .map(user => ({
@@ -782,7 +793,9 @@ export default function TicketDetailPage() {
             minRows={4}
             required
           />
-          {user?.role !== 'END_USER' && (
+          {ROLE_GROUPS.SUPPORT_TEAM.includes(
+            user?.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
+          ) && (
             <Group>
               <input
                 type='checkbox'

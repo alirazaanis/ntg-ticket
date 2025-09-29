@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { Providers } from '../components/providers/Providers';
 import { ConditionalLayout } from '@/components/layouts/ConditionalLayout';
 import { LanguageDetector } from '../components/language/LanguageDetector';
+import { RTLProvider } from '../components/providers/RTLProvider';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -32,13 +33,15 @@ export default async function RootLayout({ children }: Props) {
   const messages = await getMessages();
 
   return (
-    <html dir='auto'>
+    <html dir='auto' lang='en'>
       <body className={inter.className}>
         <LanguageDetector />
         <NextIntlClientProvider messages={messages}>
-          <Providers>
-            <ConditionalLayout>{children}</ConditionalLayout>
-          </Providers>
+          <RTLProvider>
+            <Providers>
+              <ConditionalLayout>{children}</ConditionalLayout>
+            </Providers>
+          </RTLProvider>
         </NextIntlClientProvider>
       </body>
     </html>

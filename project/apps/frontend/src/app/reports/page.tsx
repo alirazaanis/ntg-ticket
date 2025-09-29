@@ -37,6 +37,11 @@ import {
 } from '../../hooks/useReports';
 import { notifications } from '@mantine/notifications';
 import { DatePickerInput } from '@mantine/dates';
+import {
+  CATEGORY_OPTIONS,
+  PRIORITY_OPTIONS,
+  STATUS_OPTIONS,
+} from '@/lib/constants';
 
 interface ReportFilters {
   dateFrom?: string;
@@ -48,30 +53,7 @@ interface ReportFilters {
   department?: string[];
 }
 
-const STATUS_OPTIONS = [
-  { value: 'NEW', label: 'New' },
-  { value: 'OPEN', label: 'Open' },
-  { value: 'IN_PROGRESS', label: 'In Progress' },
-  { value: 'ON_HOLD', label: 'On Hold' },
-  { value: 'RESOLVED', label: 'Resolved' },
-  { value: 'CLOSED', label: 'Closed' },
-  { value: 'REOPENED', label: 'Reopened' },
-];
-
-const PRIORITY_OPTIONS = [
-  { value: 'LOW', label: 'Low' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'HIGH', label: 'High' },
-  { value: 'CRITICAL', label: 'Critical' },
-];
-
-const CATEGORY_OPTIONS = [
-  { value: 'HARDWARE', label: 'Hardware' },
-  { value: 'SOFTWARE', label: 'Software' },
-  { value: 'NETWORK', label: 'Network' },
-  { value: 'ACCESS', label: 'Access' },
-  { value: 'OTHER', label: 'Other' },
-];
+// Using centralized constants from lib/constants.ts
 
 export default function ReportsPage() {
   const t = useTranslations('reports');

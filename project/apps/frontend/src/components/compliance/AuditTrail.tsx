@@ -29,6 +29,10 @@ import {
   IconDownload,
 } from '@tabler/icons-react';
 import { useAuditLogs } from '../../hooks/useAuditLogs';
+import {
+  PAGINATION_CONFIG,
+  EXTENDED_AUDIT_LOG_ACTIONS,
+} from '../../lib/constants';
 
 interface AuditTrailProps {
   opened: boolean;
@@ -60,7 +64,7 @@ export function AuditTrail({
     error,
   } = useAuditLogs({
     page,
-    limit: 20,
+    limit: PAGINATION_CONFIG.ADMIN_PAGE_SIZE,
     ...filters,
     dateFrom: filters.dateFrom?.toISOString(),
     dateTo: filters.dateTo?.toISOString(),
@@ -153,26 +157,10 @@ export function AuditTrail({
               <Select
                 label={t('action')}
                 placeholder={t('selectAction')}
-                data={[
-                  { value: 'CREATE', label: t('create') },
-                  { value: 'UPDATE', label: t('update') },
-                  { value: 'DELETE', label: t('delete') },
-                  { value: 'LOGIN', label: t('login') },
-                  { value: 'LOGOUT', label: t('logout') },
-                  { value: 'ASSIGN', label: t('assign') },
-                  { value: 'ESCALATE', label: t('escalate') },
-                  { value: 'COMMENT', label: t('comment') },
-                  { value: 'ATTACH', label: t('attach') },
-                  { value: 'STATUS_CHANGE', label: t('statusChange') },
-                  {
-                    value: 'PRIORITY_CHANGE',
-                    label: t('priorityChange'),
-                  },
-                  {
-                    value: 'CATEGORY_CHANGE',
-                    label: t('categoryChange'),
-                  },
-                ]}
+                data={EXTENDED_AUDIT_LOG_ACTIONS.map(action => ({
+                  value: action.value,
+                  label: t(action.label.toLowerCase().replace(' ', '')),
+                }))}
                 value={filters.action}
                 onChange={value => handleFilterChange('action', value)}
                 clearable

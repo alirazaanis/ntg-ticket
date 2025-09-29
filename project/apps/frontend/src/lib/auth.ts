@@ -1,6 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { AUTH_CONFIG } from './constants';
 
 async function refreshAccessToken(token: {
   refreshToken?: string;
@@ -34,8 +35,6 @@ async function refreshAccessToken(token: {
       accessTokenExpires: Date.now() + 30 * 60 * 1000, // 30 minutes
     } as JWT;
   } catch (error) {
-    console.error('Error refreshing access token:', error);
-
     return {
       ...token,
       error: 'RefreshAccessTokenError',
@@ -107,11 +106,11 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-    updateAge: 30 * 60, // 30 minutes - refresh session every 30 minutes
+    maxAge: AUTH_CONFIG.SESSION.MAX_AGE,
+    updateAge: AUTH_CONFIG.SESSION.UPDATE_AGE,
   },
   jwt: {
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: AUTH_CONFIG.SESSION.MAX_AGE,
   },
   callbacks: {
     async jwt({ token, user, account }) {
@@ -123,7 +122,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
-          accessTokenExpires: Date.now() + 30 * 60 * 1000, // 30 minutes
+          accessTokenExpires:
+            Date.now() + AUTH_CONFIG.TOKEN.ACCESS_TOKEN_EXPIRY,
         };
       }
 
@@ -156,7 +156,7 @@ export const authOptions: NextAuthOptions = {
   useSecureCookies: process.env.NODE_ENV === 'production',
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: AUTH_CONFIG.COOKIES.SESSION_TOKEN_NAME,
       options: {
         httpOnly: true,
         sameSite: 'lax',

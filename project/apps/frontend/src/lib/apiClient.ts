@@ -48,8 +48,9 @@ import {
   IntegrationTestResult,
   WebhookPayload,
 } from '../types/unified';
+import { API_CONFIG } from './constants';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 // Re-export all types from unified types
 export type {
@@ -111,7 +112,7 @@ export type {
 // Create axios instance
 const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
-  timeout: 10000,
+  timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -161,7 +162,6 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // If refresh fails, sign out the user
-        console.error('Token refresh failed:', refreshError);
         await signOut({ callbackUrl: '/auth/signin' });
         return Promise.reject(refreshError);
       }

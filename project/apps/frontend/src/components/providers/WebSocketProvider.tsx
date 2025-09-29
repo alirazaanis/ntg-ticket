@@ -9,6 +9,7 @@ import { Notification } from '../../types/notification';
 import { Ticket, Comment } from '../../types/unified';
 import { useSession } from 'next-auth/react';
 import { io, Socket } from 'socket.io-client';
+import { API_CONFIG } from '@/lib/constants';
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
@@ -28,7 +29,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   useEffect(() => {
     if (isAuthenticated && user && user.id && session?.accessToken) {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:4000';
+      const wsUrl = API_CONFIG.WS_URL;
 
       // Create Socket.IO connection
       const socket = io(wsUrl, {
@@ -39,11 +40,11 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       });
 
       socket.on('connect', () => {
-        console.log('WebSocket connected');
+        // WebSocket connected
       });
 
       socket.on('connected', () => {
-        console.log('WebSocket authenticated');
+        // WebSocket authenticated
       });
 
       socket.on('notification_created', (notification: Notification) => {
@@ -158,40 +159,6 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
           });
         }
       );
-
-      socket.on('disconnect', reason => {
-        console.log('WebSocket disconnected:', reason);
-
-        // Show notification if disconnected unexpectedly
-        if (reason === 'io server disconnect') {
-          mantineNotifications.show({
-            title: 'Connection Lost',
-            message:
-              'Connection to server was lost. Attempting to reconnect...',
-            color: 'orange',
-          });
-        }
-      });
-
-      socket.on('error', error => {
-        console.error('WebSocket error:', error);
-
-        mantineNotifications.show({
-          title: 'Connection Error',
-          message: 'There was an error with the connection',
-          color: 'red',
-        });
-      });
-
-      socket.on('reconnect', attemptNumber => {
-        console.log('WebSocket reconnected after', attemptNumber, 'attempts');
-
-        mantineNotifications.show({
-          title: 'Reconnected',
-          message: 'Connection to server restored',
-          color: 'green',
-        });
-      });
 
       // Additional ticket-related events
       socket.on(

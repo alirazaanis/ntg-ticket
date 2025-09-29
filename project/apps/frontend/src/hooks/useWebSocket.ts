@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { io, Socket } from 'socket.io-client';
 import { notifications } from '@mantine/notifications';
+import { WEBSOCKET_CONFIG, API_CONFIG } from '../lib/constants';
 
 // WebSocket event data types
 export interface WebSocketEventData {
@@ -54,15 +55,12 @@ export function useWebSocket() {
   useEffect(() => {
     if (!session?.accessToken) return;
 
-    const newSocket = io(
-      process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
-      {
-        auth: {
-          token: session.accessToken,
-        },
-        transports: ['websocket'],
-      }
-    );
+    const newSocket = io(API_CONFIG.BACKEND_URL, {
+      auth: {
+        token: session.accessToken,
+      },
+      transports: [...WEBSOCKET_CONFIG.TRANSPORTS],
+    });
 
     newSocket.on('connect', () => {
       setConnected(true);
@@ -80,15 +78,15 @@ export function useWebSocket() {
       // Show notification for disconnection
       if (reason === 'io server disconnect') {
         notifications.show({
-          title: 'Connection Lost',
-          message: 'Lost connection to server. Attempting to reconnect...',
-          color: 'yellow',
+          title: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTION_LOST.TITLE,
+          message: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTION_LOST.MESSAGE,
+          color: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTION_LOST.COLOR,
         });
 
         // Server disconnected, try to reconnect
         reconnectTimeoutRef.current = setTimeout(() => {
           newSocket.connect();
-        }, 5000);
+        }, WEBSOCKET_CONFIG.RECONNECT_DELAY);
       }
     });
 
@@ -97,9 +95,9 @@ export function useWebSocket() {
       setConnected(false);
 
       notifications.show({
-        title: 'Connection Error',
-        message: 'Failed to connect to server. Please check your connection.',
-        color: 'red',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTION_ERROR.TITLE,
+        message: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTION_ERROR.MESSAGE,
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTION_ERROR.COLOR,
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-console
       console.error('WebSocket connection error:', error);
@@ -108,9 +106,9 @@ export function useWebSocket() {
     newSocket.on('connected', data => {
       // WebSocket authentication successful
       notifications.show({
-        title: 'Connected',
-        message: 'Successfully connected to server',
-        color: 'green',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTED.TITLE,
+        message: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTED.MESSAGE,
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.CONNECTED.COLOR,
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-console
       console.log('WebSocket authentication successful:', data);
@@ -119,34 +117,34 @@ export function useWebSocket() {
     // Ticket events
     newSocket.on('ticket_created', (ticket: TicketEventData) => {
       notifications.show({
-        title: 'New Ticket Created',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.TICKET_CREATED.TITLE,
         message: `Ticket ${ticket.ticketNumber} has been created`,
-        color: 'blue',
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.TICKET_CREATED.COLOR,
       });
     });
 
     newSocket.on('ticket_updated', (ticket: TicketEventData) => {
       notifications.show({
-        title: 'Ticket Updated',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.TICKET_UPDATED.TITLE,
         message: `Ticket ${ticket.ticketNumber} has been updated`,
-        color: 'green',
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.TICKET_UPDATED.COLOR,
       });
     });
 
     newSocket.on('ticket_assigned', (ticket: TicketEventData) => {
       notifications.show({
-        title: 'Ticket Assigned',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.TICKET_ASSIGNED.TITLE,
         message: `Ticket ${ticket.ticketNumber} has been assigned to you`,
-        color: 'orange',
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.TICKET_ASSIGNED.COLOR,
       });
     });
 
     // Comment events
     newSocket.on('comment_added', ({ comment, ticket }: CommentEventData) => {
       notifications.show({
-        title: 'New Comment',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.COMMENT_ADDED.TITLE,
         message: `New comment on ticket ${ticket.ticketNumber}`,
-        color: 'blue',
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.COMMENT_ADDED.COLOR,
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-console
       console.log('Comment added:', comment);
@@ -167,17 +165,17 @@ export function useWebSocket() {
     // SLA events
     newSocket.on('sla_warning', (ticket: TicketEventData) => {
       notifications.show({
-        title: 'SLA Warning',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.SLA_WARNING.TITLE,
         message: `Ticket ${ticket.ticketNumber} is approaching SLA deadline`,
-        color: 'yellow',
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.SLA_WARNING.COLOR,
       });
     });
 
     newSocket.on('sla_breach', (ticket: TicketEventData) => {
       notifications.show({
-        title: 'SLA Breach',
+        title: WEBSOCKET_CONFIG.NOTIFICATIONS.SLA_BREACH.TITLE,
         message: `Ticket ${ticket.ticketNumber} has breached SLA`,
-        color: 'red',
+        color: WEBSOCKET_CONFIG.NOTIFICATIONS.SLA_BREACH.COLOR,
       });
     });
 

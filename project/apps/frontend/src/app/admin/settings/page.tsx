@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Title,
@@ -34,8 +35,11 @@ import {
   useUpdateSystemSettings,
 } from '../../../hooks/useSystemSettings';
 import { notifications } from '@mantine/notifications';
+import { SYSTEM_DEFAULTS } from '../../../lib/constants';
 
 export default function SettingsPage() {
+  const t = useTranslations('common');
+  const tSettings = useTranslations('settings');
   const [activeTab, setActiveTab] = useState<string | null>('general');
   const { data: settings, isLoading, error } = useSystemSettings();
   const updateSettingsMutation = useUpdateSystemSettings();
@@ -99,7 +103,11 @@ export default function SettingsPage() {
   if (error || !settings) {
     return (
       <Container size='xl' py='md'>
-        <Alert icon={<IconAlertCircle size={16} />} title='Error' color='red'>
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title={t('error')}
+          color='red'
+        >
           Failed to load system settings. Please try again later.
         </Alert>
       </Container>
@@ -110,8 +118,8 @@ export default function SettingsPage() {
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={1}>Settings</Title>
-          <Text c='dimmed'>Configure system settings and preferences</Text>
+          <Title order={1}>{tSettings('title')}</Title>
+          <Text c='dimmed'>{tSettings('configureSettings')}</Text>
         </div>
         <Group>
           {updateSettingsMutation.isPending && <Loader size='sm' />}
@@ -121,7 +129,7 @@ export default function SettingsPage() {
             color={saved ? 'green' : 'blue'}
             loading={updateSettingsMutation.isPending}
           >
-            {saved ? 'Saved!' : 'Save Changes'}
+            {saved ? t('saved') : tSettings('saveChanges')}
           </Button>
         </Group>
       </Group>
@@ -129,43 +137,43 @@ export default function SettingsPage() {
       {saved && (
         <Alert
           icon={<IconCheck size={16} />}
-          title='Settings Saved'
+          title={tSettings('settingsUpdated')}
           color='green'
           mb='md'
         >
-          Your settings have been saved successfully.
+          {tSettings('settingsUpdated')}
         </Alert>
       )}
 
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Tab value='general' leftSection={<IconSettings size={16} />}>
-            General
+            {tSettings('general')}
           </Tabs.Tab>
           <Tabs.Tab value='notifications' leftSection={<IconBell size={16} />}>
-            Notifications
+            {tSettings('notifications')}
           </Tabs.Tab>
           <Tabs.Tab value='security' leftSection={<IconShield size={16} />}>
-            Security
+            {tSettings('security')}
           </Tabs.Tab>
           <Tabs.Tab value='system' leftSection={<IconDatabase size={16} />}>
-            System
+            {t('system')}
           </Tabs.Tab>
           <Tabs.Tab value='email' leftSection={<IconMail size={16} />}>
-            Email
+            {t('email')}
           </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value='general' pt='md'>
           <Card shadow='sm' padding='lg' radius='md' withBorder>
             <Title order={3} mb='md'>
-              General Settings
+              {tSettings('general')} {tSettings('title')}
             </Title>
             <Grid>
               <Grid.Col span={6}>
                 <TextInput
-                  label='Site Name'
-                  placeholder='Enter site name'
+                  label={tSettings('siteName')}
+                  placeholder={tSettings('siteNamePlaceholder')}
                   value={settings.siteName}
                   onChange={e =>
                     handleSettingChange('siteName', e.target.value)
@@ -174,8 +182,8 @@ export default function SettingsPage() {
               </Grid.Col>
               <Grid.Col span={6}>
                 <TextInput
-                  label='Site Description'
-                  placeholder='Enter site description'
+                  label={tSettings('siteDescription')}
+                  placeholder={tSettings('siteDescriptionPlaceholder')}
                   value={settings.siteDescription}
                   onChange={e =>
                     handleSettingChange('siteDescription', e.target.value)
@@ -184,8 +192,8 @@ export default function SettingsPage() {
               </Grid.Col>
               <Grid.Col span={4}>
                 <Select
-                  label='Timezone'
-                  placeholder='Select timezone'
+                  label={tSettings('timezone')}
+                  placeholder={tSettings('timezonePlaceholder')}
                   data={[
                     { value: 'UTC', label: 'UTC' },
                     { value: 'EST', label: 'Eastern Time' },
@@ -200,8 +208,8 @@ export default function SettingsPage() {
               </Grid.Col>
               <Grid.Col span={4}>
                 <Select
-                  label='Language'
-                  placeholder='Select language'
+                  label={tSettings('language')}
+                  placeholder={tSettings('languagePlaceholder')}
                   data={[
                     { value: 'en', label: 'English' },
                     { value: 'ar', label: 'العربية' },
@@ -214,8 +222,8 @@ export default function SettingsPage() {
               </Grid.Col>
               <Grid.Col span={4}>
                 <Select
-                  label='Date Format'
-                  placeholder='Select date format'
+                  label={tSettings('dateFormat')}
+                  placeholder={tSettings('dateFormatPlaceholder')}
                   data={[
                     { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
                     { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
@@ -234,12 +242,12 @@ export default function SettingsPage() {
         <Tabs.Panel value='notifications' pt='md'>
           <Card shadow='sm' padding='lg' radius='md' withBorder>
             <Title order={3} mb='md'>
-              Notification Settings
+              {tSettings('notifications')} {tSettings('title')}
             </Title>
             <Stack gap='md'>
               <Switch
-                label='Email Notifications'
-                description='Receive notifications via email'
+                label={tSettings('emailNotifications')}
+                description={tSettings('emailNotificationsDescription')}
                 checked={settings.emailNotifications}
                 onChange={e =>
                   handleSettingChange(
@@ -250,8 +258,8 @@ export default function SettingsPage() {
                 disabled={updateSettingsMutation.isPending}
               />
               <Switch
-                label='Push Notifications'
-                description='Receive push notifications in browser'
+                label={tSettings('pushNotifications')}
+                description={tSettings('pushNotificationsDescription')}
                 checked={settings.pushNotifications}
                 onChange={e =>
                   handleSettingChange(
@@ -454,7 +462,7 @@ export default function SettingsPage() {
               <Grid.Col span={6}>
                 <NumberInput
                   label='SMTP Port'
-                  placeholder='587'
+                  placeholder={SYSTEM_DEFAULTS.EMAIL.SMTP_PORT.toString()}
                   value={settings.smtpPort}
                   onChange={value => handleSettingChange('smtpPort', value)}
                   min={1}

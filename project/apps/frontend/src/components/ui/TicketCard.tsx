@@ -37,6 +37,7 @@ import {
   statusTransitionRules,
 } from '../../lib/statusValidation';
 import { notifications } from '@mantine/notifications';
+import { useTranslations } from 'next-intl';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -59,6 +60,8 @@ export function TicketCard({
   onComment,
   onStatusChange,
 }: TicketCardProps) {
+  const t = useTranslations('common');
+  const tTickets = useTranslations('tickets');
   const [statusModalOpened, setStatusModalOpened] = useState(false);
   const [newStatus, setNewStatus] = useState(ticket.status);
   const [resolution, setResolution] = useState('');
@@ -248,7 +251,7 @@ export function TicketCard({
                 size='sm'
                 leftSection={<IconAlertCircle size={12} />}
               >
-                Overdue
+                {tTickets('overdueTickets')}
               </Badge>
             )}
           </Group>
@@ -256,8 +259,8 @@ export function TicketCard({
           {/* Category and Subcategory */}
           <Group gap='xs'>
             <Text size='xs' c='dimmed'>
-              {ticket.category?.name || 'Unknown'} •{' '}
-              {ticket.subcategory?.name || 'Unknown'}
+              {ticket.category?.name || t('unknown')} •{' '}
+              {ticket.subcategory?.name || t('unknown')}
             </Text>
           </Group>
 
@@ -267,14 +270,14 @@ export function TicketCard({
               <Group gap={4}>
                 <IconUser size={12} />
                 <Text size='xs' c='dimmed'>
-                  Assigned to {ticket.assignedTo.name}
+                  {tTickets('assignedTo')} {ticket.assignedTo.name}
                 </Text>
               </Group>
             )}
             <Group gap={4}>
               <IconUser size={12} />
               <Text size='xs' c='dimmed'>
-                By {ticket.requester?.name || 'Unknown'}
+                {t('by')} {ticket.requester?.name || t('unknown')}
               </Text>
             </Group>
           </Group>
@@ -356,21 +359,21 @@ export function TicketCard({
       <Modal
         opened={statusModalOpened}
         onClose={() => setStatusModalOpened(false)}
-        title='Change Ticket Status'
+        title={tTickets('changeStatus')}
         size='md'
       >
         <Stack gap='md'>
           <Select
-            label='New Status'
-            placeholder='Select status'
+            label={t('newStatus')}
+            placeholder={t('selectStatus')}
             data={[
-              { value: 'NEW', label: 'New' },
-              { value: 'OPEN', label: 'Open' },
-              { value: 'IN_PROGRESS', label: 'In Progress' },
-              { value: 'ON_HOLD', label: 'On Hold' },
-              { value: 'RESOLVED', label: 'Resolved' },
-              { value: 'CLOSED', label: 'Closed' },
-              { value: 'REOPENED', label: 'Reopened' },
+              { value: 'NEW', label: t('new') },
+              { value: 'OPEN', label: t('open') },
+              { value: 'IN_PROGRESS', label: t('in_progress') },
+              { value: 'ON_HOLD', label: t('on_hold') },
+              { value: 'RESOLVED', label: t('resolved') },
+              { value: 'CLOSED', label: t('closed') },
+              { value: 'REOPENED', label: t('reopened') },
             ]}
             value={newStatus}
             onChange={value =>

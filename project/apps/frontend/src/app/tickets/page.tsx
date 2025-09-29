@@ -55,6 +55,7 @@ import { useSearch } from '../../hooks/useSearch';
 import { BulkActionsBar } from '../../components/bulk/BulkActionsBar';
 import { BulkSelectCheckbox } from '../../components/bulk/BulkSelectCheckbox';
 import { useBulkOperations } from '../../hooks/useBulkOperations';
+import { PAGINATION_CONFIG, STATUS_FILTERS } from '../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
   NEW: 'blue',
@@ -112,12 +113,12 @@ export default function TicketsPage() {
   const ticketsQuery = {
     ...searchQuery,
     page: currentPage,
-    limit: 2, // 2 tickets per page
+    limit: PAGINATION_CONFIG.DEFAULT_PAGE_SIZE, // 2 tickets per page
     // Add activeTab filter for backend filtering
     ...(activeTab === 'my' && { requesterId: [user?.id] }),
     ...(activeTab === 'assigned' && { assignedToId: [user?.id] }),
     ...(activeTab === 'overdue' && {
-      status: ['OPEN', 'IN_PROGRESS', 'ON_HOLD'] as TicketStatus[],
+      status: [...STATUS_FILTERS.ACTIVE] as TicketStatus[],
     }),
   };
 
@@ -246,7 +247,9 @@ export default function TicketsPage() {
           <Tabs.Tab value='overdue'>
             {t('overdueTickets')} (
             {allTickets?.filter(t =>
-              ['OPEN', 'IN_PROGRESS', 'ON_HOLD'].includes(t.status)
+              STATUS_FILTERS.ACTIVE.includes(
+                t.status as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD'
+              )
             ).length || 0}
             )
           </Tabs.Tab>

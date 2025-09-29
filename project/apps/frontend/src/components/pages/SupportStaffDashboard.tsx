@@ -35,8 +35,10 @@ import { TicketCard } from '../ui/TicketCard';
 import { NotificationList } from '../ui/NotificationList';
 import { Ticket } from '../../types/unified';
 import { Notification } from '../../types/notification';
+import { useTranslations } from 'next-intl';
 
 export function SupportStaffDashboard() {
+  const t = useTranslations('dashboard');
   const [activeTab, setActiveTab] = useState('assigned');
   const { user } = useAuthStore();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
@@ -62,25 +64,25 @@ export function SupportStaffDashboard() {
 
   const stats = [
     {
-      title: 'Assigned Tickets',
+      title: t('assignedTickets'),
       value: assignedTickets.length,
       icon: IconTicket,
       color: 'blue',
     },
     {
-      title: 'Open Tickets',
+      title: t('openTickets'),
       value: openTickets.length,
       icon: IconClock,
       color: 'orange',
     },
     {
-      title: 'Resolved',
+      title: t('resolvedTickets'),
       value: resolvedTickets.length,
       icon: IconCheck,
       color: 'green',
     },
     {
-      title: 'Overdue',
+      title: t('overdueTickets'),
       value: overdueTickets.length,
       icon: IconAlertCircle,
       color: 'red',

@@ -63,25 +63,25 @@ export function EndUserDashboard() {
 
   const stats = [
     {
-      title: 'Total Tickets',
+      title: t('totalTickets'),
       value: myTickets.length,
       icon: IconTicket,
       color: 'blue',
     },
     {
-      title: 'Open Tickets',
+      title: t('openTickets'),
       value: openTickets.length,
       icon: IconClock,
       color: 'orange',
     },
     {
-      title: 'Resolved',
+      title: t('resolvedTickets'),
       value: resolvedTickets.length,
       icon: IconCheck,
       color: 'green',
     },
     {
-      title: 'Closed',
+      title: t('closedTickets'),
       value: closedTickets.length,
       icon: IconX,
       color: 'gray',
@@ -107,7 +107,7 @@ export function EndUserDashboard() {
             <Title order={2}>
               {t('welcome')}, {user?.name}!
             </Title>
-            <Text c='dimmed'>Here's what's happening with your tickets</Text>
+            <Text c='dimmed'>{t('subtitle')}</Text>
           </div>
           <Button
             leftSection={<IconPlus size={16} />}
@@ -159,7 +159,7 @@ export function EndUserDashboard() {
               value='notifications'
               leftSection={<IconBell size={16} />}
             >
-              Notifications
+              {t('notifications')}
             </Tabs.Tab>
           </Tabs.List>
 
@@ -168,7 +168,7 @@ export function EndUserDashboard() {
               <Grid.Col span={{ base: 12, md: 8 }}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
-                    Recent Activity
+                    {t('recentActivity')}
                   </Title>
                   <Timeline active={-1} bulletSize={24} lineWidth={2}>
                     {myTickets.slice(0, 5).map((ticket: Ticket) => (
@@ -193,7 +193,7 @@ export function EndUserDashboard() {
               <Grid.Col span={{ base: 12, md: 4 }}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
-                    Quick Actions
+                    {t('quickActions')}
                   </Title>
                   <Stack gap='sm'>
                     <Button

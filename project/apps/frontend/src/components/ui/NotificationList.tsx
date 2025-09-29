@@ -29,8 +29,14 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { useTranslations } from 'next-intl';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { Notification } from '../../types/notification';
+import {
+  PAGINATION_CONFIG,
+  NOTIFICATION_ICONS,
+  NOTIFICATION_COLORS,
+} from '../../lib/constants';
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -47,58 +53,34 @@ export function NotificationList({
   onDelete,
   onViewTicket,
 }: NotificationListProps) {
+  const t = useTranslations('common');
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
     []
   );
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = PAGINATION_CONFIG.NOTIFICATION_PAGE_SIZE;
   const { getNotificationMessage } = useNotificationSettings();
 
   const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'TICKET_CREATED':
-        return <IconTicket size={16} />;
-      case 'TICKET_ASSIGNED':
-        return <IconUser size={16} />;
-      case 'TICKET_STATUS_CHANGED':
-        return <IconAlertCircle size={16} />;
-      case 'COMMENT_ADDED':
-        return <IconMessage size={16} />;
-      case 'SLA_WARNING':
-        return <IconClock size={16} />;
-      case 'SLA_BREACH':
-        return <IconAlertCircle size={16} />;
-      case 'TICKET_DUE':
-        return <IconCalendar size={16} />;
-      case 'TICKET_ESCALATED':
-        return <IconAlertCircle size={16} />;
-      default:
-        return <IconBell size={16} />;
-    }
+    const iconMap = {
+      IconTicket: <IconTicket size={16} />,
+      IconUser: <IconUser size={16} />,
+      IconAlertCircle: <IconAlertCircle size={16} />,
+      IconMessage: <IconMessage size={16} />,
+      IconClock: <IconClock size={16} />,
+      IconCalendar: <IconCalendar size={16} />,
+    };
+
+    const iconName =
+      NOTIFICATION_ICONS[type as keyof typeof NOTIFICATION_ICONS] || 'IconBell';
+    return iconMap[iconName as keyof typeof iconMap] || <IconBell size={16} />;
   };
 
   const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'TICKET_CREATED':
-        return 'blue';
-      case 'TICKET_ASSIGNED':
-        return 'green';
-      case 'TICKET_STATUS_CHANGED':
-        return 'orange';
-      case 'COMMENT_ADDED':
-        return 'purple';
-      case 'SLA_WARNING':
-        return 'yellow';
-      case 'SLA_BREACH':
-        return 'red';
-      case 'TICKET_DUE':
-        return 'orange';
-      case 'TICKET_ESCALATED':
-        return 'red';
-      default:
-        return 'gray';
-    }
+    return (
+      NOTIFICATION_COLORS[type as keyof typeof NOTIFICATION_COLORS] || 'blue'
+    );
   };
 
   const filteredNotifications = notifications.filter(notification => {
@@ -150,10 +132,10 @@ export function NotificationList({
           <Group>
             <IconBell size={20} />
             <Text fw={600} size='lg'>
-              Notifications
+              {t('notifications')}
             </Text>
             <Badge color='blue' variant='light'>
-              {notifications.filter(n => !n.isRead).length} unread
+              {notifications.filter(n => !n.isRead).length} {t('unread')}
             </Badge>
             <Text size='xs' c='dimmed'>
               {getNotificationMessage()}
@@ -163,9 +145,9 @@ export function NotificationList({
             <Select
               size='sm'
               data={[
-                { value: 'all', label: 'All' },
-                { value: 'unread', label: 'Unread' },
-                { value: 'read', label: 'Read' },
+                { value: 'all', label: t('all') },
+                { value: 'unread', label: t('unread') },
+                { value: 'read', label: t('read') },
               ]}
               value={filter}
               onChange={value => setFilter(value || 'all')}
@@ -176,7 +158,7 @@ export function NotificationList({
               leftSection={<IconCheck size={14} />}
               onClick={onMarkAllAsRead}
             >
-              Mark All Read
+              {t('markAllRead')}
             </Button>
           </Group>
         </Group>
@@ -189,7 +171,7 @@ export function NotificationList({
                 selectedNotifications.length === paginatedNotifications.length
               }
               onChange={event => handleSelectAll(event.currentTarget.checked)}
-              label={`${selectedNotifications.length} selected`}
+              label={`${selectedNotifications.length} ${t('selected')}`}
             />
             <Button
               size='xs'
@@ -197,7 +179,7 @@ export function NotificationList({
               leftSection={<IconCheck size={12} />}
               onClick={handleMarkSelectedAsRead}
             >
-              Mark as Read
+              {t('markAsRead')}
             </Button>
             <Button
               size='xs'
@@ -206,7 +188,7 @@ export function NotificationList({
               leftSection={<IconTrash size={12} />}
               onClick={handleDeleteSelected}
             >
-              Delete
+              {t('delete')}
             </Button>
           </Group>
         )}
@@ -218,7 +200,7 @@ export function NotificationList({
           <Stack gap='xs'>
             {paginatedNotifications.length === 0 ? (
               <Text c='dimmed' ta='center' py='xl'>
-                No notifications found
+                {t('noNotificationsFound')}
               </Text>
             ) : (
               paginatedNotifications.map(notification => (
@@ -285,7 +267,7 @@ export function NotificationList({
                           </div>
                           {!notification.isRead && (
                             <Badge color='blue' size='xs' variant='filled'>
-                              New
+                              {t('new')}
                             </Badge>
                           )}
                         </Group>

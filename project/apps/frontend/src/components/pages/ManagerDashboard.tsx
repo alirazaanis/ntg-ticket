@@ -44,8 +44,10 @@ import { useTicketReport } from '../../hooks/useReports';
 import { TicketCard } from '../ui/TicketCard';
 import { Ticket } from '../../types/unified';
 import { TeamPerformanceData } from '../../lib/apiClient';
+import { useTranslations } from 'next-intl';
 
 export function ManagerDashboard() {
+  const t = useTranslations('dashboard');
   const [activeTab, setActiveTab] = useState('overview');
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: reportData } = useTicketReport();
@@ -67,25 +69,25 @@ export function ManagerDashboard() {
 
   const stats = [
     {
-      title: 'Total Tickets',
+      title: t('totalTickets'),
       value: allTickets?.length || 0,
       icon: IconTicket,
       color: 'blue',
     },
     {
-      title: 'Open Tickets',
+      title: t('openTickets'),
       value: openTickets.length,
       icon: IconClock,
       color: 'orange',
     },
     {
-      title: 'Resolved',
+      title: t('resolvedTickets'),
       value: resolvedTickets.length,
       icon: IconCheck,
       color: 'green',
     },
     {
-      title: 'Overdue',
+      title: t('overdueTickets'),
       value: overdueTickets.length,
       icon: IconAlertCircle,
       color: 'red',

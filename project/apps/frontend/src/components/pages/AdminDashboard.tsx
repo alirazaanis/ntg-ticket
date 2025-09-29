@@ -57,12 +57,22 @@ import { TicketCard } from '../ui/TicketCard';
 import { User, CreateUserInput, UpdateUserInput } from '../../lib/apiClient';
 import { Ticket, UserRole } from '../../types/unified';
 import { notifications } from '@mantine/notifications';
+import { useTranslations } from 'next-intl';
 import { IntegrationsManagement } from '../admin/IntegrationsManagement';
 import { PermissionsManagement } from '../admin/PermissionsManagement';
 import { AuditTrail } from '../compliance/AuditTrail';
 import { AuditLogStats } from '../compliance/AuditLogStats';
+import {
+  PAGINATION_CONFIG,
+  PRIORITY_OPTIONS,
+  STATUS_FILTERS,
+} from '../../lib/constants';
 
 export function AdminDashboard() {
+  const t = useTranslations('common');
+  const tAdmin = useTranslations('admin');
+  const tHelp = useTranslations('help');
+  const tSystem = useTranslations('system');
   const [activeTab, setActiveTab] = useState('overview');
   const [userModalOpened, setUserModalOpened] = useState(false);
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
@@ -78,7 +88,9 @@ export function AdminDashboard() {
   );
 
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
-  const { data: users, isLoading: usersLoading } = useUsers({ limit: 100 });
+  const { data: users, isLoading: usersLoading } = useUsers({
+    limit: PAGINATION_CONFIG.LARGE_PAGE_SIZE,
+  });
   const { data: systemMetrics } = useSystemMetrics();
   const { data: userDistribution } = useUserDistribution();
 
@@ -88,19 +100,19 @@ export function AdminDashboard() {
 
   const validatePassword = (password: string): string | null => {
     if (password.length < 8) {
-      return 'Password must be at least 8 characters long';
+      return t('passwordMinLength', { minLength: 8 });
     }
     if (!/[A-Z]/.test(password)) {
-      return 'Password must contain at least one uppercase letter';
+      return t('passwordUppercase');
     }
     if (!/[a-z]/.test(password)) {
-      return 'Password must contain at least one lowercase letter';
+      return t('passwordLowercase');
     }
     if (!/\d/.test(password)) {
-      return 'Password must contain at least one number';
+      return t('passwordNumber');
     }
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return 'Password must contain at least one special character';
+      return t('passwordSpecial');
     }
     return null;
   };
@@ -115,8 +127,8 @@ export function AdminDashboard() {
         !userFormData.role
       ) {
         notifications.show({
-          title: 'Validation Error',
-          message: 'Please fill in all required fields',
+          title: t('validationError'),
+          message: t('fillRequiredFields'),
           color: 'red',
         });
         return;
@@ -305,10 +317,8 @@ export function AdminDashboard() {
         {/* Header */}
         <Group justify='space-between'>
           <div>
-            <Title order={2}>System Administration</Title>
-            <Text c='dimmed'>
-              Manage system settings, users, and monitor performance
-            </Text>
+            <Title order={2}>{tAdmin('systemAdministration')}</Title>
+            <Text c='dimmed'>{tAdmin('manageSystemSettings')}</Text>
           </div>
         </Group>
 
@@ -426,9 +436,10 @@ export function AdminDashboard() {
                           Open Tickets
                         </Text>
                         <Text size='xl' fw={600} c='blue'>
-                          {allTickets?.filter(
-                            t =>
-                              t.status === 'OPEN' || t.status === 'IN_PROGRESS'
+                          {allTickets?.filter(t =>
+                            STATUS_FILTERS.ACTIVE.includes(
+                              t.status as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD'
+                            )
                           ).length || 0}
                         </Text>
                       </div>
@@ -441,7 +452,9 @@ export function AdminDashboard() {
                         <Text size='xl' fw={600} c='green'>
                           {allTickets?.filter(
                             t =>
-                              t.status === 'RESOLVED' &&
+                              STATUS_FILTERS.RESOLVED.includes(
+                                t.status as 'RESOLVED' | 'CLOSED'
+                              ) &&
                               new Date(t.updatedAt).toDateString() ===
                                 new Date().toDateString()
                           ).length || 0}
@@ -471,8 +484,9 @@ export function AdminDashboard() {
                             t =>
                               t.dueDate &&
                               new Date(t.dueDate) < new Date() &&
-                              (t.status === 'OPEN' ||
-                                t.status === 'IN_PROGRESS')
+                              STATUS_FILTERS.ACTIVE.includes(
+                                t.status as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD'
+                              )
                           ).length || 0}
                         </Text>
                       </div>
@@ -530,18 +544,18 @@ export function AdminDashboard() {
                     Tickets by Priority
                   </Title>
                   <Stack gap='sm'>
-                    {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(priority => {
+                    {PRIORITY_OPTIONS.map(priority => {
                       const count =
-                        allTickets?.filter(t => t.priority === priority)
+                        allTickets?.filter(t => t.priority === priority.value)
                           .length || 0;
                       const percentage = allTickets?.length
                         ? (count / allTickets.length) * 100
                         : 0;
                       return (
-                        <div key={priority}>
+                        <div key={priority.value}>
                           <Group justify='space-between' mb={4}>
                             <Text size='sm' c='dimmed'>
-                              {priority}
+                              {priority.label}
                             </Text>
                             <Text size='sm' fw={500}>
                               {count}
@@ -550,11 +564,11 @@ export function AdminDashboard() {
                           <Progress
                             value={percentage}
                             color={
-                              priority === 'CRITICAL'
+                              priority.value === 'CRITICAL'
                                 ? 'red'
-                                : priority === 'HIGH'
+                                : priority.value === 'HIGH'
                                   ? 'orange'
-                                  : priority === 'MEDIUM'
+                                  : priority.value === 'MEDIUM'
                                     ? 'blue'
                                     : 'green'
                             }
@@ -628,7 +642,7 @@ export function AdminDashboard() {
           <Tabs.Panel value='users' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>User Management</Title>
+                <Title order={3}>{tAdmin('userManagement')}</Title>
                 <Group>
                   <TextInput
                     placeholder='Search users...'
@@ -650,12 +664,12 @@ export function AdminDashboard() {
                 <Table>
                   <Table.Thead>
                     <Table.Tr>
-                      <Table.Th>User</Table.Th>
-                      <Table.Th>Email</Table.Th>
-                      <Table.Th>Role</Table.Th>
-                      <Table.Th>Status</Table.Th>
-                      <Table.Th>Last Login</Table.Th>
-                      <Table.Th>Actions</Table.Th>
+                      <Table.Th>{t('user')}</Table.Th>
+                      <Table.Th>{t('email')}</Table.Th>
+                      <Table.Th>{t('role')}</Table.Th>
+                      <Table.Th>{t('status')}</Table.Th>
+                      <Table.Th>{t('lastLogin')}</Table.Th>
+                      <Table.Th>{t('actions')}</Table.Th>
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
@@ -672,7 +686,7 @@ export function AdminDashboard() {
                       <Table.Tr>
                         <Table.Td colSpan={6}>
                           <Group justify='center' py='xl'>
-                            <Text c='dimmed'>No users found</Text>
+                            <Text c='dimmed'>{tAdmin('noUsersFound')}</Text>
                           </Group>
                         </Table.Td>
                       </Table.Tr>
@@ -748,7 +762,7 @@ export function AdminDashboard() {
           <Tabs.Panel value='tickets' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>All Tickets</Title>
+                <Title order={3}>{tAdmin('allTickets')}</Title>
                 <Group>
                   <TextInput
                     placeholder='Search tickets...'
@@ -847,7 +861,7 @@ export function AdminDashboard() {
                     </div>
                     <div>
                       <Group justify='space-between' mb={4}>
-                        <Text size='sm'>Memory Usage</Text>
+                        <Text size='sm'>{tSystem('memoryUsage')}</Text>
                         <Text size='sm' fw={500}>
                           {systemMetrics?.memoryUsage || 78}%
                         </Text>
@@ -859,7 +873,7 @@ export function AdminDashboard() {
                     </div>
                     <div>
                       <Group justify='space-between' mb={4}>
-                        <Text size='sm'>Disk Usage</Text>
+                        <Text size='sm'>{tSystem('diskUsage')}</Text>
                         <Text size='sm' fw={500}>
                           {systemMetrics?.diskUsage || 42}%
                         </Text>
@@ -876,25 +890,25 @@ export function AdminDashboard() {
               <Grid.Col span={{ base: 12, md: 4 }}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
-                    Database Status
+                    {tSystem('databaseStatus')}
                   </Title>
                   <Stack gap='sm'>
                     <Group justify='space-between'>
-                      <Text size='sm'>Connection Pool</Text>
-                      <Badge color='green'>Healthy</Badge>
+                      <Text size='sm'>{tSystem('connectionPool')}</Text>
+                      <Badge color='green'>{tSystem('healthy')}</Badge>
                     </Group>
                     <Group justify='space-between'>
-                      <Text size='sm'>Query Performance</Text>
-                      <Badge color='blue'>Good</Badge>
+                      <Text size='sm'>{tSystem('queryPerformance')}</Text>
+                      <Badge color='blue'>{tSystem('good')}</Badge>
                     </Group>
                     <Group justify='space-between'>
-                      <Text size='sm'>Last Backup</Text>
+                      <Text size='sm'>{tSystem('lastBackup')}</Text>
                       <Text size='sm'>
                         {systemMetrics?.lastBackup || '2 hours ago'}
                       </Text>
                     </Group>
                     <Group justify='space-between'>
-                      <Text size='sm'>Database Size</Text>
+                      <Text size='sm'>{tSystem('databaseSize')}</Text>
                       <Text size='sm'>
                         {systemMetrics?.databaseSize || '1.2 GB'}
                       </Text>
@@ -907,7 +921,7 @@ export function AdminDashboard() {
 
           <Tabs.Panel value='settings' pt='md'>
             <Stack gap='md'>
-              <Title order={3}>System Settings</Title>
+              <Title order={3}>{tSystem('systemSettings')}</Title>
               <Grid>
                 <Grid.Col span={{ base: 12, md: 6 }}>
                   <Paper withBorder p='md'>
@@ -981,7 +995,7 @@ export function AdminDashboard() {
           <Tabs.Panel value='integrations' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>Integrations Management</Title>
+                <Title order={3}>{tSystem('integrationsManagement')}</Title>
                 <Button
                   leftSection={<IconPlug size={16} />}
                   onClick={() => setIntegrationsModalOpened(true)}
@@ -991,8 +1005,8 @@ export function AdminDashboard() {
               </Group>
               <Paper withBorder p='md'>
                 <Text c='dimmed'>
-                  Configure external integrations and API connections. Click
-                  "Manage Integrations" to get started.
+                  {tAdmin('configureIntegrations')}{' '}
+                  {tHelp('manageIntegrations')} {tAdmin('getStarted')}.
                 </Text>
               </Paper>
             </Stack>
@@ -1001,7 +1015,7 @@ export function AdminDashboard() {
           <Tabs.Panel value='permissions' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>Permissions Management</Title>
+                <Title order={3}>{tSystem('permissionsManagement')}</Title>
                 <Button
                   leftSection={<IconShield size={16} />}
                   onClick={() => setPermissionsModalOpened(true)}
@@ -1011,8 +1025,8 @@ export function AdminDashboard() {
               </Group>
               <Paper withBorder p='md'>
                 <Text c='dimmed'>
-                  Configure role-based permissions and access control. Click
-                  "Manage Permissions" to get started.
+                  {tAdmin('configurePermissions')} {tHelp('managePermissions')}{' '}
+                  {tAdmin('getStarted')}.
                 </Text>
               </Paper>
             </Stack>
@@ -1021,7 +1035,7 @@ export function AdminDashboard() {
           <Tabs.Panel value='logs' pt='md'>
             <Stack gap='md'>
               <Group justify='space-between'>
-                <Title order={3}>Audit Logs</Title>
+                <Title order={3}>{tSystem('auditLogs')}</Title>
                 <Group>
                   <Button
                     leftSection={<IconFileText size={16} />}
@@ -1040,9 +1054,9 @@ export function AdminDashboard() {
               </Group>
               <Paper withBorder p='md'>
                 <Text c='dimmed'>
-                  View detailed audit logs and system activity. Use "View Audit
-                  Trail" for detailed logs or "View Statistics" for analytics
-                  and insights.
+                  {tAdmin('viewAuditLogs')} {tHelp('viewAuditTrail')}{' '}
+                  {tAdmin('forDetailedLogs')} {tHelp('viewStatistics')}{' '}
+                  {tAdmin('forAnalytics')}.
                 </Text>
               </Paper>
             </Stack>

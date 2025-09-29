@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import { useTicketsStore } from '../stores/useTicketsStore';
 import { ticketApi } from '../lib/apiClient';
 import { Ticket } from '../types/unified';
+import { PAGINATION_CONFIG, TIMING_CONFIG } from '../lib/constants';
 
 /**
  * Hook to sync the tickets store with API data
@@ -22,7 +23,7 @@ export function useTicketsStoreSync() {
           // Fetch tickets from API
           const response = await ticketApi.getTickets({
             page: 1,
-            limit: 1000, // Get a large number to populate the store
+            limit: PAGINATION_CONFIG.STORE_SYNC_LIMIT, // Get a large number to populate the store
           });
 
           // Set tickets in store - handle different response structures
@@ -39,11 +40,8 @@ export function useTicketsStoreSync() {
           }
 
           setTickets(tickets);
-          console.log(
-            `Initialized tickets store with ${tickets.length} tickets`
-          );
+          // Initialized tickets store
         } catch (error) {
-          console.error('Failed to initialize tickets:', error);
           // Don't throw error, just log it - store will remain empty
         } finally {
           setLoading(false);
@@ -61,7 +59,7 @@ export function useTicketsStoreSync() {
         try {
           const response = await ticketApi.getTickets({
             page: 1,
-            limit: 1000,
+            limit: PAGINATION_CONFIG.STORE_SYNC_LIMIT,
           });
 
           // Use the same data structure handling as initial load
@@ -78,12 +76,11 @@ export function useTicketsStoreSync() {
           }
 
           setTickets(tickets);
-          console.log(`Refreshed tickets store with ${tickets.length} tickets`);
+          // Refreshed tickets store
         } catch (error) {
-          console.error('Failed to refresh tickets:', error);
           // Don't clear existing tickets on error - keep current state
         }
-      }, 60000); // Refresh every minute
+      }, TIMING_CONFIG.STORE_SYNC_INTERVAL); // Refresh every minute
 
       return () => clearInterval(interval);
     }

@@ -42,12 +42,17 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Ticket } from '../../types/unified';
 import { ComponentType } from 'react';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useTranslations } from 'next-intl';
 
 interface AppNavbarProps {
   onMobileClose?: () => void;
 }
 
 export function AppNavbar({ onMobileClose }: AppNavbarProps) {
+  const t = useTranslations('common');
+  const tDashboard = useTranslations('dashboard');
+  const tTickets = useTranslations('tickets');
+  const tAdmin = useTranslations('admin');
   const router = useRouter();
   const pathname = usePathname();
   const { user, hasRole, hasAnyRole } = useAuthStore();
@@ -97,32 +102,32 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
     badge?: number;
   }> = [
     {
-      label: 'Dashboard',
+      label: tDashboard('overview'),
       icon: IconDashboard,
       href: '/dashboard',
       show: true,
     },
     {
-      label: 'All Tickets',
+      label: tTickets('allTickets'),
       icon: IconTicket,
       href: '/tickets',
       show: true,
       badge: safeTickets.length,
     },
     {
-      label: 'Create Ticket',
+      label: tTickets('createTicket'),
       icon: IconPlus,
       href: '/tickets/create',
       show: true,
     },
     {
-      label: 'Reports',
+      label: t('reports'),
       icon: IconChartBar,
       href: '/reports',
       show: true,
     },
     {
-      label: 'Notifications',
+      label: t('notifications'),
       icon: IconBell,
       href: '/notifications',
       show: true,
@@ -139,28 +144,28 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
     badge?: number;
   }> = [
     {
-      label: 'Assigned to Me',
+      label: tTickets('assignedTickets'),
       icon: IconUserCheck,
       href: '/tickets/assigned',
       show: hasAnyRole(['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN']),
       badge: assignedTickets.length,
     },
     {
-      label: 'Overdue Tickets',
+      label: tTickets('overdueTickets'),
       icon: IconClock,
       href: '/tickets/overdue',
       show: hasAnyRole(['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN']),
       badge: overdueTickets.length,
     },
     {
-      label: 'SLA Breached',
+      label: tTickets('slaBreached'),
       icon: IconExclamationMark,
       href: '/tickets/sla-breached',
       show: hasAnyRole(['SUPPORT_MANAGER', 'ADMIN']),
       badge: slaBreachedTickets.length,
     },
     {
-      label: 'My Tickets',
+      label: tTickets('myTickets'),
       icon: IconFileText,
       href: '/tickets/my',
       show: true,
@@ -177,25 +182,25 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
     badge?: number;
   }> = [
     {
-      label: 'Users',
+      label: tAdmin('users'),
       icon: IconUsers,
       href: '/admin/users',
       show: hasAnyRole(['SUPPORT_MANAGER', 'ADMIN']),
     },
     {
-      label: 'System Settings',
+      label: tAdmin('systemSettings'),
       icon: IconSettings,
       href: '/admin/settings',
       show: hasRole('ADMIN'),
     },
     {
-      label: 'Admin Panel',
+      label: tAdmin('title'),
       icon: IconShield,
       href: '/admin/panel',
       show: hasRole('ADMIN'),
     },
     {
-      label: 'Audit Logs',
+      label: tAdmin('auditTrail'),
       icon: IconHistory,
       href: '/admin/audit-logs',
       show: hasRole('ADMIN'),
@@ -212,51 +217,51 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   }> = [
     // Content Management
     {
-      label: 'Categories',
+      label: tTickets('category'),
       icon: IconClipboardList,
       href: '/admin/categories',
       show: hasRole('ADMIN'),
     },
     {
-      label: 'Custom Fields',
+      label: tAdmin('customFields'),
       icon: IconSettings,
       href: '/admin/custom-fields',
       show: hasRole('ADMIN'),
     },
     {
-      label: 'Email Templates',
+      label: tAdmin('emailTemplates'),
       icon: IconMail,
       href: '/admin/email-templates',
       show: hasRole('ADMIN'),
     },
     // Workflow & Search
     {
-      label: 'SLA Management',
+      label: tTickets('slaLevel'),
       icon: IconClock,
       href: '/admin/sla',
       show: hasRole('ADMIN'),
     },
     {
-      label: 'Saved Searches',
+      label: t('search'),
       icon: IconSearch,
       href: '/admin/saved-searches',
       show: hasRole('ADMIN'),
     },
     // System Management
     {
-      label: 'System Monitoring',
+      label: t('monitoring'),
       icon: IconActivity,
       href: '/admin/monitoring',
       show: hasRole('ADMIN'),
     },
     {
-      label: 'Backups',
+      label: t('backups'),
       icon: IconDatabase,
       href: '/admin/backups',
       show: hasRole('ADMIN'),
     },
     {
-      label: 'Elasticsearch',
+      label: t('elasticsearch'),
       icon: IconDatabase,
       href: '/admin/elasticsearch',
       show: hasRole('ADMIN'),
@@ -304,7 +309,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
         <Stack gap='xs'>
           {/* Essential Navigation - Always visible */}
           <Text size='xs' tt='uppercase' fw={700} c='dimmed' mb='xs'>
-            Navigation
+            {t('navigation')}
           </Text>
           {renderNavItems(essentialItems)}
 
@@ -326,7 +331,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                 justify='flex-start'
                 fullWidth
               >
-                Ticket Management
+                {tTickets('title')}
               </Button>
               <Collapse in={ticketsExpanded}>
                 <Stack gap='xs' pl='md'>
@@ -354,7 +359,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                 justify='flex-start'
                 fullWidth
               >
-                Administration
+                {tAdmin('title')}
               </Button>
               <Collapse in={adminExpanded}>
                 <Stack gap='xs' pl='md'>
@@ -383,13 +388,13 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
                 justify='flex-start'
                 fullWidth
               >
-                Quick Stats
+                {t('quickStats')}
               </Button>
               <Collapse in={statsExpanded}>
                 <Stack gap='xs' pl='md'>
                   <Group justify='space-between' px='xs'>
                     <Text size='sm' c='dimmed'>
-                      Open Tickets
+                      {tTickets('openTickets')}
                     </Text>
                     <Badge size='sm' color='blue' variant='light'>
                       {isLoading ? '...' : openTickets.length}
@@ -398,7 +403,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
 
                   <Group justify='space-between' px='xs'>
                     <Text size='sm' c='dimmed'>
-                      Overdue
+                      {tTickets('overdueTickets')}
                     </Text>
                     <Badge size='sm' color='red' variant='light'>
                       {isLoading ? '...' : overdueTickets.length}

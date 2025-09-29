@@ -1,9 +1,10 @@
 'use client';
 
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button, Menu, Group, Text, useMantineTheme } from '@mantine/core';
 import { IconChevronDown, IconWorld } from '@tabler/icons-react';
 import { useState } from 'react';
+import { useRTL } from '../../hooks/useRTL';
 
 const languages: Array<{ code: string; name: string; flag: string }> = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -12,6 +13,8 @@ const languages: Array<{ code: string; name: string; flag: string }> = [
 
 export function LanguageSwitcher() {
   const locale = useLocale();
+  const t = useTranslations('common');
+  const { direction } = useRTL();
   const [opened, setOpened] = useState(false);
   const theme = useMantineTheme();
 
@@ -26,7 +29,7 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <div dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+    <div dir={direction}>
       <Menu
         opened={opened}
         onOpen={() => setOpened(true)}
@@ -54,7 +57,7 @@ export function LanguageSwitcher() {
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Label>Language</Menu.Label>
+          <Menu.Label>{t('language')}</Menu.Label>
           {languages.map(language => (
             <Menu.Item
               key={language.code}

@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { CACHE_CONFIG } from '../lib/constants';
 
 interface CacheEntry<T> {
   data: T;
@@ -12,7 +13,8 @@ interface UseSearchCacheOptions {
 }
 
 export function useSearchCache<T>(options: UseSearchCacheOptions = {}) {
-  const { ttl = 5 * 60 * 1000, maxSize = 50 } = options; // 5 minutes default TTL
+  const { ttl = CACHE_CONFIG.DEFAULT_TTL, maxSize = CACHE_CONFIG.MAX_SIZE } =
+    options;
   const [cache, setCache] = useState<Map<string, CacheEntry<T>>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
 

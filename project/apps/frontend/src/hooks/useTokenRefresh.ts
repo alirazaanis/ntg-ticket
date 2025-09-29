@@ -28,7 +28,6 @@ export function useTokenRefresh() {
 
       throw new Error('Invalid refresh response');
     } catch (error) {
-      console.error('Token refresh failed:', error);
       throw error;
     }
   }, [session, update]);

@@ -22,10 +22,19 @@ import {
   IconInfoCircle,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useTranslations } from 'next-intl';
 import { useAutoAssignSettings } from '../../hooks/useAutoAssignSettings';
 import { useCategories } from '../../hooks/useCategories';
 import { useCustomFields } from '../../hooks/useCustomFields';
 import { Category, Subcategory } from '../../types/unified';
+import {
+  CATEGORY_OPTIONS,
+  URGENCY_OPTIONS,
+  IMPACT_OPTIONS,
+  PRIORITY_OPTIONS,
+  SUBCATEGORY_OPTIONS,
+  SLA_LEVEL_OPTIONS,
+} from '@/lib/constants';
 
 // Subcategory option interface for form display
 interface SubcategoryOption {
@@ -54,79 +63,14 @@ interface TicketFormProps {
   isEditing?: boolean;
 }
 
-const categories = [
-  { value: 'HARDWARE', label: 'Hardware' },
-  { value: 'SOFTWARE', label: 'Software' },
-  { value: 'NETWORK', label: 'Network' },
-  { value: 'ACCESS', label: 'Access' },
-  { value: 'OTHER', label: 'Other' },
-];
+const categories = CATEGORY_OPTIONS;
 
-const subcategories = {
-  HARDWARE: [
-    { value: 'desktop', label: 'Desktop Computer' },
-    { value: 'laptop', label: 'Laptop' },
-    { value: 'printer', label: 'Printer' },
-    { value: 'monitor', label: 'Monitor' },
-    { value: 'keyboard', label: 'Keyboard/Mouse' },
-    { value: 'other', label: 'Other Hardware' },
-  ],
-  SOFTWARE: [
-    { value: 'operating_system', label: 'Operating System' },
-    { value: 'email_client', label: 'Email Client' },
-    { value: 'browser', label: 'Web Browser' },
-    { value: 'office_suite', label: 'Office Suite' },
-    { value: 'antivirus', label: 'Antivirus' },
-    { value: 'other', label: 'Other Software' },
-  ],
-  NETWORK: [
-    { value: 'internet', label: 'Internet Connection' },
-    { value: 'wifi', label: 'WiFi' },
-    { value: 'vpn', label: 'VPN' },
-    { value: 'email_server', label: 'Email Server' },
-    { value: 'file_server', label: 'File Server' },
-    { value: 'other', label: 'Other Network' },
-  ],
-  ACCESS: [
-    { value: 'user_account', label: 'User Account' },
-    { value: 'password_reset', label: 'Password Reset' },
-    { value: 'permissions', label: 'Permissions' },
-    { value: 'application_access', label: 'Application Access' },
-    { value: 'other', label: 'Other Access' },
-  ],
-  OTHER: [
-    { value: 'general', label: 'General Inquiry' },
-    { value: 'training', label: 'Training Request' },
-    { value: 'other', label: 'Other' },
-  ],
-};
+const subcategories = SUBCATEGORY_OPTIONS;
 
-const priorities = [
-  { value: 'LOW', label: 'Low' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'HIGH', label: 'High' },
-  { value: 'CRITICAL', label: 'Critical' },
-];
-
-const impacts = [
-  { value: 'MINOR', label: 'Minor' },
-  { value: 'MODERATE', label: 'Moderate' },
-  { value: 'MAJOR', label: 'Major' },
-  { value: 'CRITICAL', label: 'Critical' },
-];
-
-const urgencies = [
-  { value: 'LOW', label: 'Low' },
-  { value: 'NORMAL', label: 'Normal' },
-  { value: 'HIGH', label: 'High' },
-  { value: 'IMMEDIATE', label: 'Immediate' },
-];
-
-const slaLevels = [
-  { value: 'STANDARD', label: 'Standard' },
-  { value: 'PREMIUM', label: 'Premium' },
-  { value: 'CRITICAL_SUPPORT', label: 'Critical Support' },
-];
+const priorities = PRIORITY_OPTIONS;
+const impacts = IMPACT_OPTIONS;
+const urgencies = URGENCY_OPTIONS;
+const slaLevels = SLA_LEVEL_OPTIONS;
 
 export function TicketForm({
   onSubmit,
@@ -134,6 +78,8 @@ export function TicketForm({
   initialData,
   isEditing = false,
 }: TicketFormProps) {
+  const t = useTranslations('common');
+  const tTickets = useTranslations('tickets');
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategory] = useState<string>('');
@@ -241,8 +187,8 @@ export function TicketForm({
       await onSubmit(formData);
     } catch (error) {
       notifications.show({
-        title: 'Error',
-        message: 'Failed to submit ticket',
+        title: t('error'),
+        message: tTickets('submitFailed'),
         color: 'red',
       });
     } finally {
@@ -260,8 +206,8 @@ export function TicketForm({
         <Grid>
           <Grid.Col span={12}>
             <TextInput
-              label='Title'
-              placeholder='Brief description of the issue'
+              label={tTickets('title')}
+              placeholder={tTickets('titlePlaceholder')}
               required
               {...form.getInputProps('title')}
             />
@@ -269,8 +215,8 @@ export function TicketForm({
         </Grid>
 
         <Textarea
-          label='Description'
-          placeholder='Detailed description of the issue'
+          label={tTickets('description')}
+          placeholder={tTickets('descriptionPlaceholder')}
           required
           minRows={4}
           {...form.getInputProps('description')}
@@ -279,8 +225,8 @@ export function TicketForm({
         <Grid>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
-              label='Category'
-              placeholder='Select category'
+              label={tTickets('category')}
+              placeholder={tTickets('selectCategory')}
               required
               data={categories}
               {...form.getInputProps('category')}
@@ -289,8 +235,8 @@ export function TicketForm({
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
-              label='Subcategory'
-              placeholder='Select subcategory'
+              label={tTickets('subcategory')}
+              placeholder={tTickets('selectSubcategory')}
               required
               data={currentSubcategories}
               disabled={!form.values.category}
@@ -302,21 +248,21 @@ export function TicketForm({
         <Grid>
           <Grid.Col span={{ base: 12, sm: 4 }}>
             <Select
-              label='Priority'
+              label={tTickets('priority')}
               data={priorities}
               {...form.getInputProps('priority')}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 4 }}>
             <Select
-              label='Impact'
+              label={tTickets('impact')}
               data={impacts}
               {...form.getInputProps('impact')}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, sm: 4 }}>
             <Select
-              label='Urgency'
+              label={tTickets('urgency')}
               data={urgencies}
               {...form.getInputProps('urgency')}
             />
@@ -324,7 +270,7 @@ export function TicketForm({
         </Grid>
 
         <Select
-          label='SLA Level'
+          label={tTickets('slaLevel')}
           data={slaLevels}
           {...form.getInputProps('slaLevel')}
         />

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { STORAGE_KEYS } from '../lib/constants';
 import {
   TicketFilters,
   TicketStatus,
@@ -33,7 +34,7 @@ export const useSearch = () => {
   // Load saved searches from localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('saved-searches');
+      const saved = localStorage.getItem(STORAGE_KEYS.SAVED_SEARCHES);
       if (saved) {
         setSavedSearches(JSON.parse(saved));
       }
@@ -43,7 +44,7 @@ export const useSearch = () => {
   // Load recent searches from localStorage
   useEffect(() => {
     try {
-      const recent = localStorage.getItem('recent-searches');
+      const recent = localStorage.getItem(STORAGE_KEYS.RECENT_SEARCHES);
       if (recent) {
         setRecentSearches(JSON.parse(recent));
       }
@@ -53,7 +54,10 @@ export const useSearch = () => {
   // Save searches to localStorage
   const saveSearches = useCallback((searches: SavedSearch[]) => {
     try {
-      localStorage.setItem('saved-searches', JSON.stringify(searches));
+      localStorage.setItem(
+        STORAGE_KEYS.SAVED_SEARCHES,
+        JSON.stringify(searches)
+      );
       setSavedSearches(searches);
     } catch (error) {}
   }, []);
@@ -61,7 +65,10 @@ export const useSearch = () => {
   // Save recent searches to localStorage
   const saveRecentSearches = useCallback((searches: string[]) => {
     try {
-      localStorage.setItem('recent-searches', JSON.stringify(searches));
+      localStorage.setItem(
+        STORAGE_KEYS.RECENT_SEARCHES,
+        JSON.stringify(searches)
+      );
       setRecentSearches(searches);
     } catch (error) {}
   }, []);

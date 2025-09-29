@@ -99,7 +99,7 @@ export function SearchBar({
 
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
-      console.log('Suggestion clicked:', suggestion);
+      // Suggestion clicked
       // Completely bypass all debouncing and syncing logic
       setLocalValue(suggestion);
       onChange(suggestion);
@@ -200,8 +200,8 @@ export function SearchBar({
           <SearchHistory
             recentSearches={recentSearches}
             onSearchClick={handleRecentSearch}
-            onClearHistory={onClearRecentSearches || (() => {})}
-            onRemoveSearch={onRemoveRecentSearch || (() => {})}
+            onClearHistory={onClearRecentSearches || (() => undefined)}
+            onRemoveSearch={onRemoveRecentSearch || (() => undefined)}
             maxItems={5}
           />
         </div>

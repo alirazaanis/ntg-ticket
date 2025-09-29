@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Modal,
   Stack,
@@ -34,72 +35,68 @@ interface HelpSystemProps {
   onClose: () => void;
 }
 
-const helpSections = [
+const getHelpSections = (t: (key: string) => string) => [
   {
     id: 'getting-started',
-    title: 'Getting Started',
+    title: t('gettingStarted'),
     icon: IconBook,
     content: {
-      overview:
-        'Welcome to NTG Ticket System! This guide will help you get started with managing your support tickets.',
+      overview: t('welcomeMessage'),
       steps: [
-        'Create your first ticket by clicking "New Ticket"',
-        'Fill in the required information (title, description, category)',
-        'Set priority and impact level based on your needs',
-        'Submit the ticket and wait for assignment',
-        'Track progress through the ticket lifecycle',
+        t('createFirstTicket'),
+        t('fillRequiredInfo'),
+        t('setPriorityImpact'),
+        t('submitAndWait'),
+        t('trackProgress'),
       ],
       tips: [
-        'Be specific in your ticket description',
-        'Attach relevant files or screenshots',
-        'Choose the correct category for faster resolution',
-        'Set appropriate priority level',
+        t('beSpecific'),
+        t('attachFiles'),
+        t('chooseCategory'),
+        t('setPriority'),
       ],
     },
   },
   {
     id: 'ticket-lifecycle',
-    title: 'Ticket Lifecycle',
+    title: t('ticketLifecycle'),
     icon: IconQuestionMark,
     content: {
-      overview:
-        'Understanding how tickets move through different states helps you track progress effectively.',
+      overview: t('lifecycleOverview'),
       stages: [
         {
           status: 'NEW',
-          description: 'Ticket has been created and is awaiting review',
+          description: t('newStatus'),
           color: 'blue',
         },
         {
           status: 'OPEN',
-          description: 'Ticket has been reviewed and is ready for assignment',
+          description: t('openStatus'),
           color: 'cyan',
         },
         {
           status: 'IN_PROGRESS',
-          description: 'Ticket is being actively worked on',
+          description: t('inProgressStatus'),
           color: 'orange',
         },
         {
           status: 'ON_HOLD',
-          description:
-            'Ticket is waiting for additional information or resources',
+          description: t('onHoldStatus'),
           color: 'yellow',
         },
         {
           status: 'RESOLVED',
-          description:
-            'Solution has been provided and is awaiting confirmation',
+          description: t('resolvedStatus'),
           color: 'green',
         },
         {
           status: 'CLOSED',
-          description: 'Ticket has been completed and closed',
+          description: t('closedStatus'),
           color: 'gray',
         },
         {
           status: 'REOPENED',
-          description: 'Ticket has been reopened due to ongoing issues',
+          description: t('reopenedStatus'),
           color: 'red',
         },
       ],
@@ -107,50 +104,49 @@ const helpSections = [
   },
   {
     id: 'user-roles',
-    title: 'User Roles & Permissions',
+    title: t('userRolesPermissions'),
     icon: IconHelp,
     content: {
-      overview:
-        'Different user roles have different capabilities in the system.',
+      overview: t('rolesOverview'),
       roles: [
         {
-          role: 'End User',
-          description: 'Can create and manage own tickets',
+          role: t('endUserRole'),
+          description: t('endUserDesc'),
           permissions: [
-            'Create tickets',
-            'View own tickets',
-            'Add comments',
-            'Update profile',
+            t('createTickets'),
+            t('viewOwnTickets'),
+            t('addComments'),
+            t('updateProfile'),
           ],
         },
         {
-          role: 'Support Staff',
-          description: 'Can manage assigned tickets',
+          role: t('supportStaffRole'),
+          description: t('supportStaffDesc'),
           permissions: [
-            'View all tickets',
-            'Manage assigned tickets',
-            'Add comments',
-            'Update status',
+            t('viewAllTickets'),
+            t('manageAssignedTickets'),
+            t('addComments'),
+            t('updateStatus'),
           ],
         },
         {
-          role: 'Support Manager',
-          description: 'Can manage team and all tickets',
+          role: t('supportManagerRole'),
+          description: t('supportManagerDesc'),
           permissions: [
-            'Manage all tickets',
-            'Assign tickets',
-            'View reports',
-            'Manage staff',
+            t('manageAllTickets'),
+            t('assignTickets'),
+            t('viewReports'),
+            t('manageStaff'),
           ],
         },
         {
-          role: 'Administrator',
-          description: 'Full system access',
+          role: t('administratorRole'),
+          description: t('administratorDesc'),
           permissions: [
-            'All permissions',
-            'System configuration',
-            'User management',
-            'Reports',
+            t('allPermissions'),
+            t('systemConfiguration'),
+            t('userManagement'),
+            t('viewReports'),
           ],
         },
       ],
@@ -158,66 +154,65 @@ const helpSections = [
   },
   {
     id: 'sla-management',
-    title: 'SLA & Response Times',
+    title: t('slaResponseTimes'),
     icon: IconQuestionMark,
     content: {
-      overview:
-        'Service Level Agreements ensure timely response to your tickets.',
+      overview: t('slaOverview'),
       slaLevels: [
         {
-          level: 'Standard',
+          level: t('standardLevel'),
           responseTime: '8 business hours',
           resolutionTime: '5 business days',
-          description: 'General inquiries and non-urgent issues',
+          description: t('generalInquiries'),
         },
         {
-          level: 'Premium',
+          level: t('premiumLevel'),
           responseTime: '4 business hours',
           resolutionTime: '2 business days',
-          description: 'Higher urgency and impact issues',
+          description: t('higherUrgency'),
         },
         {
-          level: 'Critical Support',
-          responseTime: 'Immediate (24/7)',
+          level: t('criticalSupportLevel'),
+          responseTime: t('immediate247'),
           resolutionTime: '4 business hours',
-          description: 'Critical system failures and emergencies',
+          description: t('criticalFailures'),
         },
       ],
     },
   },
   {
     id: 'best-practices',
-    title: 'Best Practices',
+    title: t('bestPractices'),
     icon: IconBook,
     content: {
-      overview: 'Follow these guidelines for effective ticket management.',
+      overview: t('practicesOverview'),
       practices: [
         {
-          category: 'Ticket Creation',
+          category: t('ticketCreation'),
           items: [
-            'Use clear, descriptive titles',
-            'Provide detailed problem description',
-            'Include steps to reproduce the issue',
-            'Attach relevant screenshots or files',
-            'Set appropriate priority and impact',
+            t('useClearTitles'),
+            t('provideDetailedDescription'),
+            t('includeSteps'),
+            t('attachScreenshots'),
+            t('setAppropriatePriority'),
           ],
         },
         {
-          category: 'Communication',
+          category: t('communication'),
           items: [
-            'Respond promptly to requests for information',
-            'Be specific about what you need',
-            'Provide feedback on solutions',
-            'Use professional and clear language',
+            t('respondPromptly'),
+            t('beSpecific'),
+            t('provideFeedback'),
+            t('useProfessionalLanguage'),
           ],
         },
         {
-          category: 'Follow-up',
+          category: t('followUp'),
           items: [
-            'Check ticket status regularly',
-            'Confirm when issues are resolved',
-            'Provide feedback on support quality',
-            'Close tickets when satisfied',
+            t('checkTicketStatus'),
+            t('confirmResolved'),
+            t('provideSupportFeedback'),
+            t('closeTickets'),
           ],
         },
       ],
@@ -225,64 +220,69 @@ const helpSections = [
   },
   {
     id: 'troubleshooting',
-    title: 'Troubleshooting',
+    title: t('troubleshooting'),
     icon: IconQuestionMark,
     content: {
-      overview: 'Common issues and their solutions.',
+      overview: t('troubleshootingOverview'),
       issues: [
         {
-          problem: 'Cannot log in',
-          solution:
-            'Check your email and password. Use "Forgot Password" if needed.',
-          severity: 'high',
+          problem: t('cannotLogin'),
+          solution: t('checkEmailPassword'),
+          severity: t('highSeverity'),
         },
         {
-          problem: 'Ticket not updating',
-          solution: 'Refresh the page or clear browser cache.',
-          severity: 'medium',
+          problem: t('ticketNotUpdating'),
+          solution: t('refreshPage'),
+          severity: t('mediumSeverity'),
         },
         {
-          problem: 'File upload fails',
-          solution:
-            'Check file size (max 10MB) and format. Try a different browser.',
-          severity: 'medium',
+          problem: t('fileUploadFails'),
+          solution: t('checkFileSize'),
+          severity: t('mediumSeverity'),
         },
         {
-          problem: 'Notifications not received',
-          solution:
-            'Check email settings and spam folder. Verify notification preferences.',
-          severity: 'low',
+          problem: t('notificationsNotReceived'),
+          solution: t('checkEmailSettings'),
+          severity: t('lowSeverity'),
         },
       ],
     },
   },
 ];
 
-const quickActions = [
+const getQuickActions = (
+  tTickets: (key: string) => string,
+  tHelp: (key: string) => string
+) => [
   {
-    title: 'Create New Ticket',
-    description: 'Submit a new support request',
+    title: tTickets('createTicket'),
+    description: tHelp('submitNewRequest'),
     action: 'navigate',
     target: '/tickets/new',
   },
   {
-    title: 'View My Tickets',
-    description: 'Check status of your tickets',
+    title: tTickets('myTickets'),
+    description: tHelp('checkTicketStatus'),
     action: 'navigate',
     target: '/tickets',
   },
   {
-    title: 'Contact Support',
-    description: 'Get immediate help',
+    title: tHelp('contactSupport'),
+    description: tHelp('getImmediateHelp'),
     action: 'contact',
     target: 'support@ntg-ticket.com',
   },
 ];
 
 export function HelpSystem({ opened, onClose }: HelpSystemProps) {
+  const t = useTranslations('help');
+  const tTickets = useTranslations('tickets');
   const [activeSection, setActiveSection] = useState<string | null>(
     'getting-started'
   );
+
+  const helpSections = getHelpSections(t);
+  const quickActions = getQuickActions(tTickets, t);
 
   const handleQuickAction = (action: string, target: string) => {
     if (action === 'navigate') {
@@ -328,7 +328,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
             <IconHelp size={16} />
           </ThemeIcon>
           <Text size='lg' fw={600}>
-            Help & Support Center
+            {t('title')}
           </Text>
         </Group>
       }
@@ -340,7 +340,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
         <Grid.Col span={4}>
           <Stack gap='sm'>
             <Text size='sm' fw={500} c='dimmed' mb='xs'>
-              Help Topics
+              {t('helpTopics')}
             </Text>
             {helpSections.map(section => (
               <Button
@@ -388,7 +388,7 @@ export function HelpSystem({ opened, onClose }: HelpSystemProps) {
 
             <Alert
               icon={<IconMail size={16} />}
-              title='Need More Help?'
+              title={t('needMoreHelp')}
               color='blue'
               variant='light'
             >

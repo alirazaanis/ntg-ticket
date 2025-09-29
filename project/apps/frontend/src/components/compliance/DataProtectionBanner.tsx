@@ -19,6 +19,7 @@ import {
   IconEye,
   IconDatabase,
 } from '@tabler/icons-react';
+import { STORAGE_KEYS } from '../../lib/constants';
 
 interface DataProtectionBannerProps {
   onAccept?: (preferences: DataPreferences) => void;
@@ -48,7 +49,7 @@ export function DataProtectionBanner({
   });
 
   useEffect(() => {
-    const consent = localStorage.getItem('data-protection-consent');
+    const consent = localStorage.getItem(STORAGE_KEYS.DATA_PROTECTION_CONSENT);
     if (!consent) {
       setShowBanner(true);
     }
@@ -62,7 +63,7 @@ export function DataProtectionBanner({
       functional: true,
     };
     localStorage.setItem(
-      'data-protection-consent',
+      STORAGE_KEYS.DATA_PROTECTION_CONSENT,
       JSON.stringify(allPreferences)
     );
     setShowBanner(false);
@@ -77,7 +78,7 @@ export function DataProtectionBanner({
       functional: false,
     };
     localStorage.setItem(
-      'data-protection-consent',
+      STORAGE_KEYS.DATA_PROTECTION_CONSENT,
       JSON.stringify(minimalPreferences)
     );
     setShowBanner(false);
@@ -86,7 +87,7 @@ export function DataProtectionBanner({
 
   const handleCustomSave = () => {
     localStorage.setItem(
-      'data-protection-consent',
+      STORAGE_KEYS.DATA_PROTECTION_CONSENT,
       JSON.stringify(preferences)
     );
     setShowBanner(false);

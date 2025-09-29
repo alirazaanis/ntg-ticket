@@ -40,7 +40,10 @@ const roleColors: Record<string, string> = {
   END_USER: 'gray',
 };
 
-const roleIcons: Record<string, any> = {
+const roleIcons: Record<
+  string,
+  React.ComponentType<React.SVGProps<SVGSVGElement>>
+> = {
   ADMIN: IconShield,
   SUPPORT_MANAGER: IconUsers,
   SUPPORT_STAFF: IconUser,
@@ -86,10 +89,10 @@ export function PermissionsManagement({
     setShowPermissionModal(true);
   };
 
-  const handleDeletePermission = (permissionId: string) => {
+  const handleDeletePermission = () => {
     if (confirm('Are you sure you want to delete this permission?')) {
       // Implement permission deletion
-      console.log('Delete permission:', permissionId);
+      // Delete permission
     }
   };
 
@@ -164,7 +167,7 @@ export function PermissionsManagement({
                     <Accordion.Control>
                       <Group gap='sm'>
                         <ThemeIcon size='sm' variant='light' color={roleColor}>
-                          <RoleIcon size={14} />
+                          <RoleIcon />
                         </ThemeIcon>
                         <div>
                           <Text fw={500}>
@@ -253,9 +256,7 @@ export function PermissionsManagement({
                                       size='xs'
                                       color='red'
                                       leftSection={<IconTrash size={12} />}
-                                      onClick={() =>
-                                        handleDeletePermission(permission.id)
-                                      }
+                                      onClick={() => handleDeletePermission()}
                                     >
                                       Delete
                                     </Button>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { TIMING_CONFIG } from '../lib/constants';
 
 /**
  * Custom hook for debouncing values with improved performance
@@ -6,7 +7,10 @@ import { useState, useEffect, useRef } from 'react';
  * @param delay - The delay in milliseconds
  * @returns The debounced value
  */
-export function useDebounce<T>(value: T, delay: number): T {
+export function useDebounce<T>(
+  value: T,
+  delay: number = TIMING_CONFIG.DEBOUNCE_DELAY
+): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const timeoutRef = useRef<NodeJS.Timeout>();
 

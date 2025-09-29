@@ -28,6 +28,13 @@ import {
 } from '@tabler/icons-react';
 import { useCategories } from '../../hooks/useCategories';
 import { useUsers } from '../../hooks/useUsers';
+import {
+  IMPACT_OPTIONS,
+  PRIORITY_OPTIONS,
+  SLA_LEVEL_OPTIONS,
+  STATUS_OPTIONS,
+  URGENCY_OPTIONS,
+} from '@/lib/constants';
 
 export interface AdvancedSearchCriteria {
   // Basic search
@@ -164,42 +171,30 @@ export function AdvancedSearchModal({
     setActiveFilters([]);
   };
 
-  const statusOptions = [
-    { value: 'NEW', label: t('new') },
-    { value: 'OPEN', label: t('open') },
-    { value: 'IN_PROGRESS', label: t('in_progress') },
-    { value: 'ON_HOLD', label: t('on_hold') },
-    { value: 'RESOLVED', label: t('resolved') },
-    { value: 'CLOSED', label: t('closed') },
-    { value: 'REOPENED', label: t('reopened') },
-  ];
+  const statusOptions = STATUS_OPTIONS.map(option => ({
+    ...option,
+    label: t(option.value.toLowerCase().replace('_', '_')),
+  }));
 
-  const priorityOptions = [
-    { value: 'LOW', label: t('low') },
-    { value: 'MEDIUM', label: t('medium') },
-    { value: 'HIGH', label: t('high') },
-    { value: 'CRITICAL', label: t('critical') },
-  ];
+  const priorityOptions = PRIORITY_OPTIONS.map(option => ({
+    ...option,
+    label: t(option.value.toLowerCase()),
+  }));
 
-  const impactOptions = [
-    { value: 'MINOR', label: t('minor') },
-    { value: 'MODERATE', label: t('moderate') },
-    { value: 'MAJOR', label: t('major') },
-    { value: 'CRITICAL', label: t('critical') },
-  ];
+  const impactOptions = IMPACT_OPTIONS.map(option => ({
+    ...option,
+    label: t(option.value.toLowerCase()),
+  }));
 
-  const urgencyOptions = [
-    { value: 'LOW', label: t('low') },
-    { value: 'NORMAL', label: t('normal') },
-    { value: 'HIGH', label: t('high') },
-    { value: 'IMMEDIATE', label: t('immediate') },
-  ];
+  const urgencyOptions = URGENCY_OPTIONS.map(option => ({
+    ...option,
+    label: t(option.value.toLowerCase()),
+  }));
 
-  const slaLevelOptions = [
-    { value: 'STANDARD', label: t('standard') },
-    { value: 'PREMIUM', label: t('premium') },
-    { value: 'CRITICAL_SUPPORT', label: t('critical_support') },
-  ];
+  const slaLevelOptions = SLA_LEVEL_OPTIONS.map(option => ({
+    ...option,
+    label: t(option.value.toLowerCase().replace('_', '_')),
+  }));
 
   const categoryOptions =
     categories?.map(cat => ({

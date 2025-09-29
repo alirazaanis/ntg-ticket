@@ -146,7 +146,7 @@ export default function ProfilePage() {
             loading={updateUserMutation.isPending}
             onClick={() => profileForm.onSubmit(handleProfileUpdate)()}
           >
-            {saved ? 'Saved!' : 'Save Changes'}
+            {saved ? t('saved') : t('saveChanges')}
           </Button>
         </Group>
       </Group>
@@ -154,11 +154,11 @@ export default function ProfilePage() {
       {saved && (
         <Alert
           icon={<IconCheck size={16} />}
-          title='Profile Updated'
+          title={t('profileUpdated')}
           color='green'
           mb='md'
         >
-          Your profile has been updated successfully.
+          {t('profileUpdated')}
         </Alert>
       )}
 
@@ -187,7 +187,7 @@ export default function ProfilePage() {
                     <Grid>
                       <Grid.Col span={6}>
                         <TextInput
-                          label='Full Name'
+                          label={t('fullName')}
                           placeholder='Enter your full name'
                           required
                           {...profileForm.getInputProps('name')}
@@ -195,7 +195,7 @@ export default function ProfilePage() {
                       </Grid.Col>
                       <Grid.Col span={6}>
                         <TextInput
-                          label='Email Address'
+                          label={t('email')}
                           placeholder='Enter your email'
                           required
                           type='email'
@@ -282,7 +282,7 @@ export default function ProfilePage() {
             <form onSubmit={passwordForm.onSubmit(handlePasswordChange)}>
               <Stack gap='md'>
                 <PasswordInput
-                  label='Current Password'
+                  label={t('currentPassword')}
                   placeholder='Enter current password'
                   required
                   {...passwordForm.getInputProps('currentPassword')}
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                 <Grid>
                   <Grid.Col span={6}>
                     <PasswordInput
-                      label='New Password'
+                      label={t('newPassword')}
                       placeholder='Enter new password'
                       required
                       {...passwordForm.getInputProps('newPassword')}
@@ -320,12 +320,12 @@ export default function ProfilePage() {
             </Title>
             <Stack gap='md'>
               <Switch
-                label='Email Notifications'
+                label={t('emailNotifications')}
                 description='Receive notifications via email'
                 defaultChecked
               />
               <Switch
-                label='Push Notifications'
+                label={t('pushNotifications')}
                 description='Receive push notifications in browser'
                 defaultChecked
               />
@@ -335,7 +335,7 @@ export default function ProfilePage() {
               />
               <Divider />
               <Select
-                label='Notification Frequency'
+                label={t('notificationFrequency')}
                 placeholder='Select frequency'
                 data={[
                   { value: 'immediate', label: 'Immediate' },

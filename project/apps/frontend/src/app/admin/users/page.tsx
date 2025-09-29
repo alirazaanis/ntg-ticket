@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Container,
   Title,
@@ -44,6 +45,8 @@ const roleColors: Record<string, string> = {
 };
 
 export default function UsersPage() {
+  const t = useTranslations('common');
+  const tUsers = useTranslations('users');
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
@@ -103,7 +106,11 @@ export default function UsersPage() {
   if (error) {
     return (
       <Container size='xl' py='md'>
-        <Alert icon={<IconAlertCircle size={16} />} title='Error' color='red'>
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title={t('error')}
+          color='red'
+        >
           Failed to load users: {String(error)}
         </Alert>
       </Container>
@@ -114,18 +121,18 @@ export default function UsersPage() {
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={1}>Users</Title>
-          <Text c='dimmed'>Manage system users and their permissions</Text>
+          <Title order={1}>{tUsers('title')}</Title>
+          <Text c='dimmed'>{tUsers('manageUsersPermissions')}</Text>
         </div>
         <Button leftSection={<IconPlus size={16} />} onClick={handleCreateUser}>
-          Add User
+          {tUsers('addUser')}
         </Button>
       </Group>
 
       <Grid mb='md'>
         <Grid.Col span={6}>
           <TextInput
-            placeholder='Search users...'
+            placeholder={tUsers('searchUsers')}
             leftSection={<IconSearch size={16} />}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -133,12 +140,12 @@ export default function UsersPage() {
         </Grid.Col>
         <Grid.Col span={3}>
           <Select
-            placeholder='Role'
+            placeholder={tUsers('role')}
             data={[
-              { value: 'ADMIN', label: 'Admin' },
-              { value: 'SUPPORT_MANAGER', label: 'Support Manager' },
-              { value: 'SUPPORT_STAFF', label: 'Support Staff' },
-              { value: 'END_USER', label: 'End User' },
+              { value: 'ADMIN', label: t('administrator') },
+              { value: 'SUPPORT_MANAGER', label: t('supportManager') },
+              { value: 'SUPPORT_STAFF', label: t('supportStaff') },
+              { value: 'END_USER', label: t('endUser') },
             ]}
             value={roleFilter}
             onChange={setRoleFilter}
@@ -147,10 +154,10 @@ export default function UsersPage() {
         </Grid.Col>
         <Grid.Col span={3}>
           <Select
-            placeholder='Status'
+            placeholder={tUsers('status')}
             data={[
-              { value: 'true', label: 'Active' },
-              { value: 'false', label: 'Inactive' },
+              { value: 'true', label: t('active') },
+              { value: 'false', label: t('inactive') },
             ]}
             value={statusFilter}
             onChange={setStatusFilter}
@@ -163,12 +170,12 @@ export default function UsersPage() {
         <Table>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>User</Table.Th>
-              <Table.Th>Role</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>Last Login</Table.Th>
-              <Table.Th>Created</Table.Th>
-              <Table.Th>Actions</Table.Th>
+              <Table.Th>{tUsers('user')}</Table.Th>
+              <Table.Th>{tUsers('role')}</Table.Th>
+              <Table.Th>{tUsers('status')}</Table.Th>
+              <Table.Th>{tUsers('lastLogin')}</Table.Th>
+              <Table.Th>{tUsers('created')}</Table.Th>
+              <Table.Th>{t('actions')}</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>

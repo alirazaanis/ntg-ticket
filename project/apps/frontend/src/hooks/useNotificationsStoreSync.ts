@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import { useNotificationsStore } from '../stores/useNotificationsStore';
 import { notificationsApi } from '../lib/apiClient';
 import { NotificationType } from '../types/notification';
+import { TIMING_CONFIG } from '../lib/constants';
 
 /**
  * Hook to sync the notifications store with API data
@@ -104,7 +105,7 @@ export function useNotificationsStoreSync() {
           // Silently handle error to avoid breaking the app
           // In production, consider using a proper logging service
         }
-      }, 30000); // Refresh every 30 seconds
+      }, TIMING_CONFIG.STORE_SYNC_INTERVAL); // Refresh every 30 seconds
 
       return () => clearInterval(interval);
     }

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, AuditAction } from '@prisma/client';
 
 export interface AuditLogFilters {
   page: number;
@@ -22,7 +22,7 @@ export interface AuditLog {
   newValue?: string;
   ipAddress?: string;
   userAgent?: string;
-  metadata?: any;
+  metadata?: Prisma.JsonValue;
   userId: string;
   user?: {
     id: string;
@@ -61,7 +61,7 @@ export class AuditLogsService {
       const where: Prisma.AuditLogWhereInput = {};
 
       if (action) {
-        where.action = action as any;
+        where.action = action as Prisma.AuditLogWhereInput['action'];
       }
 
       if (userId) {
@@ -476,7 +476,7 @@ export class AuditLogsService {
     fieldName?: string;
     oldValue?: string;
     newValue?: string;
-    metadata?: any;
+    metadata?: Prisma.JsonValue;
     userId: string;
     ipAddress?: string;
     userAgent?: string;
@@ -484,7 +484,7 @@ export class AuditLogsService {
     try {
       const auditLog = await this.prisma.auditLog.create({
         data: {
-          action: data.action as any,
+          action: data.action as AuditAction,
           resource: data.resource,
           resourceId: data.resourceId,
           fieldName: data.fieldName,
