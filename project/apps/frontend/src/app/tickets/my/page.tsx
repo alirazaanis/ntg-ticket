@@ -10,11 +10,11 @@ import {
   Card,
   Stack,
   Badge,
-  Table,
   ActionIcon,
   Menu,
   Loader,
   Alert,
+  Pagination,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -26,10 +26,16 @@ import {
   IconTicket,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import { useTickets } from '../../../hooks/useTickets';
+import { useState } from 'react';
+import { useTicketsWithPagination } from '../../../hooks/useTickets';
 import { useAuthStore } from '../../../stores/useAuthStore';
 import { Ticket, TicketStatus, TicketPriority } from '../../../types/unified';
-import { formatDistanceToNow } from 'date-fns';
+import { SearchBar } from '../../../components/search/SearchBar';
+import { AdvancedSearchModal } from '../../../components/search/AdvancedSearchModal';
+import { SimpleFiltersModal } from '../../../components/forms/SimpleFiltersModal';
+import { useSearch } from '../../../hooks/useSearch';
+import { IconFilter, IconX } from '@tabler/icons-react';
+import { PAGINATION_CONFIG } from '../../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
   NEW: 'blue',
@@ -51,17 +57,73 @@ const priorityColors: Record<TicketPriority, string> = {
 export default function MyTicketsPage() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+  const [simpleFiltersOpen, setSimpleFiltersOpen] = useState(false);
 
-  const { data: tickets, isLoading, error } = useTickets();
+  const {
+    filters: searchFilters,
+    recentSearches,
+    updateFilters,
+    clearFilters,
+    addRecentSearch,
+    clearRecentSearches,
+    removeRecentSearch,
+    getSearchQuery,
+    hasActiveFilters,
+  } = useSearch();
 
-  const myTickets =
-    tickets?.filter(ticket => ticket.requester.id === user?.id) || [];
-  const openTickets = myTickets.filter(ticket =>
-    ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
-  );
-  const resolvedTickets = myTickets.filter(ticket =>
-    ['RESOLVED', 'CLOSED'].includes(ticket.status)
-  );
+  const searchQuery = getSearchQuery();
+  const ticketsQuery = {
+    ...searchQuery,
+    page: currentPage,
+    limit: PAGINATION_CONFIG.DEFAULT_PAGE_SIZE,
+    requesterId: [user?.id],
+  } as any;
+
+  const {
+    data: ticketsData,
+    isLoading,
+    error,
+    isFetching,
+  } = useTicketsWithPagination(ticketsQuery);
+
+  let myTickets = ticketsData?.tickets || [];
+  const pagination = ticketsData?.pagination;
+
+  // Client-side filters for resolution time and SLA breach time (in hours)
+  if (
+    typeof searchFilters.minResolutionHours === 'number' ||
+    typeof searchFilters.maxResolutionHours === 'number'
+  ) {
+    const minH = searchFilters.minResolutionHours ?? 0;
+    const maxH = searchFilters.maxResolutionHours ?? Number.POSITIVE_INFINITY;
+    myTickets = myTickets.filter(t => {
+      // Only include CLOSED tickets when filtering by resolution time
+      if (t.status !== 'CLOSED') return false;
+      const hours = typeof t.resolutionTime === 'number' ? t.resolutionTime : undefined;
+      if (typeof hours !== 'number') return false;
+      return hours >= minH && hours <= maxH;
+    });
+  }
+
+  if (
+    typeof searchFilters.minSlaBreachHours === 'number' ||
+    typeof searchFilters.maxSlaBreachHours === 'number'
+  ) {
+    const minB = searchFilters.minSlaBreachHours ?? 0;
+    const maxB = searchFilters.maxSlaBreachHours ?? Number.POSITIVE_INFINITY;
+    myTickets = myTickets.filter(t => {
+      if (!t.dueDate || !t.closedAt) return false;
+      const due = new Date(t.dueDate).getTime();
+      const closed = new Date(t.closedAt).getTime();
+      if (isNaN(due) || isNaN(closed)) return false;
+      // Breach if closed after due
+      if (closed <= due) return false;
+      const breachHours = (closed - due) / (1000 * 60 * 60);
+      return breachHours >= minB && breachHours <= maxB;
+    });
+  }
 
   const handleViewTicket = (ticketId: string) => {
     router.push(`/tickets/${ticketId}`);
@@ -97,10 +159,7 @@ export default function MyTicketsPage() {
       <Group justify='space-between' mb='xl'>
         <div>
           <Title order={1}>My Tickets</Title>
-          <Text c='dimmed'>
-            {myTickets.length} total tickets • {openTickets.length} open •{' '}
-            {resolvedTickets.length} resolved
-          </Text>
+          <Text c='dimmed'>Tickets created by you</Text>
         </div>
         <Button
           leftSection={<IconPlus size={16} />}
@@ -110,175 +169,188 @@ export default function MyTicketsPage() {
         </Button>
       </Group>
 
-      <Grid>
-        <Grid.Col span={3}>
-          <Stack gap='md'>
-            <Card withBorder p='md'>
-              <Title order={4} mb='md'>
-                Quick Stats
-              </Title>
-              <Stack gap='sm'>
-                <Group justify='space-between'>
-                  <Text size='sm' fw={500}>
-                    Total Tickets
-                  </Text>
-                  <Badge color='red' variant='light'>
-                    {myTickets.length}
-                  </Badge>
-                </Group>
-                <Group justify='space-between'>
-                  <Text size='sm' fw={500}>
-                    Open Tickets
-                  </Text>
-                  <Badge color='green' variant='light'>
-                    {openTickets.length}
-                  </Badge>
-                </Group>
-                <Group justify='space-between'>
-                  <Text size='sm' fw={500}>
-                    Resolved Tickets
-                  </Text>
-                  <Badge color='gray' variant='light'>
-                    {resolvedTickets.length}
-                  </Badge>
-                </Group>
-              </Stack>
-            </Card>
-
-            <Card withBorder p='md'>
-              <Title order={4} mb='md'>
-                Quick Actions
-              </Title>
-              <Stack gap='sm'>
-                <Button
-                  variant='outline'
-                  leftSection={<IconPlus size={16} />}
-                  onClick={() => router.push('/tickets/create')}
-                  fullWidth
-                >
-                  Create New Ticket
-                </Button>
-                <Button
-                  variant='outline'
-                  leftSection={<IconTicket size={16} />}
-                  onClick={() => router.push('/tickets')}
-                  fullWidth
-                >
-                  View All Tickets
-                </Button>
-              </Stack>
-            </Card>
-          </Stack>
+      <Grid mb='md'>
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <SearchBar
+            key={searchFilters.search || 'empty'}
+            value={searchFilters.search}
+            onChange={value => {
+              updateFilters({ search: value });
+              if (value.trim()) {
+                addRecentSearch(value);
+              }
+              setCurrentPage(1);
+            }}
+            onAdvancedSearch={() => setAdvancedSearchOpen(true)}
+            onSimpleFilters={() => setSimpleFiltersOpen(true)}
+            recentSearches={recentSearches}
+            onRecentSearchClick={addRecentSearch}
+            onClearRecentSearches={clearRecentSearches}
+            onRemoveRecentSearch={removeRecentSearch}
+            debounceMs={1500}
+            isLoading={isFetching}
+          />
         </Grid.Col>
-
-        <Grid.Col span={9}>
-          <Card shadow='sm' padding='lg' radius='md' withBorder>
-            <Title order={3} mb='md'>
-              Your Tickets
-            </Title>
-
-            {myTickets.length === 0 ? (
-              <Stack align='center' gap='md' py='xl'>
-                <IconTicket size={48} color='var(--mantine-color-dimmed)' />
-                <Text size='lg' fw={500}>
-                  No tickets found
-                </Text>
-                <Text c='dimmed' ta='center'>
-                  You haven't created any tickets yet. Create your first ticket
-                  to get started.
-                </Text>
-                <Button onClick={() => router.push('/tickets/create')}>
-                  Create Your First Ticket
-                </Button>
-              </Stack>
-            ) : (
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Ticket</Table.Th>
-                    <Table.Th>Status</Table.Th>
-                    <Table.Th>Priority</Table.Th>
-                    <Table.Th>Created</Table.Th>
-                    <Table.Th>Actions</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {myTickets.map((ticket: Ticket) => (
-                    <Table.Tr key={ticket.id}>
-                      <Table.Td>
-                        <div>
-                          <Text fw={500} size='sm'>
-                            #{ticket.ticketNumber}
-                          </Text>
-                          <Text size='xs' c='dimmed'>
-                            {ticket.title}
-                          </Text>
-                        </div>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge
-                          color={statusColors[ticket.status]}
-                          variant='light'
-                          size='sm'
-                        >
-                          {ticket.status.replace('_', ' ')}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge
-                          color={priorityColors[ticket.priority]}
-                          variant='outline'
-                          size='sm'
-                        >
-                          {ticket.priority}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size='sm'>
-                          {formatDistanceToNow(new Date(ticket.createdAt), {
-                            addSuffix: true,
-                          })}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Menu shadow='md' width={200}>
-                          <Menu.Target>
-                            <ActionIcon variant='subtle'>
-                              <IconDots size={16} />
-                            </ActionIcon>
-                          </Menu.Target>
-                          <Menu.Dropdown>
-                            <Menu.Item
-                              leftSection={<IconEye size={14} />}
-                              onClick={() => handleViewTicket(ticket.id)}
-                            >
-                              View Details
-                            </Menu.Item>
-                            <Menu.Item
-                              leftSection={<IconEdit size={14} />}
-                              onClick={() => handleEditTicket(ticket.id)}
-                            >
-                              Edit Ticket
-                            </Menu.Item>
-                            <Menu.Divider />
-                            <Menu.Item
-                              leftSection={<IconTrash size={14} />}
-                              color='red'
-                              onClick={() => handleEditTicket(ticket.id)}
-                            >
-                              Delete
-                            </Menu.Item>
-                          </Menu.Dropdown>
-                        </Menu>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            )}
-          </Card>
+        <Grid.Col span={{ base: 6, md: 3 }}>
+          <Button
+            variant='light'
+            leftSection={<IconFilter size={16} />}
+            fullWidth
+            onClick={() => setAdvancedSearchOpen(true)}
+          >
+            Advanced
+          </Button>
         </Grid.Col>
+        <Grid.Col span={{ base: 6, md: 3 }}></Grid.Col>
       </Grid>
+
+      <Stack gap='md'>
+        {myTickets.map((ticket: Ticket) => (
+          <Card key={ticket.id} shadow='sm' padding='lg' radius='md' withBorder>
+            <Group justify='space-between' mb='sm'>
+              <Group gap='sm'>
+                <Badge color={statusColors[ticket.status]} variant='light'>
+                  {ticket.status.replace('_', ' ')}
+                </Badge>
+                <Badge
+                  color={priorityColors[ticket.priority]}
+                  variant='outline'
+                >
+                  {ticket.priority}
+                </Badge>
+                <Text size='sm' c='dimmed'>
+                  #{ticket.ticketNumber}
+                </Text>
+              </Group>
+              <Menu shadow='md' width={200}>
+                <Menu.Target>
+                  <ActionIcon variant='subtle'>
+                    <IconDots size={16} />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<IconEye size={14} />}
+                    onClick={() => handleViewTicket(ticket.id)}
+                  >
+                    View
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconEdit size={14} />}
+                    onClick={() => handleEditTicket(ticket.id)}
+                  >
+                    Edit
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconTrash size={14} />}
+                    color='red'
+                    onClick={() => handleEditTicket(ticket.id)}
+                  >
+                    Delete
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
+
+            <Text
+              fw={500}
+              mb='xs'
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleViewTicket(ticket.id)}
+            >
+              {ticket.title}
+            </Text>
+
+            <Text size='sm' c='dimmed' mb='sm' lineClamp={2}>
+              {ticket.description}
+            </Text>
+
+            <Group justify='space-between'>
+              <Group gap='md'>
+                <Text size='sm'>{ticket.requester.name}</Text>
+                <Text size='sm'>
+                  {new Date(ticket.createdAt).toLocaleDateString('en-US')}
+                </Text>
+                {ticket.assignedTo && (
+                  <Text size='sm'>Assigned to {ticket.assignedTo.name}</Text>
+                )}
+              </Group>
+              <Badge variant='light' color='gray'>
+                {ticket.category?.name || 'Unknown'}
+              </Badge>
+            </Group>
+          </Card>
+        ))}
+      </Stack>
+
+      {myTickets.length === 0 && (
+        <Card shadow='sm' padding='xl' radius='md' withBorder>
+          <Stack align='center' gap='md'>
+            <IconTicket size={48} color='var(--mantine-color-dimmed)' />
+            <Text size='lg' fw={500}>
+              No tickets found
+            </Text>
+            <Text c='dimmed' ta='center'>
+              No tickets match your current filters.
+            </Text>
+            <Button onClick={() => router.push('/tickets/create')}>
+              Create your first ticket
+            </Button>
+          </Stack>
+        </Card>
+      )}
+
+      {(pagination?.totalPages || 0) > 1 && (
+        <Group justify='center' mt='xl'>
+          <Pagination
+            value={currentPage}
+            onChange={setCurrentPage}
+            total={pagination?.totalPages || 1}
+          />
+        </Group>
+      )}
+
+      <AdvancedSearchModal
+        opened={advancedSearchOpen}
+        onClose={() => setAdvancedSearchOpen(false)}
+        onSearch={advancedFilters => {
+          const searchCriteria = {
+            search: advancedFilters.query || '',
+            status: advancedFilters.status || [],
+            priority: advancedFilters.priority || [],
+            category: advancedFilters.category || [],
+            impact: advancedFilters.impact || [],
+            urgency: advancedFilters.urgency || [],
+            slaLevel: advancedFilters.slaLevel || [],
+            assignedTo: advancedFilters.assignedTo || [],
+            requester: advancedFilters.requester || [],
+            dateFrom: advancedFilters.createdFrom || null,
+            dateTo: advancedFilters.createdTo || null,
+            tags: [],
+            customFields: advancedFilters.customFields || {},
+            // Numeric hour filters
+            minResolutionHours: advancedFilters.minResolutionTime,
+            maxResolutionHours: advancedFilters.maxResolutionTime,
+            minSlaBreachHours: advancedFilters.minSlaBreachTime,
+            maxSlaBreachHours: advancedFilters.maxSlaBreachTime,
+          } as any;
+          updateFilters(searchCriteria);
+          if (advancedFilters.query) {
+            addRecentSearch(advancedFilters.query);
+          }
+          setCurrentPage(1);
+        }}
+      />
+
+      <SimpleFiltersModal
+        opened={simpleFiltersOpen}
+        onClose={() => setSimpleFiltersOpen(false)}
+        onApply={filters => {
+          updateFilters(filters as any);
+          setCurrentPage(1);
+        }}
+      />
     </Container>
   );
 }

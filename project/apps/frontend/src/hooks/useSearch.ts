@@ -26,6 +26,10 @@ export const useSearch = () => {
     dateTo: null,
     tags: [],
     customFields: {},
+    minResolutionHours: undefined,
+    maxResolutionHours: undefined,
+    minSlaBreachHours: undefined,
+    maxSlaBreachHours: undefined,
   });
 
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
@@ -92,6 +96,10 @@ export const useSearch = () => {
       dateTo: null,
       tags: [],
       customFields: {},
+      minResolutionHours: undefined,
+      maxResolutionHours: undefined,
+      minSlaBreachHours: undefined,
+      maxSlaBreachHours: undefined,
     });
   }, []);
 
@@ -188,7 +196,11 @@ export const useSearch = () => {
       (filters.requester && filters.requester.length > 0) ||
       filters.dateFrom ||
       filters.dateTo ||
-      (filters.tags && filters.tags.length > 0)
+      (filters.tags && filters.tags.length > 0) ||
+      typeof filters.minResolutionHours === 'number' ||
+      typeof filters.maxResolutionHours === 'number' ||
+      typeof filters.minSlaBreachHours === 'number' ||
+      typeof filters.maxSlaBreachHours === 'number'
     );
   }, [filters]);
 

@@ -555,6 +555,11 @@ export interface SearchCriteria {
   dateTo: Date | null;
   tags: string[];
   customFields: Record<string, unknown>;
+  // Additional numeric filters (hours)
+  minResolutionHours?: number;
+  maxResolutionHours?: number;
+  minSlaBreachHours?: number;
+  maxSlaBreachHours?: number;
 }
 
 // ===== BULK OPERATIONS TYPES =====

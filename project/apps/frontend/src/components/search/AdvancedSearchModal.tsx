@@ -64,6 +64,8 @@ export interface AdvancedSearchCriteria {
   // Numeric fields
   minResolutionTime?: number;
   maxResolutionTime?: number;
+  minSlaBreachTime?: number;
+  maxSlaBreachTime?: number;
 
   // Custom fields
   customFields?: Record<string, unknown>;
@@ -84,7 +86,7 @@ export function AdvancedSearchModal({
 }: AdvancedSearchModalProps) {
   const t = useTranslations('common');
   const tTickets = useTranslations('tickets');
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<Array<{ id: string; label: string }>>([]);
 
   const { data: categories } = useCategories();
   const { data: users } = useUsers();
@@ -109,37 +111,31 @@ export function AdvancedSearchModal({
       updatedTo: initialCriteria.updatedTo,
       minResolutionTime: initialCriteria.minResolutionTime,
       maxResolutionTime: initialCriteria.maxResolutionTime,
+      minSlaBreachTime: initialCriteria.minSlaBreachTime,
+      maxSlaBreachTime: initialCriteria.maxSlaBreachTime,
       customFields: initialCriteria.customFields || {},
     },
   });
 
   // Update active filters when form values change
   useEffect(() => {
-    const filters: string[] = [];
+    const filters: Array<{ id: string; label: string }> = [];
     const values = form.values;
-
-    if (values.query) filters.push('Search Query');
-    if (values.status?.length) filters.push(`${values.status.length} Status`);
-    if (values.priority?.length)
-      filters.push(`${values.priority.length} Priority`);
-    if (values.category?.length)
-      filters.push(`${values.category.length} Category`);
-    if (values.subcategory?.length)
-      filters.push(`${values.subcategory.length} Subcategory`);
-    if (values.impact?.length) filters.push(`${values.impact.length} Impact`);
-    if (values.urgency?.length)
-      filters.push(`${values.urgency.length} Urgency`);
-    if (values.slaLevel?.length)
-      filters.push(`${values.slaLevel.length} SLA Level`);
-    if (values.requester?.length)
-      filters.push(`${values.requester.length} Requester`);
-    if (values.assignedTo?.length)
-      filters.push(`${values.assignedTo.length} Assignee`);
-    if (values.createdFrom || values.createdTo) filters.push('Created Date');
-    if (values.dueFrom || values.dueTo) filters.push('Due Date');
-    if (values.updatedFrom || values.updatedTo) filters.push('Updated Date');
-    if (values.minResolutionTime || values.maxResolutionTime)
-      filters.push('Resolution Time');
+    if (values.query) filters.push({ id: 'query', label: 'Search Query' });
+    if (values.status?.length) filters.push({ id: 'status', label: `${values.status.length} Status` });
+    if (values.priority?.length) filters.push({ id: 'priority', label: `${values.priority.length} Priority` });
+    if (values.category?.length) filters.push({ id: 'category', label: `${values.category.length} Category` });
+    if (values.subcategory?.length) filters.push({ id: 'subcategory', label: `${values.subcategory.length} Subcategory` });
+    if (values.impact?.length) filters.push({ id: 'impact', label: `${values.impact.length} Impact` });
+    if (values.urgency?.length) filters.push({ id: 'urgency', label: `${values.urgency.length} Urgency` });
+    if (values.slaLevel?.length) filters.push({ id: 'slaLevel', label: `${values.slaLevel.length} SLA Level` });
+    if (values.requester?.length) filters.push({ id: 'requester', label: `${values.requester.length} Requester` });
+    if (values.assignedTo?.length) filters.push({ id: 'assignedTo', label: `${values.assignedTo.length} Assignee` });
+    if (values.createdFrom || values.createdTo) filters.push({ id: 'createdDate', label: 'Created Date' });
+    if (values.dueFrom || values.dueTo) filters.push({ id: 'dueDate', label: 'Due Date' });
+    if (values.updatedFrom || values.updatedTo) filters.push({ id: 'updatedDate', label: 'Updated Date' });
+    if (values.minResolutionTime || values.maxResolutionTime) filters.push({ id: 'resolutionTime', label: 'Resolution Time' });
+    if (values.minSlaBreachTime || values.maxSlaBreachTime) filters.push({ id: 'slaBreachTime', label: 'SLA Breach Duration' });
 
     setActiveFilters(filters);
   }, [form.values]);
@@ -164,11 +160,75 @@ export function AdvancedSearchModal({
     setActiveFilters([]);
   };
 
-  const removeFilter = () => {
-    // This is a simplified version - in a real implementation,
-    // you'd need to map filter names back to form fields
-    form.reset();
-    setActiveFilters([]);
+  const removeFilter = (filterId: string) => {
+    const next = { ...form.values } as AdvancedSearchCriteria;
+    switch (filterId) {
+      case 'query':
+        next.query = '';
+        break;
+      case 'status':
+        next.status = [];
+        break;
+      case 'priority':
+        next.priority = [];
+        break;
+      case 'category':
+        next.category = [];
+        next.subcategory = [];
+        break;
+      case 'subcategory':
+        next.subcategory = [];
+        break;
+      case 'impact':
+        next.impact = [];
+        break;
+      case 'urgency':
+        next.urgency = [];
+        break;
+      case 'slaLevel':
+        next.slaLevel = [];
+        break;
+      case 'requester':
+        next.requester = [];
+        break;
+      case 'assignedTo':
+        next.assignedTo = [];
+        break;
+      case 'createdDate':
+        next.createdFrom = undefined;
+        next.createdTo = undefined;
+        break;
+      case 'dueDate':
+        next.dueFrom = undefined;
+        next.dueTo = undefined;
+        break;
+      case 'updatedDate':
+        next.updatedFrom = undefined;
+        next.updatedTo = undefined;
+        break;
+      case 'resolutionTime':
+        next.minResolutionTime = undefined;
+        next.maxResolutionTime = undefined;
+        break;
+      case 'slaBreachTime':
+        next.minSlaBreachTime = undefined;
+        next.maxSlaBreachTime = undefined;
+        break;
+      default:
+        break;
+    }
+
+    form.setValues(next);
+
+    const cleanValues = Object.fromEntries(
+      Object.entries(next).filter(([, value]) => {
+        if (Array.isArray(value)) return value.length > 0;
+        if (value instanceof Date) return true;
+        if (typeof value === 'number') return value > 0;
+        return Boolean(value);
+      })
+    ) as AdvancedSearchCriteria;
+    onSearch(cleanValues);
   };
 
   const statusOptions = STATUS_OPTIONS.map(option => ({
@@ -252,7 +312,7 @@ export function AdvancedSearchModal({
               <Group gap='xs'>
                 {activeFilters.map(filter => (
                   <Badge
-                    key={`filter-${filter}`}
+                    key={`filter-${filter.id}`}
                     variant='light'
                     color='red'
                     rightSection={
@@ -260,13 +320,13 @@ export function AdvancedSearchModal({
                         size='xs'
                         color='red'
                         variant='transparent'
-                        onClick={removeFilter}
+                        onClick={() => removeFilter(filter.id)}
                       >
                         <IconX size={10} />
                       </ActionIcon>
                     }
                   >
-                    {filter}
+                    {filter.label}
                   </Badge>
                 ))}
               </Group>
@@ -470,6 +530,34 @@ export function AdvancedSearchModal({
                   placeholder={t('maxHours')}
                   min={0}
                   {...form.getInputProps('maxResolutionTime')}
+                />
+              </Grid.Col>
+            </Grid>
+          </Card>
+
+          {/* SLA Breach Duration */}
+          <Card withBorder p='md' radius='md'>
+            <Group mb='sm'>
+              <IconClock size={16} />
+              <Text size='sm' fw={500}>
+                SLA Breach Duration ({t('hours')})
+              </Text>
+            </Group>
+            <Grid>
+              <Grid.Col span={6}>
+                <NumberInput
+                  label={t('minimum')}
+                  placeholder={t('minHours')}
+                  min={0}
+                  {...form.getInputProps('minSlaBreachTime')}
+                />
+              </Grid.Col>
+              <Grid.Col span={6}>
+                <NumberInput
+                  label={t('maximum')}
+                  placeholder={t('maxHours')}
+                  min={0}
+                  {...form.getInputProps('maxSlaBreachTime')}
                 />
               </Grid.Col>
             </Grid>
