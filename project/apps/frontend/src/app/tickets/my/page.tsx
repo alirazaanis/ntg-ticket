@@ -24,17 +24,21 @@ import {
   IconTrash,
   IconAlertCircle,
   IconTicket,
+  IconFilter,
+  IconX,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useTicketsWithPagination } from '../../../hooks/useTickets';
+import {
+  useTicketsWithPagination,
+  useTotalTicketsCount,
+} from '../../../hooks/useTickets';
 import { useAuthStore } from '../../../stores/useAuthStore';
 import { Ticket, TicketStatus, TicketPriority } from '../../../types/unified';
 import { SearchBar } from '../../../components/search/SearchBar';
 import { AdvancedSearchModal } from '../../../components/search/AdvancedSearchModal';
 import { SimpleFiltersModal } from '../../../components/forms/SimpleFiltersModal';
 import { useSearch } from '../../../hooks/useSearch';
-import { IconFilter, IconX } from '@tabler/icons-react';
 import { PAGINATION_CONFIG } from '../../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
@@ -79,7 +83,7 @@ export default function MyTicketsPage() {
     page: currentPage,
     limit: PAGINATION_CONFIG.DEFAULT_PAGE_SIZE,
     requesterId: [user?.id],
-  } as any;
+  };
 
   const {
     data: ticketsData,
@@ -87,6 +91,9 @@ export default function MyTicketsPage() {
     error,
     isFetching,
   } = useTicketsWithPagination(ticketsQuery);
+
+  // Get total count of all tickets (no filters)
+  const { data: totalTicketsCount } = useTotalTicketsCount();
 
   let myTickets = ticketsData?.tickets || [];
   const pagination = ticketsData?.pagination;
@@ -101,7 +108,8 @@ export default function MyTicketsPage() {
     myTickets = myTickets.filter(t => {
       // Only include CLOSED tickets when filtering by resolution time
       if (t.status !== 'CLOSED') return false;
-      const hours = typeof t.resolutionTime === 'number' ? t.resolutionTime : undefined;
+      const hours =
+        typeof t.resolutionTime === 'number' ? t.resolutionTime : undefined;
       if (typeof hours !== 'number') return false;
       return hours >= minH && hours <= maxH;
     });
@@ -160,6 +168,11 @@ export default function MyTicketsPage() {
         <div>
           <Title order={1}>My Tickets</Title>
           <Text c='dimmed'>Tickets created by you</Text>
+          {hasActiveFilters() && (
+            <Text size='sm' c='blue' mt='xs'>
+              Showing {myTickets.length} of {totalTicketsCount || 0} tickets
+            </Text>
+          )}
         </div>
         <Button
           leftSection={<IconPlus size={16} />}
@@ -201,7 +214,18 @@ export default function MyTicketsPage() {
             Advanced
           </Button>
         </Grid.Col>
-        <Grid.Col span={{ base: 6, md: 3 }}></Grid.Col>
+        <Grid.Col span={{ base: 6, md: 3 }}>
+          {hasActiveFilters() && (
+            <Button
+              variant='outline'
+              leftSection={<IconX size={16} />}
+              fullWidth
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </Grid.Col>
       </Grid>
 
       <Stack gap='md'>
@@ -314,6 +338,27 @@ export default function MyTicketsPage() {
       <AdvancedSearchModal
         opened={advancedSearchOpen}
         onClose={() => setAdvancedSearchOpen(false)}
+        initialCriteria={{
+          query: searchFilters.search || '',
+          status: (searchFilters.status as string[]) || [],
+          priority: (searchFilters.priority as string[]) || [],
+          category: (searchFilters.category as string[]) || [],
+          impact: (searchFilters.impact as string[]) || [],
+          urgency: (searchFilters.urgency as string[]) || [],
+          slaLevel: (searchFilters.slaLevel as string[]) || [],
+          assignedTo: searchFilters.assignedTo || [],
+          requester: searchFilters.requester || [],
+          createdFrom: searchFilters.dateFrom || undefined,
+          createdTo: searchFilters.dateTo || undefined,
+          minResolutionTime: (searchFilters as { minResolutionHours?: number })
+            .minResolutionHours,
+          maxResolutionTime: (searchFilters as { maxResolutionHours?: number })
+            .maxResolutionHours,
+          minSlaBreachTime: (searchFilters as { minSlaBreachHours?: number })
+            .minSlaBreachHours,
+          maxSlaBreachTime: (searchFilters as { maxSlaBreachHours?: number })
+            .maxSlaBreachHours,
+        }}
         onSearch={advancedFilters => {
           const searchCriteria = {
             search: advancedFilters.query || '',
@@ -334,7 +379,7 @@ export default function MyTicketsPage() {
             maxResolutionHours: advancedFilters.maxResolutionTime,
             minSlaBreachHours: advancedFilters.minSlaBreachTime,
             maxSlaBreachHours: advancedFilters.maxSlaBreachTime,
-          } as any;
+          };
           updateFilters(searchCriteria);
           if (advancedFilters.query) {
             addRecentSearch(advancedFilters.query);
@@ -346,8 +391,13 @@ export default function MyTicketsPage() {
       <SimpleFiltersModal
         opened={simpleFiltersOpen}
         onClose={() => setSimpleFiltersOpen(false)}
+        initialFilters={{
+          status: (searchFilters.status as string[]) || [],
+          priority: (searchFilters.priority as string[]) || [],
+          category: (searchFilters.category as string[]) || [],
+        }}
         onApply={filters => {
-          updateFilters(filters as any);
+          updateFilters(filters);
           setCurrentPage(1);
         }}
       />

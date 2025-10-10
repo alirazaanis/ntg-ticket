@@ -21,7 +21,7 @@ import {
   IconAlertCircle,
   IconInfoCircle,
 } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
+import { showErrorNotification } from '@/lib/notifications';
 import { useTranslations } from 'next-intl';
 import { useAutoAssignSettings } from '../../hooks/useAutoAssignSettings';
 import { useCategories } from '../../hooks/useCategories';
@@ -163,11 +163,7 @@ export function TicketForm({
   const handleFileDrop = (acceptedFiles: File[]) => {
     const newFiles = [...files, ...acceptedFiles];
     if (newFiles.length > 10) {
-      notifications.show({
-        title: 'Too many files',
-        message: 'Maximum 10 files allowed',
-        color: 'red',
-      });
+      showErrorNotification('Too many files', 'Maximum 10 files allowed');
       return;
     }
     setFiles(newFiles);
@@ -186,11 +182,7 @@ export function TicketForm({
       };
       await onSubmit(formData);
     } catch (error) {
-      notifications.show({
-        title: t('error'),
-        message: tTickets('submitFailed'),
-        color: 'red',
-      });
+      showErrorNotification(t('error'), tTickets('submitFailed'));
     } finally {
       setIsSubmitting(false);
     }

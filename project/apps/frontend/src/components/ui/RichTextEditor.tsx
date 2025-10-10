@@ -60,7 +60,7 @@ import {
   MenuDropdown,
   useMantineTheme,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import { showErrorNotification } from '@/lib/notifications';
 
 interface RichTextEditorProps {
   value?: string;
@@ -285,11 +285,7 @@ export const RichTextEditorComponent: React.FC<RichTextEditorProps> = ({
         reader.readAsDataURL(file);
       }
     } catch (error) {
-      notifications.show({
-        title: 'Upload Error',
-        message: 'Failed to upload image',
-        color: 'red',
-      });
+      showErrorNotification('Upload Error', 'Failed to upload image');
     }
   };
 

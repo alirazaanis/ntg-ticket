@@ -36,7 +36,10 @@ import {
   validateStatusUpdate,
   statusTransitionRules,
 } from '../../lib/statusValidation';
-import { notifications } from '@mantine/notifications';
+import {
+  showSuccessNotification,
+  showErrorNotification,
+} from '@/lib/notifications';
 import { useTranslations } from 'next-intl';
 
 interface TicketCardProps {
@@ -118,11 +121,10 @@ export function TicketCard({
     );
 
     if (!validation.isValid) {
-      notifications.show({
-        title: 'Invalid Status Update',
-        message: validation.errorMessage,
-        color: 'red',
-      });
+      showErrorNotification(
+        'Invalid Status Update',
+        validation.errorMessage || 'Invalid status update'
+      );
       return;
     }
 
@@ -134,11 +136,10 @@ export function TicketCard({
         currentStatus: ticket.status,
       });
 
-      notifications.show({
-        title: 'Status Updated',
-        message: `Ticket #${ticket.ticketNumber} status updated to ${newStatus.replace('_', ' ')}`,
-        color: 'green',
-      });
+      showSuccessNotification(
+        'Status Updated',
+        `Ticket #${ticket.ticketNumber} status updated to ${newStatus.replace('_', ' ')}`
+      );
 
       // Call the parent callback if provided
       if (onStatusChange) {
@@ -148,12 +149,10 @@ export function TicketCard({
       setStatusModalOpened(false);
       setResolution('');
     } catch (error) {
-      notifications.show({
-        title: 'Update Failed',
-        message:
-          error instanceof Error ? error.message : 'Failed to update status',
-        color: 'red',
-      });
+      showErrorNotification(
+        'Update Failed',
+        error instanceof Error ? error.message : 'Failed to update status'
+      );
     }
   };
 

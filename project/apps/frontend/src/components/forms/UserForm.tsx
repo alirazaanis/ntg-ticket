@@ -13,7 +13,7 @@ import {
   Alert,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
+import { showErrorNotification } from '@/lib/notifications';
 import { usePasswordValidation } from '../../hooks/usePasswordValidation';
 
 import { UserFormData, User } from '../../types/unified';
@@ -80,11 +80,7 @@ export function UserForm({
       }
       await onSubmit(formData);
     } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to save user',
-        color: 'red',
-      });
+      showErrorNotification('Error', 'Failed to save user');
     } finally {
       setIsSubmitting(false);
     }

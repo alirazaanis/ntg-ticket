@@ -12,7 +12,6 @@ import {
   Group,
   Stack,
   Badge,
-  Modal,
   Tabs,
   Card,
   Avatar,
@@ -20,37 +19,24 @@ import {
   Loader,
 } from '@mantine/core';
 import {
-  IconPlus,
   IconSearch,
-  IconBell,
   IconClock,
   IconCheck,
   IconX,
   IconTrendingUp,
   IconTicket,
-  IconFileText,
 } from '@tabler/icons-react';
 import { useTickets } from '../../hooks/useTickets';
-import { useNotifications } from '../../hooks/useNotifications';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { DynamicTicketForm } from '../forms/DynamicTicketForm';
-import { TicketCard } from '../ui/TicketCard';
-import { NotificationList } from '../ui/NotificationList';
 import { Ticket } from '../../types/unified';
-import { Notification } from '../../types/notification';
 import { useRouter } from 'next/navigation';
 
 export function EndUserDashboard() {
   const t = useTranslations('dashboard');
-  const tCommon = useTranslations('common');
-  const tTickets = useTranslations('tickets');
-  const tReports = useTranslations('help');
-  const [createTicketOpened, setCreateTicketOpened] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuthStore();
   const router = useRouter();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
-  const { data: notifications } = useNotifications();
 
   const myTickets =
     tickets?.filter((ticket: Ticket) => ticket.requester.id === user?.id) || [];
@@ -112,12 +98,15 @@ export function EndUserDashboard() {
             </Title>
             <Text c='dimmed'>{t('subtitle')}</Text>
           </div>
-          <Button
-            leftSection={<IconPlus size={16} />}
-            onClick={() => setCreateTicketOpened(true)}
-          >
-            {t('createTicket')}
-          </Button>
+          <Group>
+            <Button
+              variant='outline'
+              leftSection={<IconSearch size={16} />}
+              onClick={() => router.push('/tickets')}
+            >
+              Search Tickets
+            </Button>
+          </Group>
         </Group>
 
         {/* Stats Cards */}
@@ -153,121 +142,36 @@ export function EndUserDashboard() {
               value='overview'
               leftSection={<IconTrendingUp size={16} />}
             >
-              {t('overview')}
-            </Tabs.Tab>
-            <Tabs.Tab value='tickets' leftSection={<IconTicket size={16} />}>
-              {t('myTickets')}
-            </Tabs.Tab>
-            <Tabs.Tab
-              value='notifications'
-              leftSection={<IconBell size={16} />}
-            >
-              {tCommon('notifications')}
+              Recent Activity
             </Tabs.Tab>
           </Tabs.List>
 
           <Tabs.Panel value='overview' pt='md'>
-            <Grid>
-              <Grid.Col span={{ base: 12, md: 8 }}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    {t('recentActivity')}
-                  </Title>
-                  <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                    {myTickets.slice(0, 5).map((ticket: Ticket) => (
-                      <Timeline.Item
-                        key={ticket.id}
-                        bullet={<IconTicket size={12} />}
-                        title={ticket.title}
-                      >
-                        <Text c='dimmed' size='sm'>
-                          {ticket.status} •{' '}
-                          {new Date(ticket.updatedAt).toLocaleDateString()}
-                        </Text>
-                        <Badge color='red' size='sm' mt={4}>
-                          {ticket.ticketNumber}
-                        </Badge>
-                      </Timeline.Item>
-                    ))}
-                  </Timeline>
-                </Paper>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 12, md: 4 }}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    {t('quickActions')}
-                  </Title>
-                  <Stack gap='sm'>
-                    <Button
-                      variant='light'
-                      leftSection={<IconPlus size={16} />}
-                      onClick={() => setCreateTicketOpened(true)}
-                    >
-                      {t('createTicket')}
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconSearch size={16} />}
-                      onClick={() => router.push('/tickets')}
-                    >
-                      {tTickets('searchTickets')}
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconFileText size={16} />}
-                    >
-                      {tReports('viewReports')}
-                    </Button>
-                  </Stack>
-                </Paper>
-              </Grid.Col>
-            </Grid>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='tickets' pt='md'>
-            <Stack gap='md'>
-              <Group justify='space-between'>
-                <Title order={3}>{t('myTickets')}</Title>
-                <Group>
-                  <Button
-                    variant='outline'
-                    leftSection={<IconTicket size={16} />}
-                    onClick={() => router.push('/tickets/my')}
+            <Paper withBorder p='md'>
+              <Title order={3} mb='md'>
+                {t('recentActivity')}
+              </Title>
+              <Timeline active={-1} bulletSize={24} lineWidth={2}>
+                {myTickets.slice(0, 5).map((ticket: Ticket) => (
+                  <Timeline.Item
+                    key={ticket.id}
+                    bullet={<IconTicket size={12} />}
+                    title={ticket.title}
                   >
-                    {t('viewAllTickets')}
-                  </Button>
-                </Group>
-              </Group>
-
-              <Grid>
-                {myTickets.map((ticket: Ticket) => (
-                  <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
-                    <TicketCard ticket={ticket} />
-                  </Grid.Col>
+                    <Text c='dimmed' size='sm'>
+                      {ticket.status} •{' '}
+                      {new Date(ticket.updatedAt).toLocaleDateString()}
+                    </Text>
+                    <Badge color='red' size='sm' mt={4}>
+                      {ticket.ticketNumber}
+                    </Badge>
+                  </Timeline.Item>
                 ))}
-              </Grid>
-            </Stack>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='notifications' pt='md'>
-            <NotificationList
-              notifications={(notifications as unknown as Notification[]) || []}
-            />
+              </Timeline>
+            </Paper>
           </Tabs.Panel>
         </Tabs>
       </Stack>
-
-      {/* Create Ticket Modal */}
-      <Modal
-        opened={createTicketOpened}
-        onClose={() => setCreateTicketOpened(false)}
-        title={t('createTicket')}
-        size='lg'
-        fullScreen
-      >
-        <DynamicTicketForm onSubmit={() => setCreateTicketOpened(false)} />
-      </Modal>
     </Container>
   );
 }

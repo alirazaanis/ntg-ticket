@@ -86,7 +86,9 @@ export function AdvancedSearchModal({
 }: AdvancedSearchModalProps) {
   const t = useTranslations('common');
   const tTickets = useTranslations('tickets');
-  const [activeFilters, setActiveFilters] = useState<Array<{ id: string; label: string }>>([]);
+  const [activeFilters, setActiveFilters] = useState<
+    Array<{ id: string; label: string }>
+  >([]);
 
   const { data: categories } = useCategories();
   const { data: users } = useUsers();
@@ -117,25 +119,89 @@ export function AdvancedSearchModal({
     },
   });
 
+  // Update form values when modal opens with new initialCriteria
+  useEffect(() => {
+    if (opened) {
+      form.setValues({
+        query: initialCriteria.query || '',
+        status: initialCriteria.status || [],
+        priority: initialCriteria.priority || [],
+        category: initialCriteria.category || [],
+        subcategory: initialCriteria.subcategory || [],
+        impact: initialCriteria.impact || [],
+        urgency: initialCriteria.urgency || [],
+        slaLevel: initialCriteria.slaLevel || [],
+        requester: initialCriteria.requester || [],
+        assignedTo: initialCriteria.assignedTo || [],
+        createdFrom: initialCriteria.createdFrom,
+        createdTo: initialCriteria.createdTo,
+        dueFrom: initialCriteria.dueFrom,
+        dueTo: initialCriteria.dueTo,
+        updatedFrom: initialCriteria.updatedFrom,
+        updatedTo: initialCriteria.updatedTo,
+        minResolutionTime: initialCriteria.minResolutionTime,
+        maxResolutionTime: initialCriteria.maxResolutionTime,
+        minSlaBreachTime: initialCriteria.minSlaBreachTime,
+        maxSlaBreachTime: initialCriteria.maxSlaBreachTime,
+        customFields: initialCriteria.customFields || {},
+      });
+    }
+  }, [opened, initialCriteria, form]);
+
   // Update active filters when form values change
   useEffect(() => {
     const filters: Array<{ id: string; label: string }> = [];
     const values = form.values;
     if (values.query) filters.push({ id: 'query', label: 'Search Query' });
-    if (values.status?.length) filters.push({ id: 'status', label: `${values.status.length} Status` });
-    if (values.priority?.length) filters.push({ id: 'priority', label: `${values.priority.length} Priority` });
-    if (values.category?.length) filters.push({ id: 'category', label: `${values.category.length} Category` });
-    if (values.subcategory?.length) filters.push({ id: 'subcategory', label: `${values.subcategory.length} Subcategory` });
-    if (values.impact?.length) filters.push({ id: 'impact', label: `${values.impact.length} Impact` });
-    if (values.urgency?.length) filters.push({ id: 'urgency', label: `${values.urgency.length} Urgency` });
-    if (values.slaLevel?.length) filters.push({ id: 'slaLevel', label: `${values.slaLevel.length} SLA Level` });
-    if (values.requester?.length) filters.push({ id: 'requester', label: `${values.requester.length} Requester` });
-    if (values.assignedTo?.length) filters.push({ id: 'assignedTo', label: `${values.assignedTo.length} Assignee` });
-    if (values.createdFrom || values.createdTo) filters.push({ id: 'createdDate', label: 'Created Date' });
-    if (values.dueFrom || values.dueTo) filters.push({ id: 'dueDate', label: 'Due Date' });
-    if (values.updatedFrom || values.updatedTo) filters.push({ id: 'updatedDate', label: 'Updated Date' });
-    if (values.minResolutionTime || values.maxResolutionTime) filters.push({ id: 'resolutionTime', label: 'Resolution Time' });
-    if (values.minSlaBreachTime || values.maxSlaBreachTime) filters.push({ id: 'slaBreachTime', label: 'SLA Breach Duration' });
+    if (values.status?.length)
+      filters.push({ id: 'status', label: `${values.status.length} Status` });
+    if (values.priority?.length)
+      filters.push({
+        id: 'priority',
+        label: `${values.priority.length} Priority`,
+      });
+    if (values.category?.length)
+      filters.push({
+        id: 'category',
+        label: `${values.category.length} Category`,
+      });
+    if (values.subcategory?.length)
+      filters.push({
+        id: 'subcategory',
+        label: `${values.subcategory.length} Subcategory`,
+      });
+    if (values.impact?.length)
+      filters.push({ id: 'impact', label: `${values.impact.length} Impact` });
+    if (values.urgency?.length)
+      filters.push({
+        id: 'urgency',
+        label: `${values.urgency.length} Urgency`,
+      });
+    if (values.slaLevel?.length)
+      filters.push({
+        id: 'slaLevel',
+        label: `${values.slaLevel.length} SLA Level`,
+      });
+    if (values.requester?.length)
+      filters.push({
+        id: 'requester',
+        label: `${values.requester.length} Requester`,
+      });
+    if (values.assignedTo?.length)
+      filters.push({
+        id: 'assignedTo',
+        label: `${values.assignedTo.length} Assignee`,
+      });
+    if (values.createdFrom || values.createdTo)
+      filters.push({ id: 'createdDate', label: 'Created Date' });
+    if (values.dueFrom || values.dueTo)
+      filters.push({ id: 'dueDate', label: 'Due Date' });
+    if (values.updatedFrom || values.updatedTo)
+      filters.push({ id: 'updatedDate', label: 'Updated Date' });
+    if (values.minResolutionTime || values.maxResolutionTime)
+      filters.push({ id: 'resolutionTime', label: 'Resolution Time' });
+    if (values.minSlaBreachTime || values.maxSlaBreachTime)
+      filters.push({ id: 'slaBreachTime', label: 'SLA Breach Duration' });
 
     setActiveFilters(filters);
   }, [form.values]);
@@ -153,11 +219,6 @@ export function AdvancedSearchModal({
 
     onSearch(cleanValues as AdvancedSearchCriteria);
     onClose();
-  };
-
-  const handleClear = () => {
-    form.reset();
-    setActiveFilters([]);
   };
 
   const removeFilter = (filterId: string) => {
@@ -300,14 +361,6 @@ export function AdvancedSearchModal({
                 <Text size='sm' fw={500} c='blue.7'>
                   {t('activeFilters')} ({activeFilters.length})
                 </Text>
-                <Button
-                  variant='subtle'
-                  size='xs'
-                  color='red'
-                  onClick={handleClear}
-                >
-                  {t('clearAll')}
-                </Button>
               </Group>
               <Group gap='xs'>
                 {activeFilters.map(filter => (
@@ -567,9 +620,6 @@ export function AdvancedSearchModal({
           <Group justify='flex-end' mt='md'>
             <Button variant='outline' onClick={onClose}>
               {t('cancel')}
-            </Button>
-            <Button variant='outline' onClick={handleClear}>
-              {t('clear')}
             </Button>
             <Button type='submit' leftSection={<IconSearch size={16} />}>
               {t('search')}

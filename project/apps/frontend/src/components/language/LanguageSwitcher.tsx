@@ -9,8 +9,8 @@ import { useRTL } from '../../hooks/useRTL';
 import { useRouter } from 'next/navigation';
 
 const languages: Array<{ code: string; name: string; flag: string }> = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+  { code: 'en', name: 'US English', flag: '🇺🇸' },
+  // { code: 'ar', name: 'العربية', flag: '🇸🇦' }, // Temporarily hidden until Arabic support is complete
 ];
 
 export function LanguageSwitcher() {
@@ -45,10 +45,7 @@ export function LanguageSwitcher() {
         rightSection={<RTLChevronDown size={16} />}
         style={{ minWidth: 120 }}
       >
-        <Group gap='xs'>
-          <Text size='sm'>🇺🇸</Text>
-          <Text size='sm'>English</Text>
-        </Group>
+        <Text size='sm'>US English</Text>
       </Button>
     );
   }
@@ -74,10 +71,7 @@ export function LanguageSwitcher() {
               minWidth: 120,
             }}
           >
-            <Group gap='xs'>
-              <Text size='sm'>{currentLanguage.flag}</Text>
-              <Text size='sm'>{currentLanguage.name}</Text>
-            </Group>
+            <Text size='sm'>{currentLanguage.name}</Text>
           </Button>
         </Menu.Target>
 

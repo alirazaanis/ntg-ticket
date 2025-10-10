@@ -15,13 +15,11 @@ import {
   Pagination,
   Loader,
   Alert,
-  Tabs,
   ActionIcon,
   Menu,
   Modal,
 } from '@mantine/core';
 import {
-  IconPlus,
   IconFilter,
   IconDots,
   IconEdit,
@@ -35,7 +33,6 @@ import {
 } from '@tabler/icons-react';
 import {
   useTicketsWithPagination,
-  useAllTicketsForCounting,
   useTotalTicketsCount,
   useDeleteTicket,
 } from '../../hooks/useTickets';
@@ -47,7 +44,10 @@ import {
   TicketFilters,
 } from '../../types/unified';
 import { useRouter } from 'next/navigation';
-import { notifications } from '@mantine/notifications';
+import {
+  showSuccessNotification,
+  showErrorNotification,
+} from '@/lib/notifications';
 import { AdvancedSearchModal } from '../../components/search/AdvancedSearchModal';
 import { SimpleFiltersModal } from '../../components/forms/SimpleFiltersModal';
 import { SearchBar } from '../../components/search/SearchBar';
@@ -77,9 +77,8 @@ const priorityColors: Record<TicketPriority, string> = {
 export default function TicketsPage() {
   const t = useTranslations('tickets');
   const router = useRouter();
-  const { user } = useAuthStore();
+  const {} = useAuthStore();
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<string | null>('all');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
@@ -110,34 +109,26 @@ export default function TicketsPage() {
   } = useBulkOperations();
 
   const searchQuery = getSearchQuery() as TicketFilters;
+
+  // Check if we need client-side filtering (resolution time or SLA breach time)
+  const needsClientSideFiltering =
+    typeof searchFilters.minResolutionHours === 'number' ||
+    typeof searchFilters.maxResolutionHours === 'number' ||
+    typeof searchFilters.minSlaBreachHours === 'number' ||
+    typeof searchFilters.maxSlaBreachHours === 'number';
+
   const ticketsQuery = {
     ...searchQuery,
-    page: currentPage,
-    limit: PAGINATION_CONFIG.DEFAULT_PAGE_SIZE, // 2 tickets per page
-    // Add activeTab filter for backend filtering
-    ...(activeTab === 'my' && { requesterId: [user?.id] }),
-    ...(activeTab === 'assigned' && { assignedToId: [user?.id] }),
-    ...(activeTab === 'open' && {
-      status: ['NEW', 'OPEN', 'IN_PROGRESS'] as TicketStatus[],
-    }),
-    ...(activeTab === 'onhold' && {
-      status: ['ON_HOLD'] as TicketStatus[],
-    }),
-    // Note: Overdue filtering is handled client-side since backend doesn't support dueDate filtering
-    // ...(activeTab === 'overdue' && {
-    //   status: [...STATUS_FILTERS.ACTIVE] as TicketStatus[],
-    // }),
+    page: needsClientSideFiltering ? 1 : currentPage,
+    limit: needsClientSideFiltering
+      ? 1000
+      : PAGINATION_CONFIG.DEFAULT_PAGE_SIZE, // Fetch more tickets for client-side filtering
   };
 
   // Reset to page 1 when search filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery.search, activeTab]);
-
-  // Clear selection when switching tabs
-  React.useEffect(() => {
-    clearSelection();
-  }, [activeTab, clearSelection]);
+  }, [searchQuery.search]);
 
   // Clear selection when switching pages
   React.useEffect(() => {
@@ -151,21 +142,21 @@ export default function TicketsPage() {
     isFetching,
   } = useTicketsWithPagination(ticketsQuery);
 
-  // Get all tickets for counting (without pagination)
-  const { data: allTicketsForCounting } = useAllTicketsForCounting(searchQuery);
-
   // Get total count of all tickets (no filters)
   const { data: totalTicketsCount } = useTotalTicketsCount();
 
   // Extract tickets and pagination from the response
   const tickets = ticketsData?.tickets || [];
   const pagination = ticketsData?.pagination;
-  const allTickets = allTicketsForCounting || [];
 
   const deleteTicketMutation = useDeleteTicket();
 
-  const handleCreateTicket = () => {
-    router.push('/tickets/create');
+  // Custom clear filters function that also resets modal state
+  const handleClearFilters = () => {
+    clearFilters();
+    // Close any open modals so they reopen with cleared state
+    setAdvancedSearchOpen(false);
+    setSimpleFiltersOpen(false);
   };
 
   const handleViewTicket = (ticketId: string) => {
@@ -179,32 +170,70 @@ export default function TicketsPage() {
   const handleDeleteTicket = async (ticketId: string) => {
     try {
       await deleteTicketMutation.mutateAsync(ticketId);
-      notifications.show({
-        title: 'Success',
-        message: 'Ticket deleted successfully',
-        color: 'green',
-      });
+      showSuccessNotification('Success', 'Ticket deleted successfully');
       setDeleteModalOpen(false);
     } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to delete ticket',
-        color: 'red',
-      });
+      showErrorNotification('Error', 'Failed to delete ticket');
     }
   };
 
-  // Backend handles filtering and pagination, but overdue needs client-side filtering
-  let filteredTickets = tickets;
+  // Backend handles most filtering and pagination, but we need client-side filtering for resolution time and SLA breach time
+  let allFilteredTickets = tickets;
 
-  // Client-side filtering for overdue tickets
-  if (activeTab === 'overdue') {
-    filteredTickets = tickets.filter(
-      ticket =>
-        ticket.dueDate &&
-        new Date(ticket.dueDate) < new Date() &&
-        !['RESOLVED', 'CLOSED'].includes(ticket.status)
-    );
+  // Client-side filters for resolution time (in hours)
+  if (
+    typeof searchFilters.minResolutionHours === 'number' ||
+    typeof searchFilters.maxResolutionHours === 'number'
+  ) {
+    const minH = searchFilters.minResolutionHours ?? 0;
+    const maxH = searchFilters.maxResolutionHours ?? Number.POSITIVE_INFINITY;
+    allFilteredTickets = allFilteredTickets.filter(t => {
+      // Only include CLOSED tickets when filtering by resolution time
+      if (t.status !== 'CLOSED') return false;
+      const hours =
+        typeof t.resolutionTime === 'number' ? t.resolutionTime : undefined;
+      if (typeof hours !== 'number') return false;
+      return hours >= minH && hours <= maxH;
+    });
+  }
+
+  // Client-side filters for SLA breach time (in hours)
+  if (
+    typeof searchFilters.minSlaBreachHours === 'number' ||
+    typeof searchFilters.maxSlaBreachHours === 'number'
+  ) {
+    const minB = searchFilters.minSlaBreachHours ?? 0;
+    const maxB = searchFilters.maxSlaBreachHours ?? Number.POSITIVE_INFINITY;
+    allFilteredTickets = allFilteredTickets.filter(t => {
+      // Only include CLOSED tickets when filtering by SLA breach time
+      if (t.status !== 'CLOSED') return false;
+      if (!t.closedAt || !t.dueDate) return false;
+      const breachHours =
+        (new Date(t.closedAt).getTime() - new Date(t.dueDate).getTime()) /
+        (1000 * 60 * 60);
+      return breachHours >= minB && breachHours <= maxB;
+    });
+  }
+
+  // Apply client-side pagination if we did client-side filtering
+  let filteredTickets = allFilteredTickets;
+  let clientSidePagination = null;
+
+  if (needsClientSideFiltering) {
+    const pageSize = PAGINATION_CONFIG.DEFAULT_PAGE_SIZE;
+    const totalFilteredTickets = allFilteredTickets.length;
+    const totalPages = Math.ceil(totalFilteredTickets / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+
+    filteredTickets = allFilteredTickets.slice(startIndex, endIndex);
+
+    clientSidePagination = {
+      page: currentPage,
+      limit: pageSize,
+      total: totalFilteredTickets,
+      totalPages: totalPages,
+    };
   }
 
   if (isLoading) {
@@ -234,56 +263,17 @@ export default function TicketsPage() {
         <div>
           <Title order={1}>{t('title')}</Title>
           <Text c='dimmed'>Manage and track support tickets</Text>
+          {hasActiveFilters() && (
+            <Text size='sm' c='blue' mt='xs'>
+              Showing {filteredTickets.length} of{' '}
+              {needsClientSideFiltering
+                ? allFilteredTickets.length
+                : totalTicketsCount || 0}{' '}
+              tickets
+            </Text>
+          )}
         </div>
-        <Button
-          leftSection={<IconPlus size={16} />}
-          onClick={handleCreateTicket}
-        >
-          {t('createTicket')}
-        </Button>
       </Group>
-
-      <Tabs value={activeTab} onChange={setActiveTab} mb='md'>
-        <Tabs.List>
-          <Tabs.Tab value='all'>
-            {t('allTickets')} (
-            {hasActiveFilters()
-              ? pagination?.total || 0
-              : totalTicketsCount || 0}
-            )
-          </Tabs.Tab>
-          <Tabs.Tab value='my'>
-            {t('myTickets')} (
-            {allTickets?.filter(t => t.requester?.id === user?.id).length || 0})
-          </Tabs.Tab>
-          <Tabs.Tab value='assigned'>
-            {t('assignedTickets')} (
-            {allTickets?.filter(t => t.assignedTo?.id === user?.id).length || 0}
-            )
-          </Tabs.Tab>
-          <Tabs.Tab value='open'>
-            {t('openTickets')} (
-            {allTickets?.filter(t =>
-              ['NEW', 'OPEN', 'IN_PROGRESS'].includes(t.status)
-            ).length || 0}
-            )
-          </Tabs.Tab>
-          <Tabs.Tab value='onhold'>
-            {t('on_hold')} (
-            {allTickets?.filter(t => t.status === 'ON_HOLD').length || 0})
-          </Tabs.Tab>
-          <Tabs.Tab value='overdue'>
-            {t('overdueTickets')} (
-            {allTickets?.filter(
-              t =>
-                t.dueDate &&
-                new Date(t.dueDate) < new Date() &&
-                !['RESOLVED', 'CLOSED'].includes(t.status)
-            ).length || 0}
-            )
-          </Tabs.Tab>
-        </Tabs.List>
-      </Tabs>
 
       <Grid mb='md'>
         <Grid.Col span={{ base: 12, md: 6 }}>
@@ -322,7 +312,7 @@ export default function TicketsPage() {
               variant='outline'
               leftSection={<IconX size={16} />}
               fullWidth
-              onClick={clearFilters}
+              onClick={handleClearFilters}
             >
               Clear Filters
             </Button>
@@ -475,23 +465,21 @@ export default function TicketsPage() {
               No tickets found
             </Text>
             <Text c='dimmed' ta='center'>
-              {activeTab === 'all'
-                ? 'No tickets match your current filters.'
-                : `No ${activeTab} tickets found.`}
+              No tickets match your current filters.
             </Text>
-            <Button onClick={handleCreateTicket}>
-              Create your first ticket
-            </Button>
           </Stack>
         </Card>
       )}
 
-      {(pagination?.totalPages || 0) > 1 && (
+      {(clientSidePagination?.totalPages || pagination?.totalPages || 0) >
+        1 && (
         <Group justify='center' mt='xl'>
           <Pagination
             value={currentPage}
             onChange={setCurrentPage}
-            total={pagination?.totalPages || 1}
+            total={
+              clientSidePagination?.totalPages || pagination?.totalPages || 1
+            }
           />
         </Group>
       )}
@@ -524,6 +512,27 @@ export default function TicketsPage() {
       <AdvancedSearchModal
         opened={advancedSearchOpen}
         onClose={() => setAdvancedSearchOpen(false)}
+        initialCriteria={{
+          query: searchFilters.search || '',
+          status: (searchFilters.status as string[]) || [],
+          priority: (searchFilters.priority as string[]) || [],
+          category: (searchFilters.category as string[]) || [],
+          impact: (searchFilters.impact as string[]) || [],
+          urgency: (searchFilters.urgency as string[]) || [],
+          slaLevel: (searchFilters.slaLevel as string[]) || [],
+          assignedTo: searchFilters.assignedTo || [],
+          requester: searchFilters.requester || [],
+          createdFrom: searchFilters.dateFrom || undefined,
+          createdTo: searchFilters.dateTo || undefined,
+          minResolutionTime: (searchFilters as { minResolutionHours?: number })
+            .minResolutionHours,
+          maxResolutionTime: (searchFilters as { maxResolutionHours?: number })
+            .maxResolutionHours,
+          minSlaBreachTime: (searchFilters as { minSlaBreachHours?: number })
+            .minSlaBreachHours,
+          maxSlaBreachTime: (searchFilters as { maxSlaBreachHours?: number })
+            .maxSlaBreachHours,
+        }}
         onSearch={advancedFilters => {
           // Map AdvancedSearchCriteria to SearchCriteria format
           const searchCriteria = {
@@ -538,6 +547,10 @@ export default function TicketsPage() {
             requester: advancedFilters.requester || [],
             dateFrom: advancedFilters.createdFrom || null,
             dateTo: advancedFilters.createdTo || null,
+            minResolutionHours: advancedFilters.minResolutionTime,
+            maxResolutionHours: advancedFilters.maxResolutionTime,
+            minSlaBreachHours: advancedFilters.minSlaBreachTime,
+            maxSlaBreachHours: advancedFilters.maxSlaBreachTime,
             tags: [],
             customFields: advancedFilters.customFields || {},
           };
@@ -551,6 +564,11 @@ export default function TicketsPage() {
       <SimpleFiltersModal
         opened={simpleFiltersOpen}
         onClose={() => setSimpleFiltersOpen(false)}
+        initialFilters={{
+          status: (searchFilters.status as string[]) || [],
+          priority: (searchFilters.priority as string[]) || [],
+          category: (searchFilters.category as string[]) || [],
+        }}
         onApply={filters => {
           updateFilters(filters);
         }}

@@ -1,5 +1,9 @@
 import { useState, useCallback } from 'react';
-import { notifications } from '@mantine/notifications';
+import {
+  showSuccessNotification,
+  showErrorNotification,
+  showWarningNotification,
+} from '@/lib/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { ticketApi, notificationsApi } from '../lib/apiClient';
 import { BulkUpdateData, TicketPriority } from '../types/unified';
@@ -110,19 +114,17 @@ export const useBulkOperations = () => {
         ).length;
 
         if (successful > 0) {
-          notifications.show({
-            title: 'Bulk Operation Successful',
-            message: `${successful} tickets updated successfully`,
-            color: 'green',
-          });
+          showSuccessNotification(
+            'Bulk Operation Successful',
+            `${successful} tickets updated successfully`
+          );
         }
 
         if (failed > 0) {
-          notifications.show({
-            title: 'Some Operations Failed',
-            message: `${failed} tickets could not be updated`,
-            color: 'orange',
-          });
+          showWarningNotification(
+            'Some Operations Failed',
+            `${failed} tickets could not be updated`
+          );
         }
 
         // Invalidate queries to refresh the ticket list
@@ -148,13 +150,11 @@ export const useBulkOperations = () => {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
-        notifications.show({
-          title: 'Bulk Operation Failed',
-          message:
-            'An error occurred while processing the bulk operation' +
-            errorMessage,
-          color: 'red',
-        });
+        showErrorNotification(
+          'Bulk Operation Failed',
+          'An error occurred while processing the bulk operation: ' +
+            errorMessage
+        );
       } finally {
         setIsProcessing(false);
       }

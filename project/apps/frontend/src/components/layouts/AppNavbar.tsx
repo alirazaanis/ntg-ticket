@@ -6,12 +6,10 @@ import {
   Stack,
   Text,
   Divider,
-  Group,
   Badge,
   ScrollArea,
   Collapse,
   Button,
-  useMantineTheme,
 } from '@mantine/core';
 import {
   IconDashboard,
@@ -28,10 +26,10 @@ import {
   IconShield,
   IconDatabase,
   IconHistory,
-  IconActivity,
   IconSearch,
   IconClock,
   IconExclamationMark,
+  IconPlug,
 } from '@tabler/icons-react';
 import { RTLChevronDown, RTLChevronRight } from '../ui/RTLIcon';
 import { useAuthStore } from '../../stores/useAuthStore';
@@ -40,7 +38,7 @@ import { useNotificationsStore } from '../../stores/useNotificationsStore';
 import { useRouter, usePathname } from 'next/navigation';
 import { Ticket } from '../../types/unified';
 import { ComponentType } from 'react';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 import { useTranslations } from 'next-intl';
 
 interface AppNavbarProps {
@@ -55,15 +53,12 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, hasRole, hasAnyRole } = useAuthStore();
-  const { tickets, isLoading } = useTicketsStore();
+  const { tickets } = useTicketsStore();
   const { unreadCount } = useNotificationsStore();
-  const theme = useMantineTheme();
-  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
 
   // Navigation state for collapsible sections
   const [adminExpanded, { toggle: toggleAdmin }] = useDisclosure(false); // Start collapsed
   const [ticketsExpanded, { toggle: toggleTickets }] = useDisclosure(true); // Start expanded
-  const [statsExpanded, { toggle: toggleStats }] = useDisclosure(true); // Start expanded
 
   // Defensive programming: ensure tickets is always an array
   const safeTickets = Array.isArray(tickets) ? tickets : [];
@@ -74,16 +69,6 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   const assignedTickets = user
     ? safeTickets.filter((t: Ticket) => t.assignedTo?.id === user.id)
     : [];
-  const openTickets = safeTickets.filter((t: Ticket) =>
-    ['NEW', 'OPEN', 'IN_PROGRESS'].includes(t.status)
-  );
-  const overdueTickets = safeTickets.filter((t: Ticket) => {
-    if (!t.dueDate) return false;
-    return (
-      new Date(t.dueDate) < new Date() &&
-      !['RESOLVED', 'CLOSED'].includes(t.status)
-    );
-  });
   const slaBreachedTickets = safeTickets.filter((t: Ticket) => {
     if (!t.dueDate) return false;
     return (
@@ -155,7 +140,13 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       icon: IconClock,
       href: '/tickets/overdue',
       show: hasAnyRole(['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN']),
-      badge: overdueTickets.length,
+      badge: safeTickets.filter((t: Ticket) => {
+        if (!t.dueDate) return false;
+        return (
+          new Date(t.dueDate) < new Date() &&
+          !['RESOLVED', 'CLOSED'].includes(t.status)
+        );
+      }).length,
     },
     {
       label: tTickets('slaBreached'),
@@ -185,12 +176,6 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       icon: IconUsers,
       href: '/admin/users',
       show: hasAnyRole(['SUPPORT_MANAGER', 'ADMIN']),
-    },
-    {
-      label: tAdmin('systemSettings'),
-      icon: IconSettings,
-      href: '/admin/settings',
-      show: hasRole('ADMIN'),
     },
     {
       label: tAdmin('title'),
@@ -248,12 +233,6 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
     },
     // System Management
     {
-      label: t('monitoring'),
-      icon: IconActivity,
-      href: '/admin/monitoring',
-      show: hasRole('ADMIN'),
-    },
-    {
       label: t('backups'),
       icon: IconDatabase,
       href: '/admin/backups',
@@ -265,10 +244,34 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       href: '/admin/elasticsearch',
       show: hasRole('ADMIN'),
     },
+    // Administration Features
+    {
+      label: 'Integrations',
+      icon: IconPlug,
+      href: '/admin/integrations',
+      show: hasRole('ADMIN'),
+    },
+    {
+      label: 'Permissions',
+      icon: IconShield,
+      href: '/admin/permissions',
+      show: hasRole('ADMIN'),
+    },
+    {
+      label: 'Audit Logs',
+      icon: IconFileText,
+      href: '/admin/audit-logs',
+      show: hasRole('ADMIN'),
+    },
   ];
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + '/');
+  const isActive = (href: string) => {
+    // Special handling for /tickets to avoid highlighting when on sub-pages
+    if (href === '/tickets') {
+      return pathname === '/tickets';
+    }
+    return pathname === href || pathname.startsWith(href + '/');
+  };
 
   // Helper function to render navigation items
   const renderNavItems = (
@@ -335,50 +338,6 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
               <Collapse in={ticketsExpanded}>
                 <Stack gap='xs' pl='md'>
                   {renderNavItems(ticketItems, 'orange')}
-                </Stack>
-              </Collapse>
-            </>
-          )}
-
-          {/* Quick Stats - Collapsible on all devices */}
-          {!isMobile && (
-            <>
-              <Divider my='sm' />
-              <Button
-                variant='subtle'
-                leftSection={
-                  statsExpanded ? (
-                    <RTLChevronDown size={14} />
-                  ) : (
-                    <RTLChevronRight size={14} />
-                  )
-                }
-                onClick={toggleStats}
-                size='sm'
-                justify='flex-start'
-                fullWidth
-              >
-                {t('quickStats')}
-              </Button>
-              <Collapse in={statsExpanded}>
-                <Stack gap='xs' pl='md'>
-                  <Group justify='space-between' px='xs'>
-                    <Text size='sm' c='dimmed'>
-                      {tTickets('openTickets')}
-                    </Text>
-                    <Badge size='sm' color='red' variant='light'>
-                      {isLoading ? '...' : openTickets.length}
-                    </Badge>
-                  </Group>
-
-                  <Group justify='space-between' px='xs'>
-                    <Text size='sm' c='dimmed'>
-                      {tTickets('overdueTickets')}
-                    </Text>
-                    <Badge size='sm' color='red' variant='light'>
-                      {isLoading ? '...' : overdueTickets.length}
-                    </Badge>
-                  </Group>
                 </Stack>
               </Collapse>
             </>

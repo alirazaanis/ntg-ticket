@@ -15,7 +15,7 @@ import {
   Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
+import { showErrorNotification } from '@/lib/notifications';
 
 // System settings interface
 export interface SystemSettings {
@@ -124,11 +124,7 @@ export function SystemSettingsForm({
     try {
       await onSubmit(values);
     } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to save system settings',
-        color: 'red',
-      });
+      showErrorNotification('Error', 'Failed to save system settings');
     } finally {
       setIsSubmitting(false);
     }

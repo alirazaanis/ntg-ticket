@@ -36,7 +36,7 @@ import {
   useElasticsearchAggregations,
   useElasticsearchHealth,
 } from '../../hooks/useElasticsearch';
-import { notifications } from '@mantine/notifications';
+import { showErrorNotification } from '@/lib/notifications';
 import { DatePickerInput } from '@mantine/dates';
 import { Ticket } from '../../types/unified';
 
@@ -127,11 +127,7 @@ export function AdvancedSearch() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      notifications.show({
-        title: 'Error',
-        message: 'Please enter a search query',
-        color: 'red',
-      });
+      showErrorNotification('Error', 'Please enter a search query');
       return;
     }
 
@@ -173,11 +169,7 @@ export function AdvancedSearch() {
       setSearchResults(searchResults);
       setShowSuggestions(false);
     } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Search failed',
-        color: 'red',
-      });
+      showErrorNotification('Error', 'Search failed');
     }
   };
 

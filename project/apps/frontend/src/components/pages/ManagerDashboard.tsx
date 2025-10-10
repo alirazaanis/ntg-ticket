@@ -12,27 +12,24 @@ import {
   Stack,
   Badge,
   ActionIcon,
-  TextInput,
   Tabs,
   Card,
   Avatar,
   Timeline,
-  Alert,
   Loader,
   Table,
   RingProgress,
 } from '@mantine/core';
 import { AreaChart, BarChart } from '@mantine/charts';
 import {
-  IconPlus,
   IconSearch,
   IconClock,
   IconCheck,
   IconAlertCircle,
+  IconAlertTriangle,
   IconTrendingUp,
   IconUsers,
   IconTicket,
-  IconFileText,
   IconEye,
   IconEdit,
   IconChartBar,
@@ -41,9 +38,9 @@ import {
 import {
   useTotalTicketsCount,
   useAllTicketsForCounting,
+  useBreachedSLATickets,
 } from '../../hooks/useTickets';
 import { useTicketReport } from '../../hooks/useReports';
-import { TicketCard } from '../ui/TicketCard';
 import { Ticket } from '../../types/unified';
 import { TeamPerformanceData } from '../../lib/apiClient';
 import { useTranslations } from 'next-intl';
@@ -56,7 +53,8 @@ export function ManagerDashboard() {
   const { data: totalTicketsCount } = useTotalTicketsCount();
   const { data: allTicketsForStats, isLoading: ticketsLoading } =
     useAllTicketsForCounting();
-  const { data: reportData } = useTicketReport();
+  const { data: reportData, isLoading: reportLoading } = useTicketReport();
+  const { data: slaBreachedTickets } = useBreachedSLATickets();
   const openTickets =
     allTicketsForStats?.filter((ticket: Ticket) =>
       ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
@@ -77,13 +75,13 @@ export function ManagerDashboard() {
 
   const stats = [
     {
-      title: t('totalTickets'),
+      title: 'Total',
       value: totalTicketsCount || 0,
       icon: IconTicket,
       color: 'red',
     },
     {
-      title: t('openTickets'),
+      title: 'Open',
       value: openTickets.length,
       icon: IconClock,
       color: 'orange',
@@ -98,6 +96,12 @@ export function ManagerDashboard() {
       title: t('overdueTickets'),
       value: overdueTickets.length,
       icon: IconAlertCircle,
+      color: 'red',
+    },
+    {
+      title: 'SLA Breached',
+      value: slaBreachedTickets?.length || 0,
+      icon: IconAlertTriangle,
       color: 'red',
     },
   ];
@@ -150,27 +154,32 @@ export function ManagerDashboard() {
         </Group>
 
         {/* Stats Cards */}
-        <Grid>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            width: '100%',
+          }}
+        >
           {stats.map(stat => (
-            <Grid.Col key={stat.title} span={{ base: 12, sm: 6, md: 3 }}>
-              <Card withBorder>
-                <Group>
-                  <Avatar color={stat.color} size='lg'>
-                    <stat.icon size={24} />
-                  </Avatar>
-                  <div>
-                    <Text size='lg' fw={600}>
-                      {stat.value}
-                    </Text>
-                    <Text size='sm' c='dimmed'>
-                      {stat.title}
-                    </Text>
-                  </div>
-                </Group>
-              </Card>
-            </Grid.Col>
+            <Card key={stat.title} withBorder style={{ height: '100%' }} p='md'>
+              <Group style={{ height: '100%' }}>
+                <Avatar color={stat.color} size='lg'>
+                  <stat.icon size={24} />
+                </Avatar>
+                <div style={{ flex: 1 }}>
+                  <Text size='lg' fw={600}>
+                    {stat.value}
+                  </Text>
+                  <Text size='sm' c='dimmed'>
+                    {stat.title}
+                  </Text>
+                </div>
+              </Group>
+            </Card>
           ))}
-        </Grid>
+        </div>
 
         {/* Performance Metrics */}
         <Grid>
@@ -209,23 +218,36 @@ export function ManagerDashboard() {
                     <Text size='sm' c='dimmed' mb={4}>
                       Resolution Time
                     </Text>
-                    <RingProgress
-                      size={120}
-                      thickness={12}
-                      sections={[
-                        {
-                          value: reportData?.slaMetrics?.resolutionTime || 0,
-                          color: 'orange',
-                        },
-                      ]}
-                      label={
-                        <Text ta='center' fw={700} size='lg'>
-                          {reportData?.slaMetrics?.resolutionTime
-                            ? `${reportData.slaMetrics.resolutionTime}%`
-                            : 'Loading...'}
-                        </Text>
-                      }
-                    />
+                    {reportLoading ? (
+                      <div
+                        style={{
+                          height: 120,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Loader size='sm' />
+                      </div>
+                    ) : (
+                      <RingProgress
+                        size={120}
+                        thickness={12}
+                        sections={[
+                          {
+                            value: reportData?.slaMetrics?.resolutionTime || 0,
+                            color: 'orange',
+                          },
+                        ]}
+                        label={
+                          <Text ta='center' fw={700} size='lg'>
+                            {reportData?.slaMetrics?.resolutionTime
+                              ? `${reportData.slaMetrics.resolutionTime}%`
+                              : '0%'}
+                          </Text>
+                        }
+                      />
+                    )}
                   </div>
                 </Grid.Col>
               </Grid>
@@ -299,16 +321,7 @@ export function ManagerDashboard() {
               value='overview'
               leftSection={<IconTrendingUp size={16} />}
             >
-              Overview
-            </Tabs.Tab>
-            <Tabs.Tab value='tickets' leftSection={<IconTicket size={16} />}>
-              All Tickets
-            </Tabs.Tab>
-            <Tabs.Tab
-              value='overdue'
-              leftSection={<IconAlertCircle size={16} />}
-            >
-              Overdue Tickets
+              Recent Activity
             </Tabs.Tab>
             <Tabs.Tab value='team' leftSection={<IconUsers size={16} />}>
               Team Performance
@@ -320,7 +333,7 @@ export function ManagerDashboard() {
 
           <Tabs.Panel value='overview' pt='md'>
             <Grid>
-              <Grid.Col span={{ base: 12, md: 8 }}>
+              <Grid.Col span={12}>
                 <Paper withBorder p='md'>
                   <Title order={3} mb='md'>
                     Recent Activity
@@ -344,83 +357,7 @@ export function ManagerDashboard() {
                   </Timeline>
                 </Paper>
               </Grid.Col>
-
-              <Grid.Col span={{ base: 12, md: 4 }}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    Quick Actions
-                  </Title>
-                  <Stack gap='sm'>
-                    <Button
-                      variant='light'
-                      leftSection={<IconPlus size={16} />}
-                    >
-                      Create Ticket
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconSearch size={16} />}
-                    >
-                      Search Tickets
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconFileText size={16} />}
-                    >
-                      Generate Report
-                    </Button>
-                    <Button
-                      variant='light'
-                      leftSection={<IconUsers size={16} />}
-                    >
-                      Manage Team
-                    </Button>
-                  </Stack>
-                </Paper>
-              </Grid.Col>
             </Grid>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='tickets' pt='md'>
-            <Stack gap='md'>
-              <Group justify='space-between'>
-                <Title order={3}>All Tickets</Title>
-                <Group>
-                  <TextInput
-                    placeholder='Search tickets...'
-                    leftSection={<IconSearch size={16} />}
-                    style={{ width: 300 }}
-                  />
-                </Group>
-              </Group>
-
-              <Grid>
-                {allTicketsForStats?.map((ticket: Ticket) => (
-                  <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
-                    <TicketCard ticket={ticket} showActions />
-                  </Grid.Col>
-                ))}
-              </Grid>
-            </Stack>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='overdue' pt='md'>
-            <Stack gap='md'>
-              <Title order={3}>Overdue Tickets</Title>
-              {overdueTickets.length === 0 ? (
-                <Alert color='green' icon={<IconCheck size={16} />}>
-                  No overdue tickets! Great job!
-                </Alert>
-              ) : (
-                <Grid>
-                  {overdueTickets.map((ticket: Ticket) => (
-                    <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
-                      <TicketCard ticket={ticket} showActions urgent />
-                    </Grid.Col>
-                  ))}
-                </Grid>
-              )}
-            </Stack>
           </Tabs.Panel>
 
           <Tabs.Panel value='team' pt='md'>

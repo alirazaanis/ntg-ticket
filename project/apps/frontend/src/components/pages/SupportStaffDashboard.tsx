@@ -10,45 +10,41 @@ import {
   Button,
   Group,
   Stack,
-  TextInput,
   Tabs,
   Card,
   Avatar,
   Progress,
-  Alert,
   Loader,
+  Timeline,
+  Badge,
 } from '@mantine/core';
 import {
   IconSearch,
-  IconBell,
   IconClock,
   IconCheck,
   IconAlertCircle,
   IconTicket,
+  IconTrendingUp,
 } from '@tabler/icons-react';
 import { useTickets } from '../../hooks/useTickets';
-import { useNotifications } from '../../hooks/useNotifications';
 import { useTicketReport } from '../../hooks/useReports';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { TicketCard } from '../ui/TicketCard';
-import { NotificationList } from '../ui/NotificationList';
 import { Ticket } from '../../types/unified';
-import { Notification } from '../../types/notification';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
 export function SupportStaffDashboard() {
   const t = useTranslations('dashboard');
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('assigned');
+  const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuthStore();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
-  const { data: notifications } = useNotifications();
   const { data: reportData } = useTicketReport({ userId: user?.id });
 
   const assignedTickets =
     tickets?.filter((ticket: Ticket) => ticket.assignedTo?.id === user?.id) ||
     [];
+
   const openTickets = assignedTickets.filter((ticket: Ticket) =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
   );
@@ -62,29 +58,39 @@ export function SupportStaffDashboard() {
       !['RESOLVED', 'CLOSED'].includes(ticket.status)
     );
   });
+  const slaBreachedTickets = assignedTickets.filter((ticket: Ticket) => {
+    if (!ticket.dueDate || !ticket.closedAt) return false;
+    return new Date(ticket.closedAt) > new Date(ticket.dueDate);
+  });
 
   const stats = [
     {
-      title: t('assignedTickets'),
+      title: 'Total',
       value: assignedTickets.length,
       icon: IconTicket,
       color: 'red',
     },
     {
-      title: t('openTickets'),
+      title: 'Open',
       value: openTickets.length,
       icon: IconClock,
       color: 'orange',
     },
     {
-      title: t('resolvedTickets'),
+      title: 'Resolved',
       value: resolvedTickets.length,
       icon: IconCheck,
       color: 'green',
     },
     {
-      title: t('overdueTickets'),
+      title: 'Overdue',
       value: overdueTickets.length,
+      icon: IconAlertCircle,
+      color: 'red',
+    },
+    {
+      title: 'SLA Breached',
+      value: slaBreachedTickets.length,
       icon: IconAlertCircle,
       color: 'red',
     },
@@ -123,27 +129,32 @@ export function SupportStaffDashboard() {
         </Group>
 
         {/* Stats Cards */}
-        <Grid>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            width: '100%',
+          }}
+        >
           {stats.map(stat => (
-            <Grid.Col key={stat.title} span={{ base: 12, sm: 6, md: 3 }}>
-              <Card withBorder>
-                <Group>
-                  <Avatar color={stat.color} size='lg'>
-                    <stat.icon size={24} />
-                  </Avatar>
-                  <div>
-                    <Text size='lg' fw={600}>
-                      {stat.value}
-                    </Text>
-                    <Text size='sm' c='dimmed'>
-                      {stat.title}
-                    </Text>
-                  </div>
-                </Group>
-              </Card>
-            </Grid.Col>
+            <Card key={stat.title} withBorder style={{ height: '100%' }} p='md'>
+              <Group style={{ height: '100%' }}>
+                <Avatar color={stat.color} size='lg'>
+                  <stat.icon size={24} />
+                </Avatar>
+                <div style={{ flex: 1 }}>
+                  <Text size='lg' fw={600}>
+                    {stat.value}
+                  </Text>
+                  <Text size='sm' c='dimmed'>
+                    {stat.title}
+                  </Text>
+                </div>
+              </Group>
+            </Card>
           ))}
-        </Grid>
+        </div>
 
         {/* SLA Compliance */}
         <Paper withBorder p='md'>
@@ -211,88 +222,40 @@ export function SupportStaffDashboard() {
         {/* Main Content */}
         <Tabs
           value={activeTab}
-          onChange={value => setActiveTab(value || 'assigned')}
+          onChange={value => setActiveTab(value || 'overview')}
         >
           <Tabs.List>
-            <Tabs.Tab value='assigned' leftSection={<IconTicket size={16} />}>
-              Assigned Tickets
-            </Tabs.Tab>
             <Tabs.Tab
-              value='overdue'
-              leftSection={<IconAlertCircle size={16} />}
+              value='overview'
+              leftSection={<IconTrendingUp size={16} />}
             >
-              Overdue Tickets
-            </Tabs.Tab>
-            <Tabs.Tab value='resolved' leftSection={<IconCheck size={16} />}>
-              Resolved Tickets
-            </Tabs.Tab>
-            <Tabs.Tab
-              value='notifications'
-              leftSection={<IconBell size={16} />}
-            >
-              Notifications
+              Recent Activity
             </Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value='assigned' pt='md'>
-            <Stack gap='md'>
-              <Group justify='space-between'>
-                <Title order={3}>Assigned Tickets</Title>
-                <Group>
-                  <TextInput
-                    placeholder='Search tickets...'
-                    leftSection={<IconSearch size={16} />}
-                    style={{ width: 300 }}
-                  />
-                </Group>
-              </Group>
-
-              <Grid>
-                {assignedTickets.map((ticket: Ticket) => (
-                  <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
-                    <TicketCard ticket={ticket} showActions />
-                  </Grid.Col>
+          <Tabs.Panel value='overview' pt='md'>
+            <Paper withBorder p='md'>
+              <Title order={3} mb='md'>
+                {t('recentActivity')}
+              </Title>
+              <Timeline active={-1} bulletSize={24} lineWidth={2}>
+                {assignedTickets.slice(0, 5).map((ticket: Ticket) => (
+                  <Timeline.Item
+                    key={ticket.id}
+                    bullet={<IconTicket size={12} />}
+                    title={ticket.title}
+                  >
+                    <Text c='dimmed' size='sm'>
+                      {ticket.status} •{' '}
+                      {new Date(ticket.updatedAt).toLocaleDateString()}
+                    </Text>
+                    <Badge color='red' size='sm' mt={4}>
+                      {ticket.ticketNumber}
+                    </Badge>
+                  </Timeline.Item>
                 ))}
-              </Grid>
-            </Stack>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='overdue' pt='md'>
-            <Stack gap='md'>
-              <Title order={3}>Overdue Tickets</Title>
-              {overdueTickets.length === 0 ? (
-                <Alert color='green' icon={<IconCheck size={16} />}>
-                  No overdue tickets! Great job!
-                </Alert>
-              ) : (
-                <Grid>
-                  {overdueTickets.map((ticket: Ticket) => (
-                    <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
-                      <TicketCard ticket={ticket} showActions urgent />
-                    </Grid.Col>
-                  ))}
-                </Grid>
-              )}
-            </Stack>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='resolved' pt='md'>
-            <Stack gap='md'>
-              <Title order={3}>Resolved Tickets</Title>
-              <Grid>
-                {resolvedTickets.map((ticket: Ticket) => (
-                  <Grid.Col key={ticket.id} span={{ base: 12, md: 6, lg: 4 }}>
-                    <TicketCard ticket={ticket} />
-                  </Grid.Col>
-                ))}
-              </Grid>
-            </Stack>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='notifications' pt='md'>
-            <NotificationList
-              notifications={(notifications as unknown as Notification[]) || []}
-            />
+              </Timeline>
+            </Paper>
           </Tabs.Panel>
         </Tabs>
       </Stack>

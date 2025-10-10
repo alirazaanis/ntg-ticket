@@ -5,7 +5,6 @@ import {
   Container,
   Title,
   Button,
-  Table,
   Group,
   Text,
   Badge,
@@ -14,93 +13,88 @@ import {
   Card,
   Stack,
   Pagination,
-  TextInput,
-  Select,
   Grid,
-  Modal,
-  Textarea,
 } from '@mantine/core';
 import {
-  IconSearch,
   IconFilter,
-  IconRefresh,
   IconDots,
   IconEye,
   IconEdit,
-  IconClock,
-  IconUser,
-  IconAlertTriangle,
+  IconTrash,
+  IconTicket,
+  IconX,
 } from '@tabler/icons-react';
-import { useOverdueTickets } from '../../../hooks/useTickets';
+import {
+  useTicketsWithPagination,
+  useTotalTicketsCount,
+} from '../../../hooks/useTickets';
 import { useRouter } from 'next/navigation';
-import { notifications } from '@mantine/notifications';
+import { SearchBar } from '../../../components/search/SearchBar';
+import { AdvancedSearchModal } from '../../../components/search/AdvancedSearchModal';
 import { SimpleFiltersModal } from '../../../components/forms/SimpleFiltersModal';
+import { useSearch } from '../../../hooks/useSearch';
+import { PAGINATION_CONFIG } from '../../../lib/constants';
+import { Ticket, TicketStatus } from '../../../types/unified';
 
 export default function OverdueTicketsPage() {
   const router = useRouter();
-  const [search, setSearch] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(20);
-  const [selectedTicket, setSelectedTicket] = useState<{
-    id: string;
-    ticketNumber: string;
-    title: string;
-    priority: string;
-    status: string;
-    assignedTo?: { name: string };
-    createdAt: string;
-  } | null>(null);
-  const [actionModalOpen, setActionModalOpen] = useState(false);
-  const [filtersModalOpen, setFiltersModalOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState<{
-    status?: string[];
-    priority?: string[];
-    category?: string[];
-  }>({});
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+  const [simpleFiltersOpen, setSimpleFiltersOpen] = useState(false);
 
-  const { data: overdueTickets, isLoading, refetch } = useOverdueTickets();
+  const {
+    filters: searchFilters,
+    recentSearches,
+    updateFilters,
+    clearFilters,
+    addRecentSearch,
+    clearRecentSearches,
+    removeRecentSearch,
+    getSearchQuery,
+    hasActiveFilters,
+  } = useSearch();
 
-  const filteredTickets =
-    overdueTickets?.filter(ticket => {
-      const matchesSearch =
-        ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-        ticket.ticketNumber.toLowerCase().includes(search.toLowerCase());
-      const matchesPriority =
-        priorityFilter === 'all' || ticket.priority === priorityFilter;
-      const matchesCategory =
-        categoryFilter === 'all' || ticket.category?.name === categoryFilter;
+  const baseQuery = getSearchQuery();
+  // Get all tickets without pagination for client-side filtering
+  const ticketsQuery = {
+    ...baseQuery,
+    page: 1,
+    limit: 1000, // Get a large number to ensure we get all tickets
+  };
 
-      // Apply advanced filters
-      const matchesAdvancedStatus =
-        !appliedFilters.status ||
-        appliedFilters.status.length === 0 ||
-        appliedFilters.status.includes(ticket.status);
-      const matchesAdvancedPriority =
-        !appliedFilters.priority ||
-        appliedFilters.priority.length === 0 ||
-        appliedFilters.priority.includes(ticket.priority);
-      const matchesAdvancedCategory =
-        !appliedFilters.category ||
-        appliedFilters.category.length === 0 ||
-        appliedFilters.category.includes(ticket.category?.name || '');
+  const { data: ticketsData, isFetching } =
+    useTicketsWithPagination(ticketsQuery);
 
-      return (
-        matchesSearch &&
-        matchesPriority &&
-        matchesCategory &&
-        matchesAdvancedStatus &&
-        matchesAdvancedPriority &&
-        matchesAdvancedCategory
-      );
-    }) || [];
+  // Get total count of all tickets (no filters)
+  const { data: totalTicketsCount } = useTotalTicketsCount();
 
-  const totalPages = Math.ceil(filteredTickets.length / pageSize);
-  const paginatedTickets = filteredTickets.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  // Apply client-side overdue filtering
+  let allOverdueTickets = ticketsData?.tickets || [];
+  const now = new Date();
+  allOverdueTickets = allOverdueTickets.filter(
+    t =>
+      t.dueDate &&
+      new Date(t.dueDate) < now &&
+      !(['RESOLVED', 'CLOSED'] as TicketStatus[]).includes(
+        t.status as TicketStatus
+      )
   );
+
+  // Implement client-side pagination
+  const pageSize = PAGINATION_CONFIG.DEFAULT_PAGE_SIZE;
+  const totalOverdueTickets = allOverdueTickets.length;
+  const totalPages = Math.ceil(totalOverdueTickets / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const tickets = allOverdueTickets.slice(startIndex, endIndex);
+
+  // Create pagination object for the UI
+  const pagination = {
+    total: totalOverdueTickets,
+    totalPages: totalPages,
+    currentPage: currentPage,
+    pageSize: pageSize,
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -134,41 +128,10 @@ export default function OverdueTicketsPage() {
     }
   };
 
-  const calculateOverdueHours = (createdAt: string, slaHours: number) => {
-    const created = new Date(createdAt);
-    const now = new Date();
-    const hoursSinceCreation =
-      (now.getTime() - created.getTime()) / (1000 * 60 * 60);
-    return Math.max(0, hoursSinceCreation - slaHours);
-  };
-
-  const getOverdueSeverity = (overdueHours: number) => {
-    if (overdueHours > 72) return { color: 'red', label: 'Critical' };
-    if (overdueHours > 24) return { color: 'orange', label: 'High' };
-    if (overdueHours > 8) return { color: 'yellow', label: 'Medium' };
-    return { color: 'blue', label: 'Low' };
-  };
-
-  const handleQuickAction = (
-    ticket: {
-      id: string;
-      ticketNumber: string;
-      title: string;
-      priority: string;
-      status: string;
-      assignedTo?: { name: string };
-      createdAt: string;
-    },
-    action: string
-  ) => {
-    setSelectedTicket(ticket);
-    setActionModalOpen(true);
-    // Implement quick actions
-    notifications.show({
-      title: 'Action Applied',
-      message: `${action} applied to ticket ${ticket.ticketNumber}`,
-      color: 'green',
-    });
+  const calculateOverdueHours = (dueDate: string) => {
+    const due = new Date(dueDate);
+    const hours = (now.getTime() - due.getTime()) / (1000 * 60 * 60);
+    return Math.max(0, hours);
   };
 
   return (
@@ -179,306 +142,233 @@ export default function OverdueTicketsPage() {
           <Text c='dimmed' size='sm'>
             Tickets that have exceeded their SLA deadlines
           </Text>
+          {hasActiveFilters() && (
+            <Text size='sm' c='blue' mt='xs'>
+              Showing {tickets.length} of {totalTicketsCount || 0} tickets
+            </Text>
+          )}
         </div>
-        <Button
-          variant='light'
-          leftSection={<IconRefresh size={16} />}
-          onClick={() => refetch()}
-          loading={isLoading}
-        >
-          Refresh
-        </Button>
       </Group>
 
-      {/* Statistics Cards */}
-      <Grid mb='xl'>
-        <Grid.Col span={3}>
-          <Card>
-            <Stack>
-              <Group justify='space-between'>
-                <Text size='sm' c='dimmed'>
-                  Total Overdue
-                </Text>
-                <IconAlertTriangle size={20} color='red' />
-              </Group>
-              <Text size='xl' fw={700} c='red'>
-                {overdueTickets?.length || 0}
-              </Text>
-            </Stack>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={3}>
-          <Card>
-            <Stack>
-              <Group justify='space-between'>
-                <Text size='sm' c='dimmed'>
-                  Critical
-                </Text>
-                <IconAlertTriangle size={20} color='red' />
-              </Group>
-              <Text size='xl' fw={700} c='red'>
-                {overdueTickets?.filter(t => {
-                  const overdueHours = calculateOverdueHours(t.createdAt, 24);
-                  return overdueHours > 72;
-                }).length || 0}
-              </Text>
-            </Stack>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={3}>
-          <Card>
-            <Stack>
-              <Group justify='space-between'>
-                <Text size='sm' c='dimmed'>
-                  High Priority
-                </Text>
-                <IconAlertTriangle size={20} color='orange' />
-              </Group>
-              <Text size='xl' fw={700} c='orange'>
-                {overdueTickets?.filter(t => t.priority === 'HIGH').length || 0}
-              </Text>
-            </Stack>
-          </Card>
-        </Grid.Col>
-        <Grid.Col span={3}>
-          <Card>
-            <Stack>
-              <Group justify='space-between'>
-                <Text size='sm' c='dimmed'>
-                  Avg Overdue
-                </Text>
-                <IconClock size={20} color='blue' />
-              </Group>
-              <Text size='xl' fw={700} c='blue'>
-                {overdueTickets && overdueTickets.length > 0
-                  ? Math.round(
-                      overdueTickets.reduce((acc, t) => {
-                        const overdueHours = calculateOverdueHours(
-                          t.createdAt,
-                          24
-                        );
-                        return acc + overdueHours;
-                      }, 0) / overdueTickets.length
-                    )
-                  : 0}
-                h
-              </Text>
-            </Stack>
-          </Card>
-        </Grid.Col>
-      </Grid>
-
-      {/* Filters */}
-      <Card mb='md'>
-        <Group>
-          <TextInput
-            placeholder='Search overdue tickets...'
-            leftSection={<IconSearch size={16} />}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ width: 300 }}
+      <Grid mb='md'>
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <SearchBar
+            key={searchFilters.search || 'empty'}
+            value={searchFilters.search}
+            onChange={value => {
+              updateFilters({ search: value });
+              if (value.trim()) addRecentSearch(value);
+              setCurrentPage(1);
+            }}
+            onAdvancedSearch={() => setAdvancedSearchOpen(true)}
+            onSimpleFilters={() => setSimpleFiltersOpen(true)}
+            recentSearches={recentSearches}
+            onRecentSearchClick={addRecentSearch}
+            onClearRecentSearches={clearRecentSearches}
+            onRemoveRecentSearch={removeRecentSearch}
+            debounceMs={1500}
+            isLoading={isFetching}
           />
-          <Select
-            placeholder='Filter by priority'
-            data={[
-              { value: 'all', label: 'All Priorities' },
-              { value: 'CRITICAL', label: 'Critical' },
-              { value: 'HIGH', label: 'High' },
-              { value: 'MEDIUM', label: 'Medium' },
-              { value: 'LOW', label: 'Low' },
-            ]}
-            value={priorityFilter}
-            onChange={value => setPriorityFilter(value || 'all')}
-            style={{ width: 200 }}
-          />
-          <Select
-            placeholder='Filter by category'
-            data={[
-              { value: 'all', label: 'All Categories' },
-              { value: 'HARDWARE', label: 'Hardware' },
-              { value: 'SOFTWARE', label: 'Software' },
-              { value: 'NETWORK', label: 'Network' },
-              { value: 'ACCESS', label: 'Access' },
-              { value: 'OTHER', label: 'Other' },
-            ]}
-            value={categoryFilter}
-            onChange={value => setCategoryFilter(value || 'all')}
-            style={{ width: 200 }}
-          />
+        </Grid.Col>
+        <Grid.Col span={{ base: 6, md: 3 }}>
           <Button
             variant='light'
             leftSection={<IconFilter size={16} />}
-            onClick={() => setFiltersModalOpen(true)}
+            fullWidth
+            onClick={() => setAdvancedSearchOpen(true)}
           >
-            More Filters
+            Advanced
           </Button>
-        </Group>
-      </Card>
+        </Grid.Col>
+        <Grid.Col span={{ base: 6, md: 3 }}>
+          {hasActiveFilters() && (
+            <Button
+              variant='outline'
+              leftSection={<IconX size={16} />}
+              fullWidth
+              onClick={() => {
+                clearFilters();
+                setCurrentPage(1);
+              }}
+            >
+              Reset Filters
+            </Button>
+          )}
+        </Grid.Col>
+      </Grid>
 
-      {/* Overdue Tickets Table */}
-      <Card>
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Ticket</Table.Th>
-              <Table.Th>Priority</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>Assigned To</Table.Th>
-              <Table.Th>Overdue Time</Table.Th>
-              <Table.Th>Severity</Table.Th>
-              <Table.Th>Actions</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {paginatedTickets.map(ticket => {
-              const overdueHours = calculateOverdueHours(ticket.createdAt, 24);
-              const severity = getOverdueSeverity(overdueHours);
+      <Stack gap='md'>
+        {tickets.map((ticket: Ticket) => (
+          <Card key={ticket.id} shadow='sm' padding='lg' radius='md' withBorder>
+            <Group justify='space-between' mb='sm'>
+              <Group gap='sm'>
+                <Badge color={getStatusColor(ticket.status)} variant='light'>
+                  {ticket.status}
+                </Badge>
+                <Badge
+                  color={getPriorityColor(ticket.priority)}
+                  variant='outline'
+                >
+                  {ticket.priority}
+                </Badge>
+                <Text size='sm' c='dimmed'>
+                  #{ticket.ticketNumber}
+                </Text>
+              </Group>
+              <Menu shadow='md' width={200}>
+                <Menu.Target>
+                  <ActionIcon variant='subtle'>
+                    <IconDots size={16} />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<IconEye size={14} />}
+                    onClick={() => router.push(`/tickets/${ticket.id}`)}
+                  >
+                    View
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconEdit size={14} />}
+                    onClick={() => router.push(`/tickets/${ticket.id}/edit`)}
+                  >
+                    Edit
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconTrash size={14} />}
+                    color='red'
+                    onClick={() => router.push(`/tickets/${ticket.id}/edit`)}
+                  >
+                    Delete
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
 
-              return (
-                <Table.Tr key={ticket.id}>
-                  <Table.Td>
-                    <Stack gap={4}>
-                      <Text fw={500}>{ticket.ticketNumber}</Text>
-                      <Text size='sm' c='dimmed' truncate>
-                        {ticket.title}
-                      </Text>
-                    </Stack>
-                  </Table.Td>
-                  <Table.Td>
-                    <Badge
-                      color={getPriorityColor(ticket.priority)}
-                      variant='light'
-                    >
-                      {ticket.priority}
-                    </Badge>
-                  </Table.Td>
-                  <Table.Td>
-                    <Badge
-                      color={getStatusColor(ticket.status)}
-                      variant='light'
-                    >
-                      {ticket.status}
-                    </Badge>
-                  </Table.Td>
-                  <Table.Td>
-                    <Group gap='xs'>
-                      <IconUser size={14} />
-                      <Text size='sm'>
-                        {ticket.assignedTo?.name || 'Unassigned'}
-                      </Text>
-                    </Group>
-                  </Table.Td>
-                  <Table.Td>
-                    <Stack gap={4}>
-                      <Text size='sm' fw={500} c={severity.color}>
-                        {Math.round(overdueHours)}h overdue
-                      </Text>
-                      <Text size='xs' c='dimmed'>
-                        Created:{' '}
-                        {new Date(ticket.createdAt).toLocaleDateString()}
-                      </Text>
-                    </Stack>
-                  </Table.Td>
-                  <Table.Td>
-                    <Badge color={severity.color} variant='light'>
-                      {severity.label}
-                    </Badge>
-                  </Table.Td>
-                  <Table.Td>
-                    <Menu>
-                      <Menu.Target>
-                        <ActionIcon variant='subtle'>
-                          <IconDots size={16} />
-                        </ActionIcon>
-                      </Menu.Target>
-                      <Menu.Dropdown>
-                        <Menu.Item
-                          leftSection={<IconEye size={14} />}
-                          onClick={() => router.push(`/tickets/${ticket.id}`)}
-                        >
-                          View Details
-                        </Menu.Item>
-                        <Menu.Item
-                          leftSection={<IconEdit size={14} />}
-                          onClick={() =>
-                            router.push(`/tickets/${ticket.id}/edit`)
-                          }
-                        >
-                          Edit Ticket
-                        </Menu.Item>
-                        <Menu.Divider />
-                        <Menu.Item
-                          leftSection={<IconUser size={14} />}
-                          onClick={() => handleQuickAction(ticket, 'Reassign')}
-                        >
-                          Reassign
-                        </Menu.Item>
-                        <Menu.Item
-                          leftSection={<IconAlertTriangle size={14} />}
-                          onClick={() => handleQuickAction(ticket, 'Escalate')}
-                        >
-                          Escalate
-                        </Menu.Item>
-                      </Menu.Dropdown>
-                    </Menu>
-                  </Table.Td>
-                </Table.Tr>
-              );
-            })}
-          </Table.Tbody>
-        </Table>
+            <Text
+              fw={500}
+              mb='xs'
+              style={{ cursor: 'pointer' }}
+              onClick={() => router.push(`/tickets/${ticket.id}`)}
+            >
+              {ticket.title}
+            </Text>
 
-        {totalPages > 1 && (
-          <Group justify='center' mt='md'>
-            <Pagination
-              value={currentPage}
-              onChange={setCurrentPage}
-              total={totalPages}
-            />
-          </Group>
-        )}
-      </Card>
+            <Text size='sm' c='dimmed' mb='sm' lineClamp={2}>
+              {ticket.description}
+            </Text>
 
-      {/* Quick Action Modal */}
-      <Modal
-        opened={actionModalOpen}
-        onClose={() => setActionModalOpen(false)}
-        title='Quick Action'
-      >
-        <Stack>
-          <Text size='sm' fw={500}>
-            Ticket: {selectedTicket?.ticketNumber}
-          </Text>
-          <Text size='sm' c='dimmed'>
-            {selectedTicket?.title}
-          </Text>
+            <Group justify='space-between'>
+              <Group gap='md'>
+                <Text size='sm'>{ticket.requester?.name}</Text>
+                <Text size='sm'>
+                  {new Date(ticket.createdAt).toLocaleDateString('en-US')}
+                </Text>
+                {ticket.assignedTo && (
+                  <Group gap={4}>
+                    <IconTicket size={14} />
+                    <Text size='sm'>Assigned to {ticket.assignedTo.name}</Text>
+                  </Group>
+                )}
+              </Group>
+              <Badge variant='light' color='gray'>
+                Overdue{' '}
+                {ticket.dueDate
+                  ? Math.round(calculateOverdueHours(ticket.dueDate))
+                  : 0}
+                h
+              </Badge>
+            </Group>
+          </Card>
+        ))}
+      </Stack>
 
-          <Textarea
-            label='Action Note'
-            placeholder='Add a note about the action taken...'
-            minRows={3}
+      {tickets.length === 0 && (
+        <Card shadow='sm' padding='xl' radius='md' withBorder>
+          <Stack align='center' gap='md'>
+            <Text size='lg' fw={500}>
+              No overdue tickets
+            </Text>
+            <Text c='dimmed' ta='center'>
+              No tickets match your current filters.
+            </Text>
+          </Stack>
+        </Card>
+      )}
+
+      {(pagination?.totalPages || 0) > 1 && (
+        <Group justify='center' mt='xl'>
+          <Pagination
+            value={currentPage}
+            onChange={setCurrentPage}
+            total={pagination?.totalPages || 1}
           />
+        </Group>
+      )}
 
-          <Group justify='flex-end' mt='md'>
-            <Button variant='light' onClick={() => setActionModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setActionModalOpen(false)}>
-              Apply Action
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-
-      {/* Advanced Filters Modal */}
-      <SimpleFiltersModal
-        opened={filtersModalOpen}
-        onClose={() => setFiltersModalOpen(false)}
-        onApply={filters => {
-          setAppliedFilters(filters);
-          setCurrentPage(1); // Reset to first page when filters change
+      <AdvancedSearchModal
+        opened={advancedSearchOpen}
+        onClose={() => setAdvancedSearchOpen(false)}
+        initialCriteria={{
+          query: searchFilters.search || '',
+          status: (searchFilters.status as string[]) || [],
+          priority: (searchFilters.priority as string[]) || [],
+          category: (searchFilters.category as string[]) || [],
+          impact: (searchFilters.impact as string[]) || [],
+          urgency: (searchFilters.urgency as string[]) || [],
+          slaLevel: (searchFilters.slaLevel as string[]) || [],
+          assignedTo: searchFilters.assignedTo || [],
+          requester: searchFilters.requester || [],
+          createdFrom: searchFilters.dateFrom || undefined,
+          createdTo: searchFilters.dateTo || undefined,
+          minResolutionTime: (searchFilters as { minResolutionHours?: number })
+            .minResolutionHours,
+          maxResolutionTime: (searchFilters as { maxResolutionHours?: number })
+            .maxResolutionHours,
+          minSlaBreachTime: (searchFilters as { minSlaBreachHours?: number })
+            .minSlaBreachHours,
+          maxSlaBreachTime: (searchFilters as { maxSlaBreachHours?: number })
+            .maxSlaBreachHours,
         }}
-        initialFilters={appliedFilters}
+        onSearch={advancedFilters => {
+          const searchCriteria = {
+            search: advancedFilters.query || '',
+            status: advancedFilters.status || [],
+            priority: advancedFilters.priority || [],
+            category: advancedFilters.category || [],
+            impact: advancedFilters.impact || [],
+            urgency: advancedFilters.urgency || [],
+            slaLevel: advancedFilters.slaLevel || [],
+            assignedTo: advancedFilters.assignedTo || [],
+            requester: advancedFilters.requester || [],
+            dateFrom: advancedFilters.createdFrom || null,
+            dateTo: advancedFilters.createdTo || null,
+            tags: [],
+            customFields: advancedFilters.customFields || {},
+            minResolutionHours: advancedFilters.minResolutionTime,
+            maxResolutionHours: advancedFilters.maxResolutionTime,
+            minSlaBreachHours: advancedFilters.minSlaBreachTime,
+            maxSlaBreachHours: advancedFilters.maxSlaBreachTime,
+          };
+          updateFilters(searchCriteria);
+          if (advancedFilters.query) addRecentSearch(advancedFilters.query);
+          setCurrentPage(1);
+        }}
+      />
+
+      <SimpleFiltersModal
+        opened={simpleFiltersOpen}
+        onClose={() => setSimpleFiltersOpen(false)}
+        initialFilters={{
+          status: (searchFilters.status as string[]) || [],
+          priority: (searchFilters.priority as string[]) || [],
+          category: (searchFilters.category as string[]) || [],
+        }}
+        onApply={filters => {
+          updateFilters(filters);
+          setCurrentPage(1);
+        }}
       />
     </Container>
   );

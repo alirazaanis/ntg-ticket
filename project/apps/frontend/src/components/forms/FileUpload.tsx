@@ -14,6 +14,10 @@ import {
   Badge,
 } from '@mantine/core';
 import {
+  showSuccessNotification,
+  showErrorNotification,
+} from '../../lib/notifications';
+import {
   IconUpload,
   IconX,
   IconPhoto,
@@ -22,7 +26,6 @@ import {
   IconAlertCircle,
   IconTrash,
 } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
 import { FILE_CONSTANTS, TIMING_CONFIG } from '../../lib/constants';
 
 interface FileUploadProps {
@@ -109,11 +112,10 @@ export function FileUpload({
         )
       );
 
-      notifications.show({
-        title: 'File uploaded',
-        message: `${fileUpload.file.name} uploaded successfully`,
-        color: 'green',
-      });
+      showSuccessNotification(
+        'File uploaded',
+        `${fileUpload.file.name} uploaded successfully`
+      );
     } catch (error) {
       setFiles(prev =>
         prev.map(f =>
@@ -127,11 +129,10 @@ export function FileUpload({
         )
       );
 
-      notifications.show({
-        title: 'Upload failed',
-        message: `Failed to upload ${fileUpload.file.name}`,
-        color: 'red',
-      });
+      showErrorNotification(
+        'Upload failed',
+        `Failed to upload ${fileUpload.file.name}`
+      );
     }
   };
 
@@ -176,11 +177,10 @@ export function FileUpload({
       <Dropzone
         onDrop={handleDrop}
         onReject={() => {
-          notifications.show({
-            title: 'File rejected',
-            message: 'Some files were rejected. Check file size and type.',
-            color: 'red',
-          });
+          showErrorNotification(
+            'File rejected',
+            'Some files were rejected. Check file size and type.'
+          );
         }}
         maxSize={maxSize * 1024 * 1024}
         accept={acceptedTypes}
