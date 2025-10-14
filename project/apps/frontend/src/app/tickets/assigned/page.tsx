@@ -16,6 +16,7 @@ import {
   Grid,
   Pagination,
 } from '@mantine/core';
+import { StaffAndAbove } from '../../../components/guards/RouteGuard';
 import {
   IconDots,
   IconEye,
@@ -57,7 +58,7 @@ const priorityColors: Record<TicketPriority, string> = {
   CRITICAL: 'red',
 };
 
-export default function AssignedTicketsPage() {
+function AssignedTicketsPageContent() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [currentPage, setCurrentPage] = useState(1);
@@ -392,5 +393,13 @@ export default function AssignedTicketsPage() {
         }}
       />
     </Container>
+  );
+}
+
+export default function AssignedTicketsPage() {
+  return (
+    <StaffAndAbove>
+      <AssignedTicketsPageContent />
+    </StaffAndAbove>
   );
 }

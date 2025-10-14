@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo } from 'react';
 import {
   Container,
   Grid,
@@ -11,29 +11,20 @@ import {
   Group,
   Stack,
   Badge,
-  ActionIcon,
-  Tabs,
   Card,
   Avatar,
   Timeline,
   Loader,
-  Table,
-  RingProgress,
+  Progress,
 } from '@mantine/core';
-import { AreaChart, BarChart } from '@mantine/charts';
+import { AreaChart } from '@mantine/charts';
 import {
   IconSearch,
   IconClock,
   IconCheck,
   IconAlertCircle,
   IconAlertTriangle,
-  IconTrendingUp,
-  IconUsers,
   IconTicket,
-  IconEye,
-  IconEdit,
-  IconChartBar,
-  IconReport,
 } from '@tabler/icons-react';
 import {
   useTotalTicketsCount,
@@ -42,18 +33,17 @@ import {
 } from '../../hooks/useTickets';
 import { useTicketReport } from '../../hooks/useReports';
 import { Ticket } from '../../types/unified';
-import { TeamPerformanceData } from '../../lib/apiClient';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
 export function ManagerDashboard() {
   const t = useTranslations('dashboard');
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
+
   const { data: totalTicketsCount } = useTotalTicketsCount();
   const { data: allTicketsForStats, isLoading: ticketsLoading } =
     useAllTicketsForCounting();
-  const { data: reportData, isLoading: reportLoading } = useTicketReport();
+  const { data: reportData } = useTicketReport();
   const { data: slaBreachedTickets } = useBreachedSLATickets();
   const openTickets =
     allTicketsForStats?.filter((ticket: Ticket) =>
@@ -108,14 +98,86 @@ export function ManagerDashboard() {
 
   // Real data for charts
   const ticketTrendData = reportData?.ticketTrendData || [];
-  const categoryData =
-    reportData?.categoryStats?.map(
-      (cat: { name: string; count: number; percentage: number }) => ({
-        category: cat.name,
-        count: cat.count,
-        percentage: cat.percentage,
-      })
-    ) || [];
+
+  // Breakdown calculations for tables
+  const categoryBreakdown = useMemo(() => {
+    const breakdown = new Map<string, number>();
+    allTicketsForStats?.forEach((ticket: Ticket) => {
+      const category = ticket.category?.name || 'Unknown';
+      breakdown.set(category, (breakdown.get(category) || 0) + 1);
+    });
+    return Array.from(breakdown.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5); // Top 5 categories
+  }, [allTicketsForStats]);
+
+  const statusBreakdown = useMemo(() => {
+    const breakdown = {
+      NEW: 0,
+      OPEN: 0,
+      IN_PROGRESS: 0,
+      ON_HOLD: 0,
+      RESOLVED: 0,
+      CLOSED: 0,
+      REOPENED: 0,
+    };
+    allTicketsForStats?.forEach((ticket: Ticket) => {
+      if (ticket.status in breakdown) {
+        breakdown[ticket.status as keyof typeof breakdown]++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [allTicketsForStats]);
+
+  const impactBreakdown = useMemo(() => {
+    const breakdown = {
+      CRITICAL: 0,
+      MAJOR: 0,
+      MODERATE: 0,
+      MINOR: 0,
+      UNKNOWN: 0,
+    };
+    allTicketsForStats?.forEach((ticket: Ticket) => {
+      if (ticket.impact && ticket.impact in breakdown) {
+        breakdown[ticket.impact as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [allTicketsForStats]);
+
+  const urgencyBreakdown = useMemo(() => {
+    const breakdown = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 };
+    allTicketsForStats?.forEach((ticket: Ticket) => {
+      if (ticket.urgency && ticket.urgency in breakdown) {
+        breakdown[ticket.urgency as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [allTicketsForStats]);
+
+  const priorityBreakdown = useMemo(() => {
+    const breakdown = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 };
+    allTicketsForStats?.forEach((ticket: Ticket) => {
+      if (ticket.priority && ticket.priority in breakdown) {
+        breakdown[ticket.priority as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [allTicketsForStats]);
 
   if (ticketsLoading) {
     return (
@@ -143,12 +205,6 @@ export function ManagerDashboard() {
               onClick={() => router.push('/tickets')}
             >
               Search Tickets
-            </Button>
-            <Button
-              leftSection={<IconReport size={16} />}
-              onClick={() => router.push('/reports')}
-            >
-              Generate Report
             </Button>
           </Group>
         </Group>
@@ -183,99 +239,75 @@ export function ManagerDashboard() {
 
         {/* Performance Metrics */}
         <Grid>
-          <Grid.Col span={{ base: 12, md: 6 }}>
+          <Grid.Col span={{ base: 12, md: 12 }}>
             <Paper withBorder p='md'>
               <Title order={3} mb='md'>
                 SLA Performance
               </Title>
               <Grid>
-                <Grid.Col span={6}>
+                <Grid.Col span={{ base: 12, md: 4 }}>
                   <div>
                     <Text size='sm' c='dimmed' mb={4}>
-                      Response Time
+                      Response Time (Last 30 days)
                     </Text>
-                    <RingProgress
-                      size={120}
-                      thickness={12}
-                      sections={[
-                        {
-                          value: reportData?.slaMetrics?.responseTime || 0,
-                          color: 'green',
-                        },
-                      ]}
-                      label={
-                        <Text ta='center' fw={700} size='lg'>
-                          {reportData?.slaMetrics?.responseTime
-                            ? `${reportData.slaMetrics.responseTime}%`
-                            : 'Loading...'}
-                        </Text>
-                      }
+                    <Progress
+                      value={reportData?.slaMetrics?.responseTime || 0}
+                      color='green'
+                      size='lg'
                     />
+                    <Text size='sm' mt={4}>
+                      {reportData?.slaMetrics?.responseTime !== undefined
+                        ? `${reportData.slaMetrics.responseTime}%`
+                        : 'Loading...'}{' '}
+                      within SLA
+                    </Text>
                   </div>
                 </Grid.Col>
-                <Grid.Col span={6}>
+                <Grid.Col span={{ base: 12, md: 4 }}>
                   <div>
                     <Text size='sm' c='dimmed' mb={4}>
-                      Resolution Time
+                      Resolution Time (Last 30 days)
                     </Text>
-                    {reportLoading ? (
-                      <div
-                        style={{
-                          height: 120,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Loader size='sm' />
-                      </div>
-                    ) : (
-                      <RingProgress
-                        size={120}
-                        thickness={12}
-                        sections={[
-                          {
-                            value: reportData?.slaMetrics?.resolutionTime || 0,
-                            color: 'orange',
-                          },
-                        ]}
-                        label={
-                          <Text ta='center' fw={700} size='lg'>
-                            {reportData?.slaMetrics?.resolutionTime
-                              ? `${reportData.slaMetrics.resolutionTime}%`
-                              : '0%'}
-                          </Text>
-                        }
-                      />
-                    )}
+                    <Progress
+                      value={reportData?.slaMetrics?.resolutionTime || 0}
+                      color='orange'
+                      size='lg'
+                    />
+                    <Text size='sm' mt={4}>
+                      {reportData?.slaMetrics?.resolutionTime !== undefined
+                        ? `${reportData.slaMetrics.resolutionTime}%`
+                        : 'Loading...'}{' '}
+                      within SLA
+                    </Text>
+                  </div>
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, md: 4 }}>
+                  <div>
+                    <Text size='sm' c='dimmed' mb={4}>
+                      Customer Satisfaction
+                    </Text>
+                    <Progress
+                      value={reportData?.slaMetrics?.customerSatisfaction || 92}
+                      color='red'
+                      size='lg'
+                    />
+                    <Text size='sm' mt={4}>
+                      {(
+                        (reportData?.slaMetrics?.customerSatisfaction || 92) /
+                        20
+                      ).toFixed(1)}
+                      /5.0 average
+                    </Text>
                   </div>
                 </Grid.Col>
               </Grid>
-            </Paper>
-          </Grid.Col>
-
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper withBorder p='md'>
-              <Title order={3} mb='md'>
-                Team Performance
-              </Title>
-              <Stack gap='sm'>
-                {reportData?.teamPerformance
-                  ?.slice(0, 4)
-                  .map((member: TeamPerformanceData) => (
-                    <Group key={member.userId} justify='space-between'>
-                      <Text size='sm'>{member.userName}</Text>
-                      <Badge color='green'>{member.slaCompliance}%</Badge>
-                    </Group>
-                  ))}
-              </Stack>
             </Paper>
           </Grid.Col>
         </Grid>
 
         {/* Charts */}
         <Grid>
-          <Grid.Col span={{ base: 12, md: 8 }}>
+          <Grid.Col span={12}>
             <Paper withBorder p='md'>
               <Title order={3} mb='md'>
                 Ticket Trends
@@ -293,154 +325,213 @@ export function ManagerDashboard() {
               />
             </Paper>
           </Grid.Col>
+        </Grid>
 
-          <Grid.Col span={{ base: 12, md: 4 }}>
+        {/* Breakdown Tables */}
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 6 }}>
             <Paper withBorder p='md'>
-              <Title order={3} mb='md'>
+              <Title order={4} mb='md'>
                 Tickets by Category
               </Title>
-              <BarChart
-                h={300}
-                data={categoryData}
-                dataKey='category'
-                series={[{ name: 'count', color: 'red.6' }]}
-                orientation='vertical'
-                unit=' tickets'
-              />
+              <Stack gap={0}>
+                {categoryBreakdown.map(
+                  ([category, count]: [string, number], index: number) => (
+                    <div
+                      key={category}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < categoryBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{category}</Text>
+                        <Badge variant='light' color='blue'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Status
+              </Title>
+              <Stack gap={0}>
+                {statusBreakdown.map(
+                  ([status, count]: [string, number], index: number) => (
+                    <div
+                      key={status}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < statusBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{status.replace('_', ' ')}</Text>
+                        <Badge variant='light' color='green'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Impact
+              </Title>
+              <Stack gap={0}>
+                {impactBreakdown.map(
+                  ([impact, count]: [string, number], index: number) => (
+                    <div
+                      key={impact}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < impactBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{impact}</Text>
+                        <Badge variant='light' color='red'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Urgency
+              </Title>
+              <Stack gap={0}>
+                {urgencyBreakdown.map(
+                  ([urgency, count]: [string, number], index: number) => (
+                    <div
+                      key={urgency}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < urgencyBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{urgency}</Text>
+                        <Badge variant='light' color='orange'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Priority
+              </Title>
+              <Stack gap={0}>
+                {priorityBreakdown.map(
+                  ([priority, count]: [string, number], index: number) => (
+                    <div
+                      key={priority}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < priorityBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{priority}</Text>
+                        <Badge variant='light' color='purple'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
             </Paper>
           </Grid.Col>
         </Grid>
 
-        {/* Main Content */}
-        <Tabs
-          value={activeTab}
-          onChange={value => setActiveTab(value || 'overview')}
-        >
-          <Tabs.List>
-            <Tabs.Tab
-              value='overview'
-              leftSection={<IconTrendingUp size={16} />}
-            >
-              Recent Activity
-            </Tabs.Tab>
-            <Tabs.Tab value='team' leftSection={<IconUsers size={16} />}>
-              Team Performance
-            </Tabs.Tab>
-            <Tabs.Tab value='reports' leftSection={<IconChartBar size={16} />}>
-              Reports
-            </Tabs.Tab>
-          </Tabs.List>
-
-          <Tabs.Panel value='overview' pt='md'>
-            <Grid>
-              <Grid.Col span={12}>
-                <Paper withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    Recent Activity
-                  </Title>
-                  <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                    {allTicketsForStats?.slice(0, 5).map((ticket: Ticket) => (
-                      <Timeline.Item
-                        key={ticket.id}
-                        bullet={<IconTicket size={12} />}
-                        title={ticket.title}
-                      >
-                        <Text c='dimmed' size='sm'>
-                          {ticket.status} •{' '}
-                          {new Date(ticket.updatedAt).toLocaleDateString()}
-                        </Text>
-                        <Badge color='red' size='sm' mt={4}>
-                          {ticket.ticketNumber}
-                        </Badge>
-                      </Timeline.Item>
-                    ))}
-                  </Timeline>
-                </Paper>
-              </Grid.Col>
-            </Grid>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='team' pt='md'>
+        {/* Recent Activity */}
+        <Grid>
+          <Grid.Col span={12}>
             <Paper withBorder p='md'>
               <Title order={3} mb='md'>
-                Team Performance
+                Recent Activity
               </Title>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Staff Member</Table.Th>
-                    <Table.Th>Assigned Tickets</Table.Th>
-                    <Table.Th>Resolved</Table.Th>
-                    <Table.Th>Avg. Resolution Time</Table.Th>
-                    <Table.Th>SLA Compliance</Table.Th>
-                    <Table.Th>Actions</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {reportData?.teamPerformance?.map(
-                    (member: TeamPerformanceData) => (
-                      <Table.Tr key={member.userId}>
-                        <Table.Td>{member.userName}</Table.Td>
-                        <Table.Td>{member.assignedTickets}</Table.Td>
-                        <Table.Td>{member.resolvedTickets}</Table.Td>
-                        <Table.Td>{member.avgResolutionTime} days</Table.Td>
-                        <Table.Td>
-                          <Badge color='green'>{member.slaCompliance}%</Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Group gap='xs'>
-                            <ActionIcon size='sm' variant='light'>
-                              <IconEye size={14} />
-                            </ActionIcon>
-                            <ActionIcon size='sm' variant='light'>
-                              <IconEdit size={14} />
-                            </ActionIcon>
-                          </Group>
-                        </Table.Td>
-                      </Table.Tr>
-                    )
-                  )}
-                </Table.Tbody>
-              </Table>
+              <Timeline active={-1} bulletSize={24} lineWidth={2}>
+                {allTicketsForStats?.slice(0, 5).map((ticket: Ticket) => (
+                  <Timeline.Item
+                    key={ticket.id}
+                    bullet={<IconTicket size={12} />}
+                    title={ticket.title}
+                  >
+                    <Text c='dimmed' size='sm'>
+                      {ticket.status} •{' '}
+                      {new Date(ticket.updatedAt).toLocaleDateString()}
+                    </Text>
+                    <Badge color='red' size='sm' mt={4}>
+                      {ticket.ticketNumber}
+                    </Badge>
+                  </Timeline.Item>
+                ))}
+              </Timeline>
             </Paper>
-          </Tabs.Panel>
-
-          <Tabs.Panel value='reports' pt='md'>
-            <Stack gap='md'>
-              <Title order={3}>Reports</Title>
-              <Grid>
-                <Grid.Col span={{ base: 12, md: 6 }}>
-                  <Card withBorder p='md'>
-                    <Group justify='space-between' mb='md'>
-                      <Title order={4}>Monthly Report</Title>
-                      <Button size='sm' variant='outline'>
-                        Export PDF
-                      </Button>
-                    </Group>
-                    <Text size='sm' c='dimmed'>
-                      Comprehensive monthly ticket analysis including trends,
-                      performance metrics, and recommendations.
-                    </Text>
-                  </Card>
-                </Grid.Col>
-                <Grid.Col span={{ base: 12, md: 6 }}>
-                  <Card withBorder p='md'>
-                    <Group justify='space-between' mb='md'>
-                      <Title order={4}>SLA Report</Title>
-                      <Button size='sm' variant='outline'>
-                        Export Excel
-                      </Button>
-                    </Group>
-                    <Text size='sm' c='dimmed'>
-                      Detailed SLA compliance report with breach analysis and
-                      improvement recommendations.
-                    </Text>
-                  </Card>
-                </Grid.Col>
-              </Grid>
-            </Stack>
-          </Tabs.Panel>
-        </Tabs>
+          </Grid.Col>
+        </Grid>
       </Stack>
     </Container>
   );

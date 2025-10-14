@@ -68,12 +68,19 @@ export function useExportReport() {
       type,
       format,
       filters,
+      data,
     }: {
       type: string;
       format: string;
       filters?: ReportFilters;
+      data?: unknown;
     }) => {
-      const response = await reportsApi.exportReport(type, format, filters);
+      const response = await reportsApi.exportReport(
+        type,
+        format,
+        filters,
+        data
+      );
       return response.data as Blob;
     },
   });

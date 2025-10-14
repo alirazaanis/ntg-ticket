@@ -522,8 +522,14 @@ export default function TicketsPage() {
           slaLevel: (searchFilters.slaLevel as string[]) || [],
           assignedTo: searchFilters.assignedTo || [],
           requester: searchFilters.requester || [],
-          createdFrom: searchFilters.dateFrom || undefined,
-          createdTo: searchFilters.dateTo || undefined,
+          createdFrom:
+            typeof searchFilters.dateFrom === 'string' && searchFilters.dateFrom
+              ? new Date(searchFilters.dateFrom)
+              : undefined,
+          createdTo:
+            typeof searchFilters.dateTo === 'string' && searchFilters.dateTo
+              ? new Date(searchFilters.dateTo)
+              : undefined,
           minResolutionTime: (searchFilters as { minResolutionHours?: number })
             .minResolutionHours,
           maxResolutionTime: (searchFilters as { maxResolutionHours?: number })

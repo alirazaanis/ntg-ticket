@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   TicketStatus,
   TicketPriority,
+  TicketImpact,
+  TicketUrgency,
   Comment,
   Attachment,
 } from '../../../types/unified';
@@ -83,6 +85,20 @@ const priorityColors: Record<TicketPriority, string> = {
   MEDIUM: 'yellow',
   HIGH: 'orange',
   CRITICAL: 'red',
+};
+
+const impactColors: Record<TicketImpact, string> = {
+  MINOR: 'green',
+  MODERATE: 'yellow',
+  MAJOR: 'orange',
+  CRITICAL: 'red',
+};
+
+const urgencyColors: Record<TicketUrgency, string> = {
+  LOW: 'green',
+  NORMAL: 'blue',
+  HIGH: 'orange',
+  IMMEDIATE: 'red',
 };
 
 export default function TicketDetailPage() {
@@ -539,13 +555,23 @@ export default function TicketDetailPage() {
                   <Text size='sm' fw={500}>
                     Impact
                   </Text>
-                  <Text size='sm'>{ticket.impact}</Text>
+                  <Badge
+                    color={impactColors[ticket.impact as TicketImpact]}
+                    variant='outline'
+                  >
+                    {ticket.impact}
+                  </Badge>
                 </Group>
                 <Group justify='space-between'>
                   <Text size='sm' fw={500}>
                     Urgency
                   </Text>
-                  <Text size='sm'>{ticket.urgency}</Text>
+                  <Badge
+                    color={urgencyColors[ticket.urgency as TicketUrgency]}
+                    variant='outline'
+                  >
+                    {ticket.urgency}
+                  </Badge>
                 </Group>
                 {canEdit && (
                   <Button

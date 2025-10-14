@@ -508,7 +508,7 @@ async function main() {
       requesterId: endUser1.id,
       assignedToId: supportStaff2.id,
       dueDate: twoDaysAgo, // Overdue by 2 days
-      createdAt: oneWeekAgo,
+      createdAt: new Date('2025-10-01T10:00:00Z'), // Changed from Sep 24, 2025 to Oct 1, 2025
     },
     {
       ticketNumber: 'TKT-2024-000003',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ManagerAndAdmin } from '../../../components/guards/RouteGuard';
 import {
   Container,
   Title,
@@ -36,7 +37,7 @@ import { useSearch } from '../../../hooks/useSearch';
 import { PAGINATION_CONFIG } from '../../../lib/constants';
 import { Ticket } from '../../../types/unified';
 
-export default function SLABreachedTicketsPage() {
+function SLABreachedTicketsPageContent() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
@@ -355,5 +356,13 @@ export default function SLABreachedTicketsPage() {
         }}
       />
     </Container>
+  );
+}
+
+export default function SLABreachedTicketsPage() {
+  return (
+    <ManagerAndAdmin>
+      <SLABreachedTicketsPageContent />
+    </ManagerAndAdmin>
   );
 }

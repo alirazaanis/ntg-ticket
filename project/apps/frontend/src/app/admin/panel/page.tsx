@@ -1,5 +1,10 @@
 import { AdminPanel } from '../../../components/features/AdminPanel';
+import { AdminOnly } from '../../../components/guards/RouteGuard';
 
 export default function AdminPanelPage() {
-  return <AdminPanel />;
+  return (
+    <AdminOnly>
+      <AdminPanel />
+    </AdminOnly>
+  );
 }

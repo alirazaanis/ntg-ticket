@@ -442,11 +442,23 @@ export const reportsApi = {
       }>
     >('/reports/sla', { params: filters }),
 
-  exportReport: (type: string, format: string, filters?: ReportFilters) =>
-    apiClient.get(`/reports/export/${type}`, {
-      params: { ...filters, format },
-      responseType: 'blob',
-    }),
+  exportReport: (
+    type: string,
+    format: string,
+    filters?: ReportFilters,
+    data?: unknown
+  ) =>
+    apiClient.post(
+      `/reports/export/${type}`,
+      {
+        format,
+        filters,
+        data,
+      },
+      {
+        responseType: 'blob',
+      }
+    ),
 
   exportReports: (filters?: ReportFilters) =>
     apiClient.post<Blob>('/reports/export', filters, {

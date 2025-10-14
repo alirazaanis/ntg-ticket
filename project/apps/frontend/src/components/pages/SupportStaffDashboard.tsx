@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo } from 'react';
 import {
   Container,
   Grid,
@@ -10,7 +10,6 @@ import {
   Button,
   Group,
   Stack,
-  Tabs,
   Card,
   Avatar,
   Progress,
@@ -24,7 +23,6 @@ import {
   IconCheck,
   IconAlertCircle,
   IconTicket,
-  IconTrendingUp,
 } from '@tabler/icons-react';
 import { useTickets } from '../../hooks/useTickets';
 import { useTicketReport } from '../../hooks/useReports';
@@ -36,14 +34,17 @@ import { useRouter } from 'next/navigation';
 export function SupportStaffDashboard() {
   const t = useTranslations('dashboard');
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
+
   const { user } = useAuthStore();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const { data: reportData } = useTicketReport({ userId: user?.id });
 
-  const assignedTickets =
-    tickets?.filter((ticket: Ticket) => ticket.assignedTo?.id === user?.id) ||
-    [];
+  const assignedTickets = useMemo(
+    () =>
+      tickets?.filter((ticket: Ticket) => ticket.assignedTo?.id === user?.id) ||
+      [],
+    [tickets, user?.id]
+  );
 
   const openTickets = assignedTickets.filter((ticket: Ticket) =>
     ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
@@ -95,6 +96,86 @@ export function SupportStaffDashboard() {
       color: 'red',
     },
   ];
+
+  // Breakdown calculations for tables
+  const categoryBreakdown = useMemo(() => {
+    const breakdown = new Map<string, number>();
+    assignedTickets?.forEach((ticket: Ticket) => {
+      const category = ticket.category?.name || 'Unknown';
+      breakdown.set(category, (breakdown.get(category) || 0) + 1);
+    });
+    return Array.from(breakdown.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5); // Top 5 categories
+  }, [assignedTickets]);
+
+  const statusBreakdown = useMemo(() => {
+    const breakdown = {
+      NEW: 0,
+      OPEN: 0,
+      IN_PROGRESS: 0,
+      ON_HOLD: 0,
+      RESOLVED: 0,
+      CLOSED: 0,
+      REOPENED: 0,
+    };
+    assignedTickets?.forEach((ticket: Ticket) => {
+      if (ticket.status in breakdown) {
+        breakdown[ticket.status as keyof typeof breakdown]++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [assignedTickets]);
+
+  const impactBreakdown = useMemo(() => {
+    const breakdown = {
+      CRITICAL: 0,
+      MAJOR: 0,
+      MODERATE: 0,
+      MINOR: 0,
+      UNKNOWN: 0,
+    };
+    assignedTickets?.forEach((ticket: Ticket) => {
+      if (ticket.impact && ticket.impact in breakdown) {
+        breakdown[ticket.impact as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [assignedTickets]);
+
+  const urgencyBreakdown = useMemo(() => {
+    const breakdown = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 };
+    assignedTickets?.forEach((ticket: Ticket) => {
+      if (ticket.urgency && ticket.urgency in breakdown) {
+        breakdown[ticket.urgency as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [assignedTickets]);
+
+  const priorityBreakdown = useMemo(() => {
+    const breakdown = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 };
+    assignedTickets?.forEach((ticket: Ticket) => {
+      if (ticket.priority && ticket.priority in breakdown) {
+        breakdown[ticket.priority as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return Object.entries(breakdown)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [assignedTickets]);
 
   if (ticketsLoading) {
     return (
@@ -173,7 +254,7 @@ export function SupportStaffDashboard() {
                   size='lg'
                 />
                 <Text size='sm' mt={4}>
-                  {reportData?.slaMetrics?.responseTime
+                  {reportData?.slaMetrics?.responseTime !== undefined
                     ? `${reportData.slaMetrics.responseTime}%`
                     : 'Loading...'}{' '}
                   within SLA
@@ -191,7 +272,7 @@ export function SupportStaffDashboard() {
                   size='lg'
                 />
                 <Text size='sm' mt={4}>
-                  {reportData?.slaMetrics?.resolutionTime
+                  {reportData?.slaMetrics?.resolutionTime !== undefined
                     ? `${reportData.slaMetrics.resolutionTime}%`
                     : 'Loading...'}{' '}
                   within SLA
@@ -219,45 +300,207 @@ export function SupportStaffDashboard() {
           </Grid>
         </Paper>
 
-        {/* Main Content */}
-        <Tabs
-          value={activeTab}
-          onChange={value => setActiveTab(value || 'overview')}
-        >
-          <Tabs.List>
-            <Tabs.Tab
-              value='overview'
-              leftSection={<IconTrendingUp size={16} />}
-            >
-              Recent Activity
-            </Tabs.Tab>
-          </Tabs.List>
-
-          <Tabs.Panel value='overview' pt='md'>
+        {/* Breakdown Tables */}
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 6 }}>
             <Paper withBorder p='md'>
-              <Title order={3} mb='md'>
-                {t('recentActivity')}
+              <Title order={4} mb='md'>
+                Tickets by Category
               </Title>
-              <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                {assignedTickets.slice(0, 5).map((ticket: Ticket) => (
-                  <Timeline.Item
-                    key={ticket.id}
-                    bullet={<IconTicket size={12} />}
-                    title={ticket.title}
-                  >
-                    <Text c='dimmed' size='sm'>
-                      {ticket.status} •{' '}
-                      {new Date(ticket.updatedAt).toLocaleDateString()}
-                    </Text>
-                    <Badge color='red' size='sm' mt={4}>
-                      {ticket.ticketNumber}
-                    </Badge>
-                  </Timeline.Item>
-                ))}
-              </Timeline>
+              <Stack gap={0}>
+                {categoryBreakdown.map(
+                  ([category, count]: [string, number], index: number) => (
+                    <div
+                      key={category}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < categoryBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{category}</Text>
+                        <Badge variant='light' color='blue'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
             </Paper>
-          </Tabs.Panel>
-        </Tabs>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Status
+              </Title>
+              <Stack gap={0}>
+                {statusBreakdown.map(
+                  ([status, count]: [string, number], index: number) => (
+                    <div
+                      key={status}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < statusBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{status.replace('_', ' ')}</Text>
+                        <Badge variant='light' color='green'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Impact
+              </Title>
+              <Stack gap={0}>
+                {impactBreakdown.map(
+                  ([impact, count]: [string, number], index: number) => (
+                    <div
+                      key={impact}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < impactBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{impact}</Text>
+                        <Badge variant='light' color='red'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Urgency
+              </Title>
+              <Stack gap={0}>
+                {urgencyBreakdown.map(
+                  ([urgency, count]: [string, number], index: number) => (
+                    <div
+                      key={urgency}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < urgencyBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{urgency}</Text>
+                        <Badge variant='light' color='orange'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Paper withBorder p='md'>
+              <Title order={4} mb='md'>
+                Tickets by Priority
+              </Title>
+              <Stack gap={0}>
+                {priorityBreakdown.map(
+                  ([priority, count]: [string, number], index: number) => (
+                    <div
+                      key={priority}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < priorityBreakdown.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{priority}</Text>
+                        <Badge variant='light' color='purple'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  )
+                )}
+              </Stack>
+            </Paper>
+          </Grid.Col>
+        </Grid>
+
+        {/* Recent Activity */}
+        <Paper withBorder p='md'>
+          <Title order={3} mb='md'>
+            {t('recentActivity')}
+          </Title>
+          <Timeline active={-1} bulletSize={24} lineWidth={2}>
+            {assignedTickets.slice(0, 5).map((ticket: Ticket) => (
+              <Timeline.Item
+                key={ticket.id}
+                bullet={<IconTicket size={12} />}
+                title={ticket.title}
+              >
+                <Text c='dimmed' size='sm'>
+                  {ticket.status} •{' '}
+                  {new Date(ticket.updatedAt).toLocaleDateString()}
+                </Text>
+                <Badge color='red' size='sm' mt={4}>
+                  {ticket.ticketNumber}
+                </Badge>
+              </Timeline.Item>
+            ))}
+          </Timeline>
+        </Paper>
       </Stack>
     </Container>
   );

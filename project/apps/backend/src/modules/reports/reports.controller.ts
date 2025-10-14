@@ -1,8 +1,10 @@
 import {
   Controller,
   Get,
+  Post,
   Query,
   Param,
+  Body,
   UseGuards,
   Res,
   Logger,
@@ -322,4 +324,231 @@ export class ReportsController {
       });
     }
   }
+
+  @Post('export/:type')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Export structured report by type (POST)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Structured report exported successfully',
+  })
+  async exportStructuredReport(
+    @Param('type') type: string,
+    @Body()
+    body: {
+      format: 'excel' | 'pdf' | 'csv';
+      filters?: Record<string, unknown>;
+      data?: AdminReportExportData;
+    },
+    @Res() res: Response
+  ): Promise<void> {
+    try {
+      this.logger.log('Structured export request received:', {
+        type,
+        format: body.format,
+        hasData: !!body.data,
+      });
+
+      if (type === 'admin-report' && body.format === 'excel') {
+        await this.exportAdminReport(body.data, res);
+        return;
+      }
+
+      // For other types, fall back to the original GET method logic
+      throw new Error(`Unsupported structured export type: ${type}`);
+    } catch (error) {
+      this.logger.error('Structured export error:', error);
+      res.status(500).json({
+        message: 'Failed to export structured report',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  private async exportAdminReport(
+    data: AdminReportExportData,
+    res: Response
+  ): Promise<void> {
+    try {
+      const workbook = XLSX.utils.book_new();
+
+      // Summary Cards Sheet
+      if (data.summaryCards) {
+        const summarySheet = XLSX.utils.json_to_sheet(
+          data.summaryCards.map(card => ({
+            Metric: card.title,
+            Value: card.value,
+          }))
+        );
+        XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary Cards');
+      }
+
+      // Users by Role Sheet
+      if (data.usersByRole) {
+        const roleSheet = XLSX.utils.json_to_sheet(
+          data.usersByRole.map(item => ({
+            Role: item.role.replace('_', ' '),
+            Count: item.count,
+          }))
+        );
+        XLSX.utils.book_append_sheet(workbook, roleSheet, 'Users by Role');
+      }
+
+      // Users by Registration Period Sheet
+      if (data.usersByRegistrationPeriod) {
+        const registrationSheet = XLSX.utils.json_to_sheet(
+          data.usersByRegistrationPeriod.map(item => ({
+            'Registration Period': item.monthYear,
+            'New Users': item.count,
+          }))
+        );
+        XLSX.utils.book_append_sheet(
+          workbook,
+          registrationSheet,
+          'Registration Trends'
+        );
+      }
+
+      // Users by Status Sheet
+      if (data.usersByStatus) {
+        const statusSheet = XLSX.utils.json_to_sheet(
+          data.usersByStatus.map(item => ({
+            Status: item.status,
+            Count: item.count,
+          }))
+        );
+        XLSX.utils.book_append_sheet(workbook, statusSheet, 'Users by Status');
+      }
+
+      // Tickets by Priority Sheet
+      if (data.ticketsByPriority) {
+        const prioritySheet = XLSX.utils.json_to_sheet(
+          data.ticketsByPriority.map(item => ({
+            Priority: item.priority,
+            Count: item.count,
+          }))
+        );
+        XLSX.utils.book_append_sheet(
+          workbook,
+          prioritySheet,
+          'Tickets by Priority'
+        );
+      }
+
+      // Tickets by Category Sheet
+      if (data.ticketsByCategory) {
+        const categorySheet = XLSX.utils.json_to_sheet(
+          data.ticketsByCategory.map(item => ({
+            Category: item.category,
+            Count: item.count,
+          }))
+        );
+        XLSX.utils.book_append_sheet(
+          workbook,
+          categorySheet,
+          'Tickets by Category'
+        );
+      }
+
+      // Login Activity Sheet
+      if (data.loginActivity) {
+        const loginSheet = XLSX.utils.json_to_sheet(
+          data.loginActivity.map(item => ({
+            Metric: item.metric,
+            Count: item.count,
+            Status: item.status,
+          }))
+        );
+        XLSX.utils.book_append_sheet(workbook, loginSheet, 'Login Activity');
+      }
+
+      // Audit Trail Sheet
+      if (data.auditTrail) {
+        const auditSheet = XLSX.utils.json_to_sheet(
+          data.auditTrail.map(item => ({
+            'Activity Type': item.activityType,
+            Count: item.count,
+            'Last Activity': item.lastActivity,
+          }))
+        );
+        XLSX.utils.book_append_sheet(workbook, auditSheet, 'Audit Trail');
+      }
+
+      const content = XLSX.write(workbook, {
+        type: 'buffer',
+        bookType: 'xlsx',
+      });
+      const mimeType =
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const filename = `administrative-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // Set response headers for file download
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${filename}"`
+      );
+      res.setHeader('Content-Length', content.length);
+
+      // Send the file content
+      res.end(content);
+    } catch (error) {
+      this.logger.error('Admin report export error:', error);
+      throw error;
+    }
+  }
+}
+
+// Types for admin structured export payload
+interface SummaryCardItem {
+  title: string;
+  value: number;
+}
+
+interface RoleCountItem {
+  role: string;
+  count: number;
+}
+
+interface RegistrationPeriodItem {
+  monthYear: string;
+  count: number;
+}
+
+interface StatusCountItem {
+  status: string;
+  count: number;
+}
+
+interface PriorityCountItem {
+  priority: string;
+  count: number;
+}
+
+interface CategoryCountItem {
+  category: string;
+  count: number;
+}
+
+interface LoginActivityItem {
+  metric: string;
+  count: number;
+  status: string;
+}
+
+interface AuditTrailItem {
+  activityType: string;
+  count: number;
+  lastActivity: string;
+}
+
+interface AdminReportExportData {
+  summaryCards?: SummaryCardItem[];
+  usersByRole?: RoleCountItem[];
+  usersByRegistrationPeriod?: RegistrationPeriodItem[];
+  usersByStatus?: StatusCountItem[];
+  ticketsByPriority?: PriorityCountItem[];
+  ticketsByCategory?: CategoryCountItem[];
+  loginActivity?: LoginActivityItem[];
+  auditTrail?: AuditTrailItem[];
 }

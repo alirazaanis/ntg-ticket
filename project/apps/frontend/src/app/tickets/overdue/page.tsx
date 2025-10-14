@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { StaffAndAbove } from '../../../components/guards/RouteGuard';
 import {
   Container,
   Title,
@@ -36,7 +37,7 @@ import { useSearch } from '../../../hooks/useSearch';
 import { PAGINATION_CONFIG } from '../../../lib/constants';
 import { Ticket, TicketStatus } from '../../../types/unified';
 
-export default function OverdueTicketsPage() {
+function OverdueTicketsPageContent() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
@@ -371,5 +372,13 @@ export default function OverdueTicketsPage() {
         }}
       />
     </Container>
+  );
+}
+
+export default function OverdueTicketsPage() {
+  return (
+    <StaffAndAbove>
+      <OverdueTicketsPageContent />
+    </StaffAndAbove>
   );
 }

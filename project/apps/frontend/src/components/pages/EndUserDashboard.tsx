@@ -1,21 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Container,
   Grid,
-  Paper,
   Title,
   Text,
   Button,
   Group,
   Stack,
-  Badge,
-  Tabs,
   Card,
   Avatar,
-  Timeline,
   Loader,
 } from '@mantine/core';
 import {
@@ -23,7 +18,6 @@ import {
   IconClock,
   IconCheck,
   IconX,
-  IconTrendingUp,
   IconTicket,
 } from '@tabler/icons-react';
 import { useTickets } from '../../hooks/useTickets';
@@ -33,7 +27,6 @@ import { useRouter } from 'next/navigation';
 
 export function EndUserDashboard() {
   const t = useTranslations('dashboard');
-  const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuthStore();
   const router = useRouter();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
@@ -132,45 +125,25 @@ export function EndUserDashboard() {
           ))}
         </Grid>
 
-        {/* Main Content */}
-        <Tabs
-          value={activeTab}
-          onChange={value => setActiveTab(value || 'overview')}
-        >
-          <Tabs.List>
-            <Tabs.Tab
-              value='overview'
-              leftSection={<IconTrendingUp size={16} />}
-            >
-              Recent Activity
-            </Tabs.Tab>
-          </Tabs.List>
-
-          <Tabs.Panel value='overview' pt='md'>
-            <Paper withBorder p='md'>
-              <Title order={3} mb='md'>
-                {t('recentActivity')}
-              </Title>
-              <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                {myTickets.slice(0, 5).map((ticket: Ticket) => (
-                  <Timeline.Item
-                    key={ticket.id}
-                    bullet={<IconTicket size={12} />}
-                    title={ticket.title}
-                  >
-                    <Text c='dimmed' size='sm'>
-                      {ticket.status} •{' '}
-                      {new Date(ticket.updatedAt).toLocaleDateString()}
-                    </Text>
-                    <Badge color='red' size='sm' mt={4}>
-                      {ticket.ticketNumber}
-                    </Badge>
-                  </Timeline.Item>
-                ))}
-              </Timeline>
-            </Paper>
-          </Tabs.Panel>
-        </Tabs>
+        {/* Quick Actions */}
+        <Group justify='center' mt='xl'>
+          <Button
+            variant='filled'
+            leftSection={<IconSearch size={16} />}
+            onClick={() => router.push('/tickets')}
+            size='lg'
+          >
+            View All My Tickets
+          </Button>
+          <Button
+            variant='outline'
+            leftSection={<IconTicket size={16} />}
+            onClick={() => router.push('/tickets/create')}
+            size='lg'
+          >
+            Create New Ticket
+          </Button>
+        </Group>
       </Stack>
     </Container>
   );

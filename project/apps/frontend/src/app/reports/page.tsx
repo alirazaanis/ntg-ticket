@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Container,
@@ -15,9 +15,12 @@ import {
   Modal,
   MultiSelect,
   Select,
-  Tabs,
-  RingProgress,
   Loader,
+  Avatar,
+  Badge,
+  Paper,
+  Tooltip,
+  Progress,
 } from '@mantine/core';
 import {
   IconRefresh,
@@ -25,18 +28,25 @@ import {
   IconTicket,
   IconClock,
   IconCheck,
+  IconX,
   IconChartBar,
+  IconAlertCircle,
   IconFileExport,
   IconShield,
   IconAlertTriangle,
+  IconTrendingUp,
+  IconStar,
+  IconStarFilled,
+  IconInfoCircle,
+  IconKey,
+  IconHistory,
+  IconActivity,
 } from '@tabler/icons-react';
-import {
-  useTicketReport,
-  useSlaReport,
-  useUserDistribution,
-  useExportReport,
-} from '../../hooks/useReports';
+import { useSlaReport, useExportReport } from '../../hooks/useReports';
 import { useUsers } from '../../hooks/useUsers';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { useTickets, useAllTicketsForCounting } from '../../hooks/useTickets';
+import { Ticket } from '../../types/unified';
 import { notifications } from '@mantine/notifications';
 import { DatePickerInput } from '@mantine/dates';
 import {
@@ -48,51 +58,468 @@ import {
 interface ReportFilters {
   dateFrom?: string;
   dateTo?: string;
+  monthYear?: string[];
   status?: string[];
   priority?: string[];
   category?: string[];
-  assignedTo?: string[];
+  assignedTo?: string;
   department?: string[];
+  role?: string[];
+  requesterId?: string;
+}
+
+interface MetricCardProps {
+  title: string;
+  value: number;
+  icon: React.ComponentType<{ size?: number }>;
+  color: string;
+  tooltip: string;
+}
+
+function MetricCard({
+  title,
+  value,
+  icon: Icon,
+  color,
+  tooltip,
+}: MetricCardProps) {
+  return (
+    <Card withBorder>
+      <Group>
+        <Avatar color={color} size='lg'>
+          <Icon size={24} />
+        </Avatar>
+        <div style={{ flex: 1 }}>
+          <Group gap='xs' align='center'>
+            <Text size='lg' fw={600}>
+              {value}
+            </Text>
+            <Tooltip label={tooltip} position='top' withArrow>
+              <IconInfoCircle
+                size={14}
+                color='var(--mantine-color-dimmed)'
+                style={{ cursor: 'help' }}
+              />
+            </Tooltip>
+          </Group>
+          <Text size='sm' c='dimmed'>
+            {title}
+          </Text>
+        </div>
+      </Group>
+    </Card>
+  );
 }
 
 // Using centralized constants from lib/constants.ts
 
 export default function ReportsPage() {
   const t = useTranslations('reports');
-  const [activeTab, setActiveTab] = useState('overview');
+  const { user } = useAuthStore();
+
   const [filters, setFilters] = useState<ReportFilters>({});
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const [exportFormat, setExportFormat] = useState('pdf');
+  const [exportFormat, setExportFormat] = useState('excel');
 
-  const { data: ticketReport } = useTicketReport({
+  // For End Users and Support Staff, we'll use their own tickets data
+  const { data: tickets, isLoading: ticketsLoading } = useTickets();
+
+  // For Support Manager and Admin, use the same approach as Manager Dashboard
+  const { data: allTicketsForStats } = useAllTicketsForCounting();
+  const { data: slaReport } = useSlaReport({
     ...filters,
-    assignedTo: filters.assignedTo?.[0],
+    assignedTo: user?.role === 'SUPPORT_STAFF' ? user.id : filters.assignedTo,
   });
-  const { data: slaReport, isLoading: slaReportLoading } = useSlaReport({
-    ...filters,
-    assignedTo: filters.assignedTo?.[0],
-  });
-  const { data: userDistribution, isLoading: userDistributionLoading } =
-    useUserDistribution();
-  const { data: users, isLoading: usersLoading } = useUsers({ limit: 1000 });
+  const { data: users } = useUsers({ limit: 1000 });
   const exportReport = useExportReport();
+
+  // Filter tickets based on user role
+  const myTickets = useMemo(() => {
+    if (!user) return [];
+
+    switch (user.role) {
+      case 'END_USER':
+        if (!tickets) return [];
+        return tickets.filter(
+          (ticket: Ticket) => ticket.requester.id === user.id
+        );
+      case 'SUPPORT_STAFF':
+        if (!tickets) return [];
+        return tickets.filter(
+          (ticket: Ticket) => ticket.assignedTo?.id === user.id
+        );
+      case 'SUPPORT_MANAGER':
+      case 'ADMIN':
+        // Use allTicketsForStats for managers and admins (same as Manager Dashboard)
+        return allTicketsForStats || [];
+      default:
+        return [];
+    }
+  }, [tickets, allTicketsForStats, user]);
+
+  // Generate available month-year options from user's tickets with counts
+  const availableMonthYears = useMemo(() => {
+    if (!myTickets || myTickets.length === 0) return [];
+
+    const monthYearCounts = new Map<string, number>();
+    myTickets.forEach((ticket: Ticket) => {
+      const ticketDate = new Date(ticket.createdAt);
+      const monthYear = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}`;
+      monthYearCounts.set(monthYear, (monthYearCounts.get(monthYear) || 0) + 1);
+    });
+
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return Array.from(monthYearCounts.entries())
+      .map(([monthYear, count]) => {
+        const [year, month] = monthYear.split('-');
+        const displayFormat = `${monthNames[parseInt(month) - 1]}-${year}`;
+        return {
+          value: monthYear,
+          label: `${displayFormat} (${count} tickets)`,
+        };
+      })
+      .sort((a, b) => b.value.localeCompare(a.value)); // Sort newest first
+  }, [myTickets]);
+
+  // Apply additional filters for all roles
+  const filteredTickets = myTickets.filter((ticket: Ticket) => {
+    if (
+      filters.status &&
+      filters.status.length > 0 &&
+      !filters.status.includes(ticket.status)
+    ) {
+      return false;
+    }
+    if (
+      filters.priority &&
+      filters.priority.length > 0 &&
+      !filters.priority.includes(ticket.priority)
+    ) {
+      return false;
+    }
+    if (
+      filters.category &&
+      filters.category.length > 0 &&
+      !filters.category.includes(ticket.category?.name || '')
+    ) {
+      return false;
+    }
+    if (
+      filters.dateFrom &&
+      new Date(ticket.createdAt) < new Date(filters.dateFrom)
+    ) {
+      return false;
+    }
+    if (
+      filters.dateTo &&
+      new Date(ticket.createdAt) > new Date(filters.dateTo)
+    ) {
+      return false;
+    }
+    // Month-Year filter (multiple selection)
+    if (filters.monthYear && filters.monthYear.length > 0) {
+      const ticketDate = new Date(ticket.createdAt);
+      const ticketMonthYear = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}`;
+      if (!filters.monthYear.includes(ticketMonthYear)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Calculate summary counts based on user role
+  const totalTickets = filteredTickets.length;
+  const openTickets = filteredTickets.filter((ticket: Ticket) =>
+    ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
+  );
+  const resolvedTickets = filteredTickets.filter(
+    (ticket: Ticket) => ticket.status === 'RESOLVED'
+  );
+  const overdueTickets = filteredTickets.filter((ticket: Ticket) => {
+    if (!ticket.dueDate) return false;
+    return (
+      new Date(ticket.dueDate) < new Date() &&
+      !['RESOLVED', 'CLOSED'].includes(ticket.status)
+    );
+  });
+  const slaBreachedTickets = filteredTickets.filter((ticket: Ticket) => {
+    if (!ticket.dueDate || !ticket.closedAt) return false;
+    return new Date(ticket.closedAt) > new Date(ticket.dueDate);
+  });
+  const closedTickets = filteredTickets.filter(
+    (ticket: Ticket) => ticket.status === 'CLOSED'
+  );
+
+  // Additional breakdown calculations for Support Staff and Manager
+  // Use filteredTickets for calculations, but ensure consistency with overview when no filters
+  const ticketsForBreakdown = useMemo(() => {
+    // For Support Manager, when no filters are applied, use allTicketsForStats for consistency with overview
+    if (user?.role === 'SUPPORT_MANAGER' && Object.keys(filters).length === 0) {
+      return allTicketsForStats || [];
+    }
+    return filteredTickets;
+  }, [filteredTickets, allTicketsForStats, user?.role, filters]);
+
+  // Admin-specific filtering logic
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+
+    return users.filter(user => {
+      // Filter by date range
+      if (filters.dateFrom || filters.dateTo) {
+        const userDate = new Date(user.createdAt);
+        if (filters.dateFrom && userDate < new Date(filters.dateFrom)) {
+          return false;
+        }
+        if (filters.dateTo && userDate > new Date(filters.dateTo)) {
+          return false;
+        }
+      }
+
+      // Month-Year filter (multiple selection)
+      if (filters.monthYear && filters.monthYear.length > 0) {
+        const userDate = new Date(user.createdAt);
+        const userMonthYear = `${userDate.getFullYear()}-${String(userDate.getMonth() + 1).padStart(2, '0')}`;
+        if (!filters.monthYear.includes(userMonthYear)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [users, filters]);
+
+  const filteredTicketsForAdmin = useMemo(() => {
+    if (!allTicketsForStats) return [];
+
+    return allTicketsForStats.filter(ticket => {
+      // Filter by date range
+      if (filters.dateFrom || filters.dateTo) {
+        const ticketDate = new Date(ticket.createdAt);
+        if (filters.dateFrom && ticketDate < new Date(filters.dateFrom)) {
+          return false;
+        }
+        if (filters.dateTo && ticketDate > new Date(filters.dateTo)) {
+          return false;
+        }
+      }
+
+      // Month-Year filter (multiple selection)
+      if (filters.monthYear && filters.monthYear.length > 0) {
+        const ticketDate = new Date(ticket.createdAt);
+        const ticketMonthYear = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}`;
+        if (!filters.monthYear.includes(ticketMonthYear)) {
+          return false;
+        }
+      }
+
+      // Filter by category
+      if (filters.category && filters.category.length > 0) {
+        if (!filters.category.includes(ticket.category?.name || '')) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allTicketsForStats, filters]);
+
+  const priorityBreakdown = useMemo(() => {
+    const breakdown = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 };
+    ticketsForBreakdown.forEach((ticket: Ticket) => {
+      if (ticket.priority && ticket.priority in breakdown) {
+        breakdown[ticket.priority as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return breakdown;
+  }, [ticketsForBreakdown]);
+
+  const statusBreakdown = useMemo(() => {
+    const breakdown = {
+      NEW: 0,
+      OPEN: 0,
+      IN_PROGRESS: 0,
+      ON_HOLD: 0,
+      RESOLVED: 0,
+      CLOSED: 0,
+      REOPENED: 0,
+    };
+    ticketsForBreakdown.forEach((ticket: Ticket) => {
+      if (ticket.status in breakdown) {
+        breakdown[ticket.status as keyof typeof breakdown]++;
+      }
+    });
+    return breakdown;
+  }, [ticketsForBreakdown]);
+
+  const categoryBreakdown = useMemo(() => {
+    const breakdown = new Map<string, number>();
+    ticketsForBreakdown.forEach((ticket: Ticket) => {
+      const category = ticket.category?.name || 'Unknown';
+      breakdown.set(category, (breakdown.get(category) || 0) + 1);
+    });
+    return Array.from(breakdown.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5); // Top 5 categories to match overview
+  }, [ticketsForBreakdown]);
+
+  const impactBreakdown = useMemo(() => {
+    const breakdown = {
+      CRITICAL: 0,
+      MAJOR: 0,
+      MODERATE: 0,
+      MINOR: 0,
+      UNKNOWN: 0,
+    };
+    ticketsForBreakdown.forEach((ticket: Ticket) => {
+      if (ticket.impact && ticket.impact in breakdown) {
+        breakdown[ticket.impact as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return breakdown;
+  }, [ticketsForBreakdown]);
+
+  const urgencyBreakdown = useMemo(() => {
+    const breakdown = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 };
+    ticketsForBreakdown.forEach((ticket: Ticket) => {
+      if (ticket.urgency && ticket.urgency in breakdown) {
+        breakdown[ticket.urgency as keyof typeof breakdown]++;
+      } else {
+        breakdown.UNKNOWN++;
+      }
+    });
+    return breakdown;
+  }, [ticketsForBreakdown]);
+
+  // Staff performance calculation for Support Manager
+  const staffPerformance = useMemo(() => {
+    if (user?.role !== 'SUPPORT_MANAGER') return [];
+
+    const staffMap = new Map<
+      string,
+      {
+        name: string;
+        assignedTickets: number;
+        resolvedTickets: number;
+        openTickets: number;
+        overdueTickets: number;
+        slaBreachedTickets: number;
+        avgResolutionTime: number;
+      }
+    >();
+
+    filteredTickets.forEach((ticket: Ticket) => {
+      if (!ticket.assignedTo) return;
+
+      const staffId = ticket.assignedTo.id;
+      const staffName = ticket.assignedTo.name;
+
+      if (!staffMap.has(staffId)) {
+        staffMap.set(staffId, {
+          name: staffName,
+          assignedTickets: 0,
+          resolvedTickets: 0,
+          openTickets: 0,
+          overdueTickets: 0,
+          slaBreachedTickets: 0,
+          avgResolutionTime: 0,
+        });
+      }
+
+      const staff = staffMap.get(staffId);
+      if (!staff) {
+        return;
+      }
+      staff.assignedTickets++;
+
+      if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') {
+        staff.resolvedTickets++;
+      }
+
+      if (['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)) {
+        staff.openTickets++;
+      }
+
+      if (
+        ticket.dueDate &&
+        new Date(ticket.dueDate) < new Date() &&
+        !['RESOLVED', 'CLOSED'].includes(ticket.status)
+      ) {
+        staff.overdueTickets++;
+      }
+
+      if (
+        ticket.dueDate &&
+        ticket.closedAt &&
+        new Date(ticket.closedAt) > new Date(ticket.dueDate)
+      ) {
+        staff.slaBreachedTickets++;
+      }
+    });
+
+    return Array.from(staffMap.values()).sort(
+      (a, b) => b.assignedTickets - a.assignedTickets
+    );
+  }, [filteredTickets, user]);
 
   const handleExportReport = async (format: string) => {
     try {
+      // Special handling for Administrator reports
+      if (user?.role === 'ADMIN') {
+        await handleAdminExport();
+        return;
+      }
+
+      // Set export filters based on user role
+      let exportFilters: ReportFilters;
+
+      if (user?.role === 'END_USER') {
+        exportFilters = {
+          ...filters,
+          requesterId: user.id, // Only export current user's tickets
+        };
+      } else if (user?.role === 'SUPPORT_STAFF') {
+        exportFilters = {
+          ...filters,
+          assignedTo: user.id, // Only export tickets assigned to current staff
+        };
+      } else {
+        // For Support Manager - export all filtered tickets
+        exportFilters = {
+          ...filters,
+          assignedTo: filters.assignedTo,
+        };
+      }
+
       const blob = await exportReport.mutateAsync({
         type: 'tickets', // Always export tickets data
         format,
-        filters: {
-          ...filters,
-          assignedTo: filters.assignedTo?.[0],
-        },
+        filters: exportFilters,
       });
 
       // Create download link for the blob
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `report-${format}-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv'}`;
+      a.download = `report-${format}-${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -102,7 +529,7 @@ export default function ReportsPage() {
 
       notifications.show({
         title: 'Success',
-        message: `Report exported successfully as ${format.toUpperCase()}`,
+        message: 'Report exported successfully',
         color: 'green',
       });
     } catch (error) {
@@ -114,6 +541,962 @@ export default function ReportsPage() {
     }
   };
 
+  const handleAdminExport = async () => {
+    try {
+      // Create structured data for Excel export
+      const exportData = {
+        summaryCards: [
+          { title: 'Total Users', value: filteredUsers.length },
+          {
+            title: 'Active Users',
+            value: filteredUsers.filter(user => user.isActive).length,
+          },
+          {
+            title: 'Inactive Users',
+            value: filteredUsers.filter(user => !user.isActive).length,
+          },
+          {
+            title: 'Support Staff',
+            value: filteredUsers.filter(user => user.role === 'SUPPORT_STAFF')
+              .length,
+          },
+          {
+            title: 'Support Managers',
+            value: filteredUsers.filter(user => user.role === 'SUPPORT_MANAGER')
+              .length,
+          },
+          {
+            title: 'New Users',
+            value: filteredUsers.filter(user => {
+              const userDate = new Date(user.createdAt);
+              const now = new Date();
+              return (
+                userDate.getMonth() === now.getMonth() &&
+                userDate.getFullYear() === now.getFullYear()
+              );
+            }).length,
+          },
+          {
+            title: 'Suspended Users',
+            value: filteredUsers.filter(user => !user.isActive).length,
+          },
+          { title: 'Failed Logins', value: 0 },
+          { title: 'Password Resets', value: 0 },
+          { title: 'Audit Entries', value: 0 },
+          { title: 'Active Sessions', value: 0 },
+          { title: 'Total Tickets', value: filteredTicketsForAdmin.length },
+          {
+            title: 'Open Tickets',
+            value: filteredTicketsForAdmin.filter(ticket =>
+              ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
+            ).length,
+          },
+        ],
+        usersByRole: [
+          {
+            role: 'END_USER',
+            count: filteredUsers.filter(u => u.role === 'END_USER').length,
+          },
+          {
+            role: 'SUPPORT_STAFF',
+            count: filteredUsers.filter(u => u.role === 'SUPPORT_STAFF').length,
+          },
+          {
+            role: 'SUPPORT_MANAGER',
+            count: filteredUsers.filter(u => u.role === 'SUPPORT_MANAGER')
+              .length,
+          },
+          {
+            role: 'ADMIN',
+            count: filteredUsers.filter(u => u.role === 'ADMIN').length,
+          },
+        ],
+        usersByRegistrationPeriod: Array.from({ length: 4 }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const monthYear = date.toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric',
+          });
+          const count = filteredUsers.filter(user => {
+            const userDate = new Date(user.createdAt);
+            return (
+              userDate.getMonth() === date.getMonth() &&
+              userDate.getFullYear() === date.getFullYear()
+            );
+          }).length;
+          return { monthYear, count };
+        }),
+        usersByStatus: [
+          {
+            status: 'Active',
+            count: filteredUsers.filter(u => u.isActive).length,
+          },
+          {
+            status: 'Inactive',
+            count: filteredUsers.filter(u => !u.isActive).length,
+          },
+        ],
+        ticketsByPriority: [
+          {
+            priority: 'CRITICAL',
+            count: filteredTicketsForAdmin.filter(
+              t => t.priority === 'CRITICAL'
+            ).length,
+          },
+          {
+            priority: 'HIGH',
+            count: filteredTicketsForAdmin.filter(t => t.priority === 'HIGH')
+              .length,
+          },
+          {
+            priority: 'MEDIUM',
+            count: filteredTicketsForAdmin.filter(t => t.priority === 'MEDIUM')
+              .length,
+          },
+          {
+            priority: 'LOW',
+            count: filteredTicketsForAdmin.filter(t => t.priority === 'LOW')
+              .length,
+          },
+        ],
+        ticketsByCategory: Object.entries(
+          filteredTicketsForAdmin.reduce(
+            (acc, ticket) => {
+              const category = ticket.category?.name || 'Unknown';
+              acc[category] = (acc[category] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          )
+        ).map(([category, count]) => ({ category, count })),
+        loginActivity: [
+          { metric: 'Failed Login Attempts', count: 0, status: 'Normal' },
+          {
+            metric: 'Successful Logins',
+            count: filteredUsers.length,
+            status: 'Active',
+          },
+          { metric: 'Password Resets', count: 0, status: 'Pending' },
+          { metric: 'Active Sessions', count: 0, status: 'Online' },
+        ],
+        auditTrail: [
+          {
+            activityType: 'User Registrations',
+            count: filteredUsers.length,
+            lastActivity:
+              filteredUsers.length > 0
+                ? new Date(
+                    Math.max(
+                      ...filteredUsers.map(u => new Date(u.createdAt).getTime())
+                    )
+                  ).toLocaleDateString()
+                : 'N/A',
+          },
+          {
+            activityType: 'Ticket Creations',
+            count: filteredTicketsForAdmin.length,
+            lastActivity:
+              filteredTicketsForAdmin.length > 0
+                ? new Date(
+                    Math.max(
+                      ...filteredTicketsForAdmin.map(t =>
+                        new Date(t.createdAt).getTime()
+                      )
+                    )
+                  ).toLocaleDateString()
+                : 'N/A',
+          },
+          { activityType: 'System Changes', count: 0, lastActivity: 'N/A' },
+          { activityType: 'Security Events', count: 0, lastActivity: 'N/A' },
+        ],
+      };
+
+      // Call the backend with structured data
+      const blob = await exportReport.mutateAsync({
+        type: 'admin-report',
+        format: 'excel',
+        data: exportData,
+      });
+
+      // Create download link for the blob
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `administrative-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setExportModalOpen(false);
+
+      notifications.show({
+        title: 'Success',
+        message:
+          'Administrative report exported successfully as Excel with structured sheets',
+        color: 'green',
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: `Failed to export administrative report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        color: 'red',
+      });
+    }
+  };
+
+  // Show loading state
+  if (ticketsLoading) {
+    return (
+      <Container size='xl' py='md'>
+        <Group justify='center' py='xl'>
+          <Loader size='lg' />
+          <Text>Loading report data...</Text>
+        </Group>
+      </Container>
+    );
+  }
+
+  // For End Users, Support Staff, and Support Manager, show simplified report with filters and summary boxes
+  if (
+    ['END_USER', 'SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(user?.role || '')
+  ) {
+    // Define stats based on user role
+    const stats =
+      user?.role === 'END_USER'
+        ? [
+            {
+              title: 'Total Tickets',
+              value: totalTickets,
+              icon: IconTicket,
+              color: 'red',
+              tooltip: 'Total number of tickets you have created',
+            },
+            {
+              title: 'Open Tickets',
+              value: openTickets.length,
+              icon: IconClock,
+              color: 'orange',
+              tooltip:
+                'Tickets that are currently open, in progress, or newly created',
+            },
+            {
+              title: 'Resolved Tickets',
+              value: resolvedTickets.length,
+              icon: IconCheck,
+              color: 'green',
+              tooltip: 'Tickets that have been resolved but not yet closed',
+            },
+            {
+              title: 'Closed Tickets',
+              value: closedTickets.length,
+              icon: IconX,
+              color: 'gray',
+              tooltip: 'Tickets that have been permanently closed',
+            },
+          ]
+        : [
+            // Support Staff and Manager stats (same as their dashboards)
+            {
+              title: 'Total',
+              value: totalTickets,
+              icon: IconTicket,
+              color: 'red',
+              tooltip:
+                user?.role === 'SUPPORT_STAFF'
+                  ? 'Total tickets assigned to you'
+                  : 'Total tickets in the system',
+            },
+            {
+              title: 'Open',
+              value: openTickets.length,
+              icon: IconClock,
+              color: 'orange',
+              tooltip:
+                'Tickets that are currently open, in progress, or newly created',
+            },
+            {
+              title: 'Resolved',
+              value: resolvedTickets.length,
+              icon: IconCheck,
+              color: 'green',
+              tooltip: 'Tickets that have been resolved but not yet closed',
+            },
+            {
+              title: 'Overdue',
+              value: overdueTickets.length,
+              icon: IconAlertCircle,
+              color: 'red',
+              tooltip:
+                'Tickets that have passed their due date and are not yet resolved',
+            },
+            {
+              title: 'SLA Breached',
+              value: slaBreachedTickets.length,
+              icon: IconAlertCircle,
+              color: 'red',
+              tooltip:
+                'Tickets that exceeded their due date before being resolved',
+            },
+            // Additional breakdown boxes
+            {
+              title: 'Critical Priority',
+              value: priorityBreakdown.CRITICAL,
+              icon: IconStarFilled,
+              color: 'red',
+              tooltip: 'Tickets with critical priority level',
+            },
+            {
+              title: 'High Priority',
+              value: priorityBreakdown.HIGH,
+              icon: IconStar,
+              color: 'orange',
+              tooltip: 'Tickets with high priority level',
+            },
+            {
+              title: 'Major Impact',
+              value: impactBreakdown.MAJOR,
+              icon: IconTrendingUp,
+              color: 'red',
+              tooltip: 'Tickets with major business impact',
+            },
+            {
+              title: 'High Urgency',
+              value: urgencyBreakdown.HIGH,
+              icon: IconTrendingUp,
+              color: 'orange',
+              tooltip: 'Tickets with high urgency level',
+            },
+            {
+              title: 'Top Category',
+              value: categoryBreakdown[0]?.[1] || 0,
+              icon: IconChartBar,
+              color: 'blue',
+              tooltip: 'Count of tickets in the most common category',
+            },
+          ];
+
+    return (
+      <Container size='xl' py='md'>
+        <Stack gap='md'>
+          {/* Header */}
+          <Group justify='space-between'>
+            <div>
+              <Title order={2}>
+                {user?.role === 'END_USER'
+                  ? 'My Ticket Reports'
+                  : user?.role === 'SUPPORT_STAFF'
+                    ? 'Assigned Ticket Reports'
+                    : 'Team Ticket Reports'}
+              </Title>
+              <Text c='dimmed' size='sm'>
+                {user?.role === 'END_USER'
+                  ? 'View and filter your ticket statistics'
+                  : user?.role === 'SUPPORT_STAFF'
+                    ? 'View and filter your assigned ticket statistics'
+                    : 'View and filter team ticket statistics'}
+              </Text>
+            </div>
+            <Group>
+              <Button
+                variant='light'
+                leftSection={<IconRefresh size={16} />}
+                onClick={() => window.location.reload()}
+              >
+                Refresh
+              </Button>
+              <Button
+                leftSection={<IconFileExport size={16} />}
+                onClick={() => setExportModalOpen(true)}
+              >
+                Export Report
+              </Button>
+            </Group>
+          </Group>
+
+          {/* Filters */}
+          <Card>
+            <Stack>
+              <Group justify='space-between'>
+                <Title order={4}>Filter Options</Title>
+                <Button
+                  variant='outline'
+                  leftSection={<IconRefresh size={16} />}
+                  onClick={() => setFilters({})}
+                  disabled={Object.keys(filters).length === 0}
+                >
+                  Clear All Filters
+                </Button>
+              </Group>
+              <Grid>
+                {/* Top Row - 3 filters */}
+                <Grid.Col span={3}>
+                  <DatePickerInput
+                    label='From Date'
+                    placeholder='Select start date'
+                    value={filters.dateFrom ? new Date(filters.dateFrom) : null}
+                    onChange={(date: Date | null) =>
+                      setFilters({ ...filters, dateFrom: date?.toISOString() })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <DatePickerInput
+                    label='To Date'
+                    placeholder='Select end date'
+                    value={filters.dateTo ? new Date(filters.dateTo) : null}
+                    onChange={(date: Date | null) =>
+                      setFilters({ ...filters, dateTo: date?.toISOString() })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <MultiSelect
+                    label='Month-Year'
+                    placeholder='Select month-years'
+                    data={availableMonthYears}
+                    value={filters.monthYear || []}
+                    onChange={value =>
+                      setFilters({ ...filters, monthYear: value })
+                    }
+                    clearable
+                    searchable
+                    size='sm'
+                    styles={{
+                      input: {
+                        height: '36px', // Match DatePickerInput height
+                        fontSize: '14px',
+                      },
+                    }}
+                  />
+                </Grid.Col>
+                {/* Bottom Row - 3 filters */}
+                <Grid.Col span={3}>
+                  <MultiSelect
+                    label='Status'
+                    placeholder='Select status'
+                    data={STATUS_OPTIONS}
+                    value={filters.status || []}
+                    onChange={value =>
+                      setFilters({ ...filters, status: value })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <MultiSelect
+                    label='Priority'
+                    placeholder='Select priority'
+                    data={PRIORITY_OPTIONS}
+                    value={filters.priority || []}
+                    onChange={value =>
+                      setFilters({ ...filters, priority: value })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <MultiSelect
+                    label='Category'
+                    placeholder='Select category'
+                    data={CATEGORY_OPTIONS}
+                    value={filters.category || []}
+                    onChange={value =>
+                      setFilters({ ...filters, category: value })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+              </Grid>
+            </Stack>
+          </Card>
+
+          {/* Summary Count Boxes */}
+          <Grid>
+            {stats.map(stat => (
+              <Grid.Col
+                key={stat.title}
+                span={{
+                  base: 12,
+                  sm: user?.role === 'END_USER' ? 6 : 6,
+                  md: user?.role === 'END_USER' ? 3 : 2.4,
+                }}
+              >
+                <MetricCard
+                  title={stat.title}
+                  value={stat.value}
+                  icon={stat.icon}
+                  color={stat.color}
+                  tooltip={stat.tooltip}
+                />
+              </Grid.Col>
+            ))}
+          </Grid>
+
+          {/* SLA Performance Section - Support Staff and Manager */}
+          {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(user?.role || '') && (
+            <Paper withBorder p='md'>
+              <Title order={3} mb='md'>
+                SLA Performance
+              </Title>
+              <Grid>
+                <Grid.Col span={{ base: 12, md: 4 }}>
+                  <div>
+                    <Text size='sm' c='dimmed' mb={4}>
+                      Response Time (Last 30 days)
+                    </Text>
+                    <Progress
+                      value={slaReport?.slaMetrics?.responseTime || 0}
+                      color='green'
+                      size='lg'
+                    />
+                    <Text size='sm' mt={4}>
+                      {slaReport?.slaMetrics?.responseTime !== undefined
+                        ? `${slaReport.slaMetrics.responseTime}%`
+                        : 'Loading...'}{' '}
+                      within SLA
+                    </Text>
+                  </div>
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, md: 4 }}>
+                  <div>
+                    <Text size='sm' c='dimmed' mb={4}>
+                      Resolution Time (Last 30 days)
+                    </Text>
+                    <Progress
+                      value={slaReport?.slaMetrics?.resolutionTime || 0}
+                      color='orange'
+                      size='lg'
+                    />
+                    <Text size='sm' mt={4}>
+                      {slaReport?.slaMetrics?.resolutionTime !== undefined
+                        ? `${slaReport.slaMetrics.resolutionTime}%`
+                        : 'Loading...'}{' '}
+                      within SLA
+                    </Text>
+                  </div>
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, md: 4 }}>
+                  <div>
+                    <Text size='sm' c='dimmed' mb={4}>
+                      Customer Satisfaction
+                    </Text>
+                    <Progress
+                      value={slaReport?.slaMetrics?.customerSatisfaction || 92}
+                      color='red'
+                      size='lg'
+                    />
+                    <Text size='sm' mt={4}>
+                      {(
+                        (slaReport?.slaMetrics?.customerSatisfaction || 92) / 20
+                      ).toFixed(1)}
+                      /5.0 average
+                    </Text>
+                  </div>
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          )}
+
+          {/* Breakdown Tables - Support Staff and Manager */}
+          {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(user?.role || '') && (
+            <Grid>
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder p='md'>
+                  <Title order={4} mb='md'>
+                    Tickets by Category
+                  </Title>
+                  <Stack gap={0}>
+                    {categoryBreakdown.map(
+                      ([category, count]: [string, number], index: number) => (
+                        <div
+                          key={category}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom:
+                              index < categoryBreakdown.length - 1
+                                ? '1px solid var(--mantine-color-gray-2)'
+                                : 'none',
+                            backgroundColor:
+                              index % 2 === 0
+                                ? 'var(--mantine-color-gray-0)'
+                                : 'transparent',
+                          }}
+                        >
+                          <Group justify='space-between' align='center'>
+                            <Text size='sm'>{category}</Text>
+                            <Badge variant='light' color='blue'>
+                              {count}
+                            </Badge>
+                          </Group>
+                        </div>
+                      )
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder p='md'>
+                  <Title order={4} mb='md'>
+                    Tickets by Status
+                  </Title>
+                  <Stack gap={0}>
+                    {Object.entries(statusBreakdown).map(
+                      ([status, count]: [string, number], index: number) => (
+                        <div
+                          key={status}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom:
+                              index < Object.entries(statusBreakdown).length - 1
+                                ? '1px solid var(--mantine-color-gray-2)'
+                                : 'none',
+                            backgroundColor:
+                              index % 2 === 0
+                                ? 'var(--mantine-color-gray-0)'
+                                : 'transparent',
+                          }}
+                        >
+                          <Group justify='space-between' align='center'>
+                            <Text size='sm'>{status.replace('_', ' ')}</Text>
+                            <Badge variant='light' color='green'>
+                              {count}
+                            </Badge>
+                          </Group>
+                        </div>
+                      )
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder p='md'>
+                  <Title order={4} mb='md'>
+                    Tickets by Impact
+                  </Title>
+                  <Stack gap={0}>
+                    {Object.entries(impactBreakdown).map(
+                      ([impact, count]: [string, number], index: number) => (
+                        <div
+                          key={impact}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom:
+                              index < Object.entries(impactBreakdown).length - 1
+                                ? '1px solid var(--mantine-color-gray-2)'
+                                : 'none',
+                            backgroundColor:
+                              index % 2 === 0
+                                ? 'var(--mantine-color-gray-0)'
+                                : 'transparent',
+                          }}
+                        >
+                          <Group justify='space-between' align='center'>
+                            <Text size='sm'>{impact}</Text>
+                            <Badge variant='light' color='red'>
+                              {count}
+                            </Badge>
+                          </Group>
+                        </div>
+                      )
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder p='md'>
+                  <Title order={4} mb='md'>
+                    Tickets by Urgency
+                  </Title>
+                  <Stack gap={0}>
+                    {Object.entries(urgencyBreakdown).map(
+                      ([urgency, count]: [string, number], index: number) => (
+                        <div
+                          key={urgency}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom:
+                              index <
+                              Object.entries(urgencyBreakdown).length - 1
+                                ? '1px solid var(--mantine-color-gray-2)'
+                                : 'none',
+                            backgroundColor:
+                              index % 2 === 0
+                                ? 'var(--mantine-color-gray-0)'
+                                : 'transparent',
+                          }}
+                        >
+                          <Group justify='space-between' align='center'>
+                            <Text size='sm'>{urgency}</Text>
+                            <Badge variant='light' color='orange'>
+                              {count}
+                            </Badge>
+                          </Group>
+                        </div>
+                      )
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+
+              <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder p='md'>
+                  <Title order={4} mb='md'>
+                    Tickets by Priority
+                  </Title>
+                  <Stack gap={0}>
+                    {Object.entries(priorityBreakdown).map(
+                      ([priority, count]: [string, number], index: number) => (
+                        <div
+                          key={priority}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom:
+                              index <
+                              Object.entries(priorityBreakdown).length - 1
+                                ? '1px solid var(--mantine-color-gray-2)'
+                                : 'none',
+                            backgroundColor:
+                              index % 2 === 0
+                                ? 'var(--mantine-color-gray-0)'
+                                : 'transparent',
+                          }}
+                        >
+                          <Group justify='space-between' align='center'>
+                            <Text size='sm'>{priority}</Text>
+                            <Badge variant='light' color='purple'>
+                              {count}
+                            </Badge>
+                          </Group>
+                        </div>
+                      )
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid.Col>
+            </Grid>
+          )}
+
+          {/* Staff Performance Section - Support Manager Only */}
+          {user?.role === 'SUPPORT_MANAGER' && staffPerformance.length > 0 && (
+            <Paper withBorder p='md'>
+              <Title order={3} mb='md'>
+                Staff Performance
+              </Title>
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Staff Member</Table.Th>
+                    <Table.Th>
+                      <Group gap='xs' align='center'>
+                        Assigned
+                        <Tooltip
+                          label='Total tickets assigned to this staff member'
+                          position='top'
+                          withArrow
+                        >
+                          <IconInfoCircle
+                            size={12}
+                            color='var(--mantine-color-dimmed)'
+                            style={{ cursor: 'help' }}
+                          />
+                        </Tooltip>
+                      </Group>
+                    </Table.Th>
+                    <Table.Th>
+                      <Group gap='xs' align='center'>
+                        Resolved
+                        <Tooltip
+                          label='Tickets resolved or closed by this staff member'
+                          position='top'
+                          withArrow
+                        >
+                          <IconInfoCircle
+                            size={12}
+                            color='var(--mantine-color-dimmed)'
+                            style={{ cursor: 'help' }}
+                          />
+                        </Tooltip>
+                      </Group>
+                    </Table.Th>
+                    <Table.Th>
+                      <Group gap='xs' align='center'>
+                        Open
+                        <Tooltip
+                          label='Currently open tickets assigned to this staff member'
+                          position='top'
+                          withArrow
+                        >
+                          <IconInfoCircle
+                            size={12}
+                            color='var(--mantine-color-dimmed)'
+                            style={{ cursor: 'help' }}
+                          />
+                        </Tooltip>
+                      </Group>
+                    </Table.Th>
+                    <Table.Th>
+                      <Group gap='xs' align='center'>
+                        Overdue
+                        <Tooltip
+                          label='Open tickets that have passed their due date'
+                          position='top'
+                          withArrow
+                        >
+                          <IconInfoCircle
+                            size={12}
+                            color='var(--mantine-color-dimmed)'
+                            style={{ cursor: 'help' }}
+                          />
+                        </Tooltip>
+                      </Group>
+                    </Table.Th>
+                    <Table.Th>
+                      <Group gap='xs' align='center'>
+                        SLA Breached
+                        <Tooltip
+                          label='Resolved tickets that exceeded their due date'
+                          position='top'
+                          withArrow
+                        >
+                          <IconInfoCircle
+                            size={12}
+                            color='var(--mantine-color-dimmed)'
+                            style={{ cursor: 'help' }}
+                          />
+                        </Tooltip>
+                      </Group>
+                    </Table.Th>
+                    <Table.Th>
+                      <Group gap='xs' align='center'>
+                        Performance
+                        <Tooltip
+                          label='SLA compliance percentage based on resolved tickets only'
+                          position='top'
+                          withArrow
+                        >
+                          <IconInfoCircle
+                            size={12}
+                            color='var(--mantine-color-dimmed)'
+                            style={{ cursor: 'help' }}
+                          />
+                        </Tooltip>
+                      </Group>
+                    </Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {staffPerformance.map(staff => {
+                    const slaCompliance =
+                      staff.resolvedTickets > 0
+                        ? Math.round(
+                            ((staff.resolvedTickets -
+                              staff.slaBreachedTickets) /
+                              staff.resolvedTickets) *
+                              100
+                          )
+                        : 100;
+
+                    return (
+                      <Table.Tr key={staff.name}>
+                        <Table.Td>
+                          <Group gap='sm'>
+                            <Avatar size='sm' color='blue'>
+                              {staff.name.charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Text fw={500}>{staff.name}</Text>
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge variant='light' color='blue'>
+                            {staff.assignedTickets}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge variant='light' color='green'>
+                            {staff.resolvedTickets}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge variant='light' color='orange'>
+                            {staff.openTickets}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge variant='light' color='red'>
+                            {staff.overdueTickets}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge variant='light' color='red'>
+                            {staff.slaBreachedTickets}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
+                            variant='light'
+                            color={
+                              slaCompliance >= 90
+                                ? 'green'
+                                : slaCompliance >= 70
+                                  ? 'yellow'
+                                  : 'red'
+                            }
+                          >
+                            {slaCompliance}%
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
+                    );
+                  })}
+                </Table.Tbody>
+              </Table>
+            </Paper>
+          )}
+        </Stack>
+
+        {/* Export Modal */}
+        <Modal
+          opened={exportModalOpen}
+          onClose={() => setExportModalOpen(false)}
+          title='Export Report'
+        >
+          <Stack>
+            <Select
+              label='Export Format'
+              placeholder='Select format'
+              data={[
+                { value: 'pdf', label: 'PDF' },
+                { value: 'excel', label: 'Excel' },
+                { value: 'csv', label: 'CSV' },
+              ]}
+              value={exportFormat}
+              onChange={value => setExportFormat(value || 'pdf')}
+            />
+            <Group justify='flex-end'>
+              <Button variant='light' onClick={() => setExportModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleExportReport(exportFormat)}
+                loading={exportReport.isPending}
+              >
+                Export
+              </Button>
+            </Group>
+          </Stack>
+        </Modal>
+      </Container>
+    );
+  }
+
+  // For other roles, show the full administrative reports (existing functionality)
   return (
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
@@ -140,741 +1523,598 @@ export default function ReportsPage() {
         </Group>
       </Group>
 
-      {/* Filters */}
-      <Card mb='xl'>
-        <Stack>
-          <Group justify='space-between'>
-            <Title order={4}>Report Filters</Title>
-            <Button
-              variant='outline'
-              leftSection={<IconRefresh size={16} />}
-              onClick={() => setFilters({})}
-              disabled={Object.keys(filters).length === 0}
-            >
-              Clear All Filters
-            </Button>
-          </Group>
+      {/* Administrator Reports */}
+      {user?.role === 'ADMIN' && (
+        <Stack gap='md'>
+          {/* Filters */}
+          <Card>
+            <Stack>
+              <Group justify='space-between'>
+                <Title order={4}>Filter Options</Title>
+                <Button
+                  variant='outline'
+                  leftSection={<IconRefresh size={16} />}
+                  onClick={() => setFilters({})}
+                  disabled={Object.keys(filters).length === 0}
+                >
+                  Clear All Filters
+                </Button>
+              </Group>
+              <Grid>
+                <Grid.Col span={3}>
+                  <DatePickerInput
+                    label='From Date'
+                    placeholder='Select start date'
+                    value={filters.dateFrom ? new Date(filters.dateFrom) : null}
+                    onChange={(date: Date | null) =>
+                      setFilters({ ...filters, dateFrom: date?.toISOString() })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <DatePickerInput
+                    label='To Date'
+                    placeholder='Select end date'
+                    value={filters.dateTo ? new Date(filters.dateTo) : null}
+                    onChange={(date: Date | null) =>
+                      setFilters({ ...filters, dateTo: date?.toISOString() })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <MultiSelect
+                    label='Month-Year'
+                    placeholder='Select month-years'
+                    data={availableMonthYears}
+                    value={filters.monthYear || []}
+                    onChange={value =>
+                      setFilters({ ...filters, monthYear: value })
+                    }
+                    clearable
+                    searchable
+                    size='sm'
+                    styles={{
+                      input: {
+                        height: '36px', // Match DatePickerInput height
+                        fontSize: '14px',
+                      },
+                    }}
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <MultiSelect
+                    label='Category'
+                    placeholder='Select category'
+                    data={CATEGORY_OPTIONS}
+                    value={filters.category || []}
+                    onChange={value =>
+                      setFilters({ ...filters, category: value })
+                    }
+                    clearable
+                  />
+                </Grid.Col>
+              </Grid>
+            </Stack>
+          </Card>
+
+          {/* Summary Cards */}
           <Grid>
-            <Grid.Col span={3}>
-              <DatePickerInput
-                label='From Date'
-                placeholder='Select start date'
-                value={filters.dateFrom ? new Date(filters.dateFrom) : null}
-                onChange={(date: Date | null) =>
-                  setFilters({ ...filters, dateFrom: date?.toISOString() })
-                }
-                clearable
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <DatePickerInput
-                label='To Date'
-                placeholder='Select end date'
-                value={filters.dateTo ? new Date(filters.dateTo) : null}
-                onChange={(date: Date | null) =>
-                  setFilters({ ...filters, dateTo: date?.toISOString() })
-                }
-                clearable
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <MultiSelect
-                label='Status'
-                placeholder='Select status'
-                data={STATUS_OPTIONS}
-                value={filters.status || []}
-                onChange={value => setFilters({ ...filters, status: value })}
-                clearable
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <MultiSelect
-                label='Priority'
-                placeholder='Select priority'
-                data={PRIORITY_OPTIONS}
-                value={filters.priority || []}
-                onChange={value => setFilters({ ...filters, priority: value })}
-                clearable
-              />
-            </Grid.Col>
-            <Grid.Col span={3}>
-              <MultiSelect
-                label='Category'
-                placeholder='Select category'
-                data={CATEGORY_OPTIONS}
-                value={filters.category || []}
-                onChange={value => setFilters({ ...filters, category: value })}
-                clearable
-              />
-            </Grid.Col>
+            {[
+              {
+                title: 'Total Users',
+                value: filteredUsers.length,
+                icon: IconUsers,
+                color: 'blue',
+                tooltip: 'Total number of registered users in the system',
+              },
+              {
+                title: 'Active Users',
+                value: filteredUsers.filter(user => user.isActive).length,
+                icon: IconCheck,
+                color: 'green',
+                tooltip: 'Users with active accounts',
+              },
+              {
+                title: 'Inactive Users',
+                value: filteredUsers.filter(user => !user.isActive).length,
+                icon: IconAlertCircle,
+                color: 'orange',
+                tooltip: 'Users with inactive accounts',
+              },
+              {
+                title: 'Support Staff',
+                value: filteredUsers.filter(
+                  user => user.role === 'SUPPORT_STAFF'
+                ).length,
+                icon: IconUsers,
+                color: 'cyan',
+                tooltip: 'Number of support staff members',
+              },
+              {
+                title: 'Support Managers',
+                value: filteredUsers.filter(
+                  user => user.role === 'SUPPORT_MANAGER'
+                ).length,
+                icon: IconUsers,
+                color: 'purple',
+                tooltip: 'Number of support managers',
+              },
+              {
+                title: 'New Users',
+                value: filteredUsers.filter(user => {
+                  const userDate = new Date(user.createdAt);
+                  const now = new Date();
+                  return (
+                    userDate.getMonth() === now.getMonth() &&
+                    userDate.getFullYear() === now.getFullYear()
+                  );
+                }).length,
+                icon: IconTrendingUp,
+                color: 'teal',
+                tooltip: 'Users registered in the current month',
+              },
+              {
+                title: 'Suspended Users',
+                value: filteredUsers.filter(user => !user.isActive).length,
+                icon: IconAlertTriangle,
+                color: 'red',
+                tooltip: 'Users with inactive/suspended accounts',
+              },
+              {
+                title: 'Failed Logins',
+                value: 0, // This would need to be implemented in the backend
+                icon: IconAlertCircle,
+                color: 'red',
+                tooltip: 'Failed login attempts in the last 30 days',
+              },
+              {
+                title: 'Total Tickets',
+                value: filteredTicketsForAdmin.length,
+                icon: IconTicket,
+                color: 'blue',
+                tooltip: 'Total number of tickets in the system',
+              },
+              {
+                title: 'Open Tickets',
+                value: filteredTicketsForAdmin.filter(ticket =>
+                  ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
+                ).length,
+                icon: IconClock,
+                color: 'orange',
+                tooltip: 'Currently open tickets across all users',
+              },
+              {
+                title: 'Failed Logins',
+                value: 0, // This would need to be implemented in the backend
+                icon: IconShield,
+                color: 'red',
+                tooltip: 'Failed login attempts in the last 30 days',
+              },
+              {
+                title: 'Password Resets',
+                value: 0, // This would need to be implemented in the backend
+                icon: IconKey,
+                color: 'blue',
+                tooltip: 'Password reset requests in the last 30 days',
+              },
+              {
+                title: 'Audit Entries',
+                value: 0, // This would need to be implemented in the backend
+                icon: IconHistory,
+                color: 'purple',
+                tooltip: 'System audit log entries in the last 30 days',
+              },
+              {
+                title: 'Active Sessions',
+                value: 0, // This would need to be implemented in the backend
+                icon: IconActivity,
+                color: 'green',
+                tooltip: 'Currently active user sessions',
+              },
+            ].map(stat => (
+              <Grid.Col key={stat.title} span={{ base: 12, sm: 6, md: 2.4 }}>
+                <MetricCard
+                  title={stat.title}
+                  value={stat.value}
+                  icon={stat.icon}
+                  color={stat.color}
+                  tooltip={stat.tooltip}
+                />
+              </Grid.Col>
+            ))}
           </Grid>
-        </Stack>
-      </Card>
 
-      <Tabs
-        value={activeTab}
-        onChange={value => setActiveTab(value || 'overview')}
-      >
-        <Tabs.List>
-          <Tabs.Tab value='overview' leftSection={<IconChartBar size={16} />}>
-            {t('overview')}
-          </Tabs.Tab>
-          <Tabs.Tab value='tickets' leftSection={<IconTicket size={16} />}>
-            {t('ticketReport')}
-          </Tabs.Tab>
-          <Tabs.Tab value='users' leftSection={<IconUsers size={16} />}>
-            {t('userReport')}
-          </Tabs.Tab>
-          <Tabs.Tab value='sla' leftSection={<IconClock size={16} />}>
-            SLA Compliance
-          </Tabs.Tab>
-        </Tabs.List>
-
-        <Tabs.Panel value='overview'>
-          <Grid mt='md'>
-            {/* Key Metrics */}
+          {/* Breakdown Tables */}
+          <Grid>
             <Grid.Col span={12}>
-              <Card>
+              <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
-                  Key Metrics
+                  Users by Role
                 </Title>
-                <Grid>
-                  <Grid.Col span={3}>
-                    <Card padding='md'>
-                      <Group>
-                        <IconTicket size={24} color='red' />
-                        <div>
-                          <Text size='sm' c='dimmed'>
-                            Total Tickets
-                          </Text>
-                          <Text size='xl' fw={700}>
-                            {ticketReport?.ticketStats?.total || 0}
-                          </Text>
-                        </div>
+                <Stack gap={0}>
+                  {Object.entries({
+                    END_USER: filteredUsers.filter(u => u.role === 'END_USER')
+                      .length,
+                    SUPPORT_STAFF: filteredUsers.filter(
+                      u => u.role === 'SUPPORT_STAFF'
+                    ).length,
+                    SUPPORT_MANAGER: filteredUsers.filter(
+                      u => u.role === 'SUPPORT_MANAGER'
+                    ).length,
+                    ADMIN: filteredUsers.filter(u => u.role === 'ADMIN').length,
+                  }).map(([role, count], index, array) => (
+                    <div
+                      key={role}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < array.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{role.replace('_', ' ')}</Text>
+                        <Badge variant='light' color='blue'>
+                          {count}
+                        </Badge>
                       </Group>
-                    </Card>
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <Card padding='md'>
-                      <Group>
-                        <IconCheck size={24} color='green' />
-                        <div>
-                          <Text size='sm' c='dimmed'>
-                            Resolved
-                          </Text>
-                          <Text size='xl' fw={700}>
-                            {ticketReport?.ticketStats?.resolved || 0}
-                          </Text>
-                        </div>
-                      </Group>
-                    </Card>
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <Card padding='md'>
-                      <Group>
-                        <IconClock size={24} color='orange' />
-                        <div>
-                          <Text size='sm' c='dimmed'>
-                            Pending
-                          </Text>
-                          <Text size='xl' fw={700}>
-                            {ticketReport?.ticketStats?.pending || 0}
-                          </Text>
-                        </div>
-                      </Group>
-                    </Card>
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <Card padding='md'>
-                      <Group>
-                        <IconUsers size={24} color='red' />
-                        <div>
-                          <Text size='sm' c='dimmed'>
-                            Overdue
-                          </Text>
-                          <Text size='xl' fw={700} c='red'>
-                            {ticketReport?.ticketStats?.overdue || 0}
-                          </Text>
-                        </div>
-                      </Group>
-                    </Card>
-                  </Grid.Col>
-                </Grid>
-              </Card>
-            </Grid.Col>
-
-            {/* Charts */}
-            <Grid.Col span={6}>
-              <Card>
-                <Title order={4} mb='md'>
-                  Ticket Status Distribution
-                </Title>
-                <Stack gap='md'>
-                  {ticketReport?.ticketStats && (
-                    <>
-                      <Group justify='space-between'>
-                        <Text size='sm'>New</Text>
-                        <Text fw={500}>
-                          {ticketReport.ticketStats.new || 0}
-                        </Text>
-                      </Group>
-                      <Group justify='space-between'>
-                        <Text size='sm'>In Progress</Text>
-                        <Text fw={500}>
-                          {ticketReport.ticketStats.inProgress || 0}
-                        </Text>
-                      </Group>
-                      <Group justify='space-between'>
-                        <Text size='sm'>Resolved</Text>
-                        <Text fw={500} c='green'>
-                          {ticketReport.ticketStats.resolved || 0}
-                        </Text>
-                      </Group>
-                      <Group justify='space-between'>
-                        <Text size='sm'>Closed</Text>
-                        <Text fw={500} c='blue'>
-                          {ticketReport.ticketStats.closed || 0}
-                        </Text>
-                      </Group>
-                      <Group justify='space-between'>
-                        <Text size='sm'>Overdue</Text>
-                        <Text fw={500} c='red'>
-                          {ticketReport.ticketStats.overdue || 0}
-                        </Text>
-                      </Group>
-                    </>
-                  )}
-                </Stack>
-              </Card>
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Card>
-                <Title order={4} mb='md'>
-                  Priority Distribution
-                </Title>
-                <Stack gap='md'>
-                  {ticketReport?.priorityStats?.map(item => (
-                    <Group key={item.priority} justify='space-between'>
-                      <Text
-                        size='sm'
-                        c={
-                          item.priority === 'HIGH'
-                            ? 'red'
-                            : item.priority === 'MEDIUM'
-                              ? 'orange'
-                              : 'blue'
-                        }
-                      >
-                        {item.priority}
-                      </Text>
-                      <Group gap='xs'>
-                        <Text fw={500}>{item.count}</Text>
-                        <Text size='xs' c='dimmed'>
-                          ({item.percentage}%)
-                        </Text>
-                      </Group>
-                    </Group>
+                    </div>
                   ))}
                 </Stack>
-              </Card>
+              </Paper>
             </Grid.Col>
 
-            {/* Trends */}
             <Grid.Col span={12}>
-              <Card>
+              <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
-                  Ticket Trends (Last 6 Months)
+                  Users by Registration Period
                 </Title>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Month</Table.Th>
-                      <Table.Th>Total Tickets</Table.Th>
-                      <Table.Th>Resolved</Table.Th>
-                      <Table.Th>Resolution Rate</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {ticketReport?.ticketTrendData?.map(trend => (
-                      <Table.Tr key={trend.month}>
-                        <Table.Td>
-                          <Text fw={500}>{trend.month}</Text>
-                        </Table.Td>
-                        <Table.Td>{trend.tickets}</Table.Td>
-                        <Table.Td>
-                          <Text c='green'>{trend.resolved}</Text>
-                        </Table.Td>
-                        <Table.Td>
-                          <Text
-                            c={
-                              trend.tickets > 0
-                                ? trend.resolved / trend.tickets >= 0.8
-                                  ? 'green'
-                                  : 'orange'
-                                : 'dimmed'
-                            }
-                          >
-                            {trend.tickets > 0
-                              ? Math.round(
-                                  (trend.resolved / trend.tickets) * 100
-                                )
-                              : 0}
-                            %
-                          </Text>
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </Card>
-            </Grid.Col>
-          </Grid>
-        </Tabs.Panel>
-
-        <Tabs.Panel value='tickets'>
-          <Grid mt='md'>
-            <Grid.Col span={6}>
-              <Card>
-                <Title order={4} mb='md'>
-                  Ticket Status Distribution
-                </Title>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Status</Table.Th>
-                      <Table.Th>Count</Table.Th>
-                      <Table.Th>Percentage</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    <Table.Tr>
-                      <Table.Td>New</Table.Td>
-                      <Table.Td>{ticketReport?.ticketStats?.new || 0}</Table.Td>
-                      <Table.Td>
-                        {ticketReport?.ticketStats?.total
-                          ? Math.round(
-                              ((ticketReport.ticketStats.new || 0) /
-                                ticketReport.ticketStats.total) *
-                                100
-                            )
-                          : 0}
-                        %
-                      </Table.Td>
-                    </Table.Tr>
-                    <Table.Tr>
-                      <Table.Td>In Progress</Table.Td>
-                      <Table.Td>
-                        {ticketReport?.ticketStats?.inProgress || 0}
-                      </Table.Td>
-                      <Table.Td>
-                        {ticketReport?.ticketStats?.total
-                          ? Math.round(
-                              ((ticketReport.ticketStats.inProgress || 0) /
-                                ticketReport.ticketStats.total) *
-                                100
-                            )
-                          : 0}
-                        %
-                      </Table.Td>
-                    </Table.Tr>
-                    <Table.Tr>
-                      <Table.Td>Resolved</Table.Td>
-                      <Table.Td>
-                        {ticketReport?.ticketStats?.resolved || 0}
-                      </Table.Td>
-                      <Table.Td>
-                        {ticketReport?.ticketStats?.total
-                          ? Math.round(
-                              ((ticketReport.ticketStats.resolved || 0) /
-                                ticketReport.ticketStats.total) *
-                                100
-                            )
-                          : 0}
-                        %
-                      </Table.Td>
-                    </Table.Tr>
-                    <Table.Tr>
-                      <Table.Td>Closed</Table.Td>
-                      <Table.Td>
-                        {ticketReport?.ticketStats?.closed || 0}
-                      </Table.Td>
-                      <Table.Td>
-                        {ticketReport?.ticketStats?.total
-                          ? Math.round(
-                              ((ticketReport.ticketStats.closed || 0) /
-                                ticketReport.ticketStats.total) *
-                                100
-                            )
-                          : 0}
-                        %
-                      </Table.Td>
-                    </Table.Tr>
-                  </Table.Tbody>
-                </Table>
-              </Card>
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Card>
-                <Title order={4} mb='md'>
-                  Priority Distribution
-                </Title>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Priority</Table.Th>
-                      <Table.Th>Count</Table.Th>
-                      <Table.Th>Percentage</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {ticketReport?.priorityStats?.map(item => (
-                      <Table.Tr key={item.priority}>
-                        <Table.Td>
-                          <Text
-                            fw={500}
-                            c={
-                              item.priority === 'HIGH'
-                                ? 'red'
-                                : item.priority === 'MEDIUM'
-                                  ? 'orange'
-                                  : 'blue'
-                            }
-                          >
-                            {item.priority}
-                          </Text>
-                        </Table.Td>
-                        <Table.Td>{item.count}</Table.Td>
-                        <Table.Td>{item.percentage}%</Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </Card>
-            </Grid.Col>
-            <Grid.Col span={12}>
-              <Card>
-                <Title order={4} mb='md'>
-                  Category Distribution
-                </Title>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Category</Table.Th>
-                      <Table.Th>Count</Table.Th>
-                      <Table.Th>Percentage</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {ticketReport?.categoryStats?.map(item => (
-                      <Table.Tr key={item.name}>
-                        <Table.Td>
-                          <Text fw={500}>{item.name}</Text>
-                        </Table.Td>
-                        <Table.Td>{item.count}</Table.Td>
-                        <Table.Td>{item.percentage}%</Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </Card>
-            </Grid.Col>
-          </Grid>
-        </Tabs.Panel>
-
-        <Tabs.Panel value='users'>
-          <Grid mt='md'>
-            <Grid.Col span={6}>
-              <Card>
-                <Title order={4} mb='md'>
-                  User Distribution by Role
-                </Title>
-                {userDistributionLoading ? (
-                  <Group justify='center' py='xl'>
-                    <Loader size='sm' />
-                    <Text>Loading user data...</Text>
-                  </Group>
-                ) : (
-                  <Stack gap='md'>
-                    {userDistribution?.map(item => (
-                      <Group key={item.role} justify='space-between'>
-                        <Text size='sm' fw={500}>
-                          {item.role.replace('_', ' ')}
-                        </Text>
-                        <Group gap='xs'>
-                          <Text fw={500}>{item.count}</Text>
-                          <Text size='xs' c='dimmed'>
-                            ({item.percentage}%)
-                          </Text>
-                        </Group>
+                <Stack gap={0}>
+                  {Array.from({ length: 4 }, (_, i) => {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - i);
+                    const monthYear = date.toLocaleDateString('en-US', {
+                      month: 'short',
+                      year: 'numeric',
+                    });
+                    const count = filteredUsers.filter(user => {
+                      const userDate = new Date(user.createdAt);
+                      return (
+                        userDate.getMonth() === date.getMonth() &&
+                        userDate.getFullYear() === date.getFullYear()
+                      );
+                    }).length;
+                    return { monthYear, count };
+                  }).map(({ monthYear, count }, index, array) => (
+                    <div
+                      key={monthYear}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < array.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{monthYear}</Text>
+                        <Badge variant='light' color='green'>
+                          {count}
+                        </Badge>
                       </Group>
-                    ))}
-                  </Stack>
-                )}
-              </Card>
+                    </div>
+                  ))}
+                </Stack>
+              </Paper>
             </Grid.Col>
-            <Grid.Col span={6}>
-              <Card>
+
+            <Grid.Col span={12}>
+              <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
-                  User Activity Summary
+                  Users by Status
                 </Title>
-                {userDistributionLoading ? (
-                  <Group justify='center' py='xl'>
-                    <Loader size='sm' />
-                    <Text>Loading user data...</Text>
-                  </Group>
-                ) : (
+                <Stack gap={0}>
+                  {Object.entries({
+                    Active: filteredUsers.filter(u => u.isActive).length,
+                    Inactive: filteredUsers.filter(u => !u.isActive).length,
+                  }).map(([status, count], index, array) => (
+                    <div
+                      key={status}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < array.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{status}</Text>
+                        <Badge
+                          variant='light'
+                          color={status === 'Active' ? 'green' : 'red'}
+                        >
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  ))}
+                </Stack>
+              </Paper>
+            </Grid.Col>
+
+            <Grid.Col span={12}>
+              <Paper withBorder p='md'>
+                <Title order={4} mb='md'>
+                  Tickets by Priority
+                </Title>
+                <Stack gap={0}>
+                  {Object.entries({
+                    CRITICAL: filteredTicketsForAdmin.filter(
+                      t => t.priority === 'CRITICAL'
+                    ).length,
+                    HIGH: filteredTicketsForAdmin.filter(
+                      t => t.priority === 'HIGH'
+                    ).length,
+                    MEDIUM: filteredTicketsForAdmin.filter(
+                      t => t.priority === 'MEDIUM'
+                    ).length,
+                    LOW: filteredTicketsForAdmin.filter(
+                      t => t.priority === 'LOW'
+                    ).length,
+                  }).map(([priority, count], index, array) => (
+                    <div
+                      key={priority}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < array.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{priority}</Text>
+                        <Badge variant='light' color='orange'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  ))}
+                </Stack>
+              </Paper>
+            </Grid.Col>
+
+            <Grid.Col span={12}>
+              <Paper withBorder p='md'>
+                <Title order={4} mb='md'>
+                  Tickets by Category
+                </Title>
+                <Stack gap={0}>
+                  {Object.entries(
+                    filteredTicketsForAdmin.reduce(
+                      (acc, ticket) => {
+                        const category = ticket.category?.name || 'Unknown';
+                        acc[category] = (acc[category] || 0) + 1;
+                        return acc;
+                      },
+                      {} as Record<string, number>
+                    )
+                  ).map(([category, count], index, array) => (
+                    <div
+                      key={category}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom:
+                          index < array.length - 1
+                            ? '1px solid var(--mantine-color-gray-2)'
+                            : 'none',
+                        backgroundColor:
+                          index % 2 === 0
+                            ? 'var(--mantine-color-gray-0)'
+                            : 'transparent',
+                      }}
+                    >
+                      <Group justify='space-between' align='center'>
+                        <Text size='sm'>{category}</Text>
+                        <Badge variant='light' color='purple'>
+                          {count}
+                        </Badge>
+                      </Group>
+                    </div>
+                  ))}
+                </Stack>
+              </Paper>
+            </Grid.Col>
+          </Grid>
+
+          {/* Security & Compliance Breakdown Tables */}
+          <div>
+            <Title order={3} mb='md'>
+              Security & Compliance Analysis
+            </Title>
+            <Grid>
+              <Grid.Col span={12}>
+                <Card withBorder>
+                  <Card.Section withBorder inheritPadding py='xs'>
+                    <Text fw={500}>Login Activity Summary</Text>
+                  </Card.Section>
                   <Table>
                     <Table.Thead>
                       <Table.Tr>
-                        <Table.Th>Role</Table.Th>
-                        <Table.Th>Users</Table.Th>
-                        <Table.Th>Percentage</Table.Th>
+                        <Table.Th>Metric</Table.Th>
+                        <Table.Th>Count</Table.Th>
+                        <Table.Th>
+                          <Group gap={6} align='center'>
+                            <Text>Status</Text>
+                            <Tooltip
+                              label='Qualitative state for each metric (e.g., Normal, Active, Pending, Online) based on thresholds or current activity'
+                              withArrow
+                              position='top'
+                            >
+                              <IconInfoCircle
+                                size={14}
+                                style={{ cursor: 'help' }}
+                                color='var(--mantine-color-dimmed)'
+                              />
+                            </Tooltip>
+                          </Group>
+                        </Table.Th>
                       </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>
-                      {userDistribution?.map(item => (
-                        <Table.Tr key={item.role}>
-                          <Table.Td>
-                            <Text fw={500}>{item.role.replace('_', ' ')}</Text>
-                          </Table.Td>
-                          <Table.Td>{item.count}</Table.Td>
-                          <Table.Td>
-                            <Text c='blue'>{item.percentage}%</Text>
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
+                      <Table.Tr>
+                        <Table.Td>Failed Login Attempts</Table.Td>
+                        <Table.Td>0</Table.Td>
+                        <Table.Td>
+                          <Badge color='green' variant='light'>
+                            Normal
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
+                      <Table.Tr>
+                        <Table.Td>Successful Logins</Table.Td>
+                        <Table.Td>{filteredUsers.length}</Table.Td>
+                        <Table.Td>
+                          <Badge color='blue' variant='light'>
+                            Active
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
+                      <Table.Tr>
+                        <Table.Td>Password Resets</Table.Td>
+                        <Table.Td>0</Table.Td>
+                        <Table.Td>
+                          <Badge color='orange' variant='light'>
+                            Pending
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
+                      <Table.Tr>
+                        <Table.Td>Active Sessions</Table.Td>
+                        <Table.Td>0</Table.Td>
+                        <Table.Td>
+                          <Badge color='green' variant='light'>
+                            Online
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
                     </Table.Tbody>
                   </Table>
-                )}
-              </Card>
-            </Grid.Col>
-            <Grid.Col span={12}>
-              <Card>
-                <Title order={4} mb='md'>
-                  User Management Summary
-                </Title>
-                {usersLoading ? (
-                  <Group justify='center' py='xl'>
-                    <Loader size='sm' />
-                    <Text>Loading user management data...</Text>
-                  </Group>
-                ) : (
-                  <Grid>
-                    <Grid.Col span={3}>
-                      <Card padding='md'>
-                        <Group>
-                          <IconUsers size={24} color='blue' />
-                          <div>
-                            <Text size='sm' c='dimmed'>
-                              Total Users
-                            </Text>
-                            <Text size='xl' fw={700}>
-                              {users?.length || 0}
-                            </Text>
-                          </div>
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                      <Card padding='md'>
-                        <Group>
-                          <IconCheck size={24} color='green' />
-                          <div>
-                            <Text size='sm' c='dimmed'>
-                              Active Users
-                            </Text>
-                            <Text size='xl' fw={700} c='green'>
-                              {users?.filter(user => user.isActive).length || 0}
-                            </Text>
-                          </div>
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                      <Card padding='md'>
-                        <Group>
-                          <IconAlertTriangle size={24} color='red' />
-                          <div>
-                            <Text size='sm' c='dimmed'>
-                              Inactive Users
-                            </Text>
-                            <Text size='xl' fw={700} c='red'>
-                              {users?.filter(user => !user.isActive).length ||
-                                0}
-                            </Text>
-                          </div>
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                    <Grid.Col span={3}>
-                      <Card padding='md'>
-                        <Group>
-                          <IconShield size={24} color='purple' />
-                          <div>
-                            <Text size='sm' c='dimmed'>
-                              Administrators
-                            </Text>
-                            <Text size='xl' fw={700} c='purple'>
-                              {users?.filter(user => user.role === 'ADMIN')
-                                .length || 0}
-                            </Text>
-                          </div>
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                  </Grid>
-                )}
-              </Card>
-            </Grid.Col>
-          </Grid>
-        </Tabs.Panel>
+                </Card>
+              </Grid.Col>
 
-        <Tabs.Panel value='sla'>
-          <Grid mt='md'>
-            <Grid.Col span={6}>
-              <Card>
-                <Title order={4} mb='md'>
-                  SLA Compliance Overview
-                </Title>
-                {slaReportLoading ? (
-                  <Group justify='center' py='xl'>
-                    <Loader size='sm' />
-                    <Text>Loading SLA data...</Text>
-                  </Group>
-                ) : (
-                  <RingProgress
-                    size={200}
-                    thickness={20}
-                    sections={[
-                      { value: slaReport?.compliance || 0, color: 'green' },
-                      {
-                        value: 100 - (slaReport?.compliance || 0),
-                        color: 'red',
-                      },
-                    ]}
-                    label={
-                      <Text ta='center' size='xl' fw={700}>
-                        {slaReport?.compliance || 0}%
-                      </Text>
-                    }
-                  />
-                )}
-              </Card>
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Card>
-                <Title order={4} mb='md'>
-                  Key SLA Metrics
-                </Title>
-                {slaReportLoading ? (
-                  <Group justify='center' py='xl'>
-                    <Loader size='sm' />
-                    <Text>Loading SLA data...</Text>
-                  </Group>
-                ) : (
-                  <Stack gap='md'>
-                    <Group justify='space-between'>
-                      <Text size='sm' c='dimmed'>
-                        Response Time Compliance
-                      </Text>
-                      <Text size='lg' fw={600}>
-                        {slaReport?.slaMetrics?.responseTime || 0}%
-                      </Text>
-                    </Group>
-                    <Group justify='space-between'>
-                      <Text size='sm' c='dimmed'>
-                        Resolution Time Compliance
-                      </Text>
-                      <Text size='lg' fw={600}>
-                        {slaReport?.slaMetrics?.resolutionTime || 0}%
-                      </Text>
-                    </Group>
-                    <Group justify='space-between'>
-                      <Text size='sm' c='dimmed'>
-                        SLA Violations
-                      </Text>
-                      <Text size='lg' fw={600} c='red'>
-                        {slaReport?.violations || 0}
-                      </Text>
-                    </Group>
-                    <Group justify='space-between'>
-                      <Text size='sm' c='dimmed'>
-                        Overall Satisfaction
-                      </Text>
-                      <Text size='lg' fw={600} c='green'>
-                        {slaReport?.slaMetrics?.customerSatisfaction || 0}%
-                      </Text>
-                    </Group>
-                  </Stack>
-                )}
-              </Card>
-            </Grid.Col>
-            <Grid.Col span={12}>
-              <Card>
-                <Title order={4} mb='md'>
-                  SLA Compliance Summary
-                </Title>
-                <Text size='sm' c='dimmed' mb='md'>
-                  This report shows how well the ticketing system is meeting
-                  service level agreements. High compliance rates indicate good
-                  service quality and customer satisfaction.
-                </Text>
-                <Grid>
-                  <Grid.Col span={4}>
-                    <Card padding='md' style={{ textAlign: 'center' }}>
-                      <IconCheck
-                        size={32}
-                        color='green'
-                        style={{ margin: '0 auto 8px' }}
-                      />
-                      <Text size='sm' c='dimmed'>
-                        Good Performance
-                      </Text>
-                      <Text size='lg' fw={600} c='green'>
-                        {(slaReport?.compliance || 0) >= 90
-                          ? 'Yes'
-                          : 'Needs Improvement'}
-                      </Text>
-                    </Card>
-                  </Grid.Col>
-                  <Grid.Col span={4}>
-                    <Card padding='md' style={{ textAlign: 'center' }}>
-                      <IconAlertTriangle
-                        size={32}
-                        color='orange'
-                        style={{ margin: '0 auto 8px' }}
-                      />
-                      <Text size='sm' c='dimmed'>
-                        Areas for Improvement
-                      </Text>
-                      <Text size='lg' fw={600} c='orange'>
-                        {(slaReport?.violations || 0) > 0 ? 'Yes' : 'None'}
-                      </Text>
-                    </Card>
-                  </Grid.Col>
-                  <Grid.Col span={4}>
-                    <Card padding='md' style={{ textAlign: 'center' }}>
-                      <IconShield
-                        size={32}
-                        color='blue'
-                        style={{ margin: '0 auto 8px' }}
-                      />
-                      <Text size='sm' c='dimmed'>
-                        System Health
-                      </Text>
-                      <Text size='lg' fw={600} c='blue'>
-                        {(slaReport?.compliance || 0) >= 80
-                          ? 'Healthy'
-                          : 'Attention Needed'}
-                      </Text>
-                    </Card>
-                  </Grid.Col>
-                </Grid>
-              </Card>
-            </Grid.Col>
-          </Grid>
-        </Tabs.Panel>
-      </Tabs>
+              <Grid.Col span={12}>
+                <Card withBorder>
+                  <Card.Section withBorder inheritPadding py='xs'>
+                    <Text fw={500}>Audit Trail Summary</Text>
+                  </Card.Section>
+                  <Table>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Activity Type</Table.Th>
+                        <Table.Th>Count</Table.Th>
+                        <Table.Th>Last Activity</Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      <Table.Tr>
+                        <Table.Td>User Registrations</Table.Td>
+                        <Table.Td>{filteredUsers.length}</Table.Td>
+                        <Table.Td>
+                          {filteredUsers.length > 0
+                            ? new Date(
+                                Math.max(
+                                  ...filteredUsers.map(u =>
+                                    new Date(u.createdAt).getTime()
+                                  )
+                                )
+                              ).toLocaleDateString()
+                            : 'N/A'}
+                        </Table.Td>
+                      </Table.Tr>
+                      <Table.Tr>
+                        <Table.Td>Ticket Creations</Table.Td>
+                        <Table.Td>{filteredTicketsForAdmin.length}</Table.Td>
+                        <Table.Td>
+                          {filteredTicketsForAdmin.length > 0
+                            ? new Date(
+                                Math.max(
+                                  ...filteredTicketsForAdmin.map(t =>
+                                    new Date(t.createdAt).getTime()
+                                  )
+                                )
+                              ).toLocaleDateString()
+                            : 'N/A'}
+                        </Table.Td>
+                      </Table.Tr>
+                      <Table.Tr>
+                        <Table.Td>
+                          <Group gap={6} align='center'>
+                            <Text>System Changes</Text>
+                            <Tooltip
+                              label='Administrative configuration updates such as role/permission changes, policy edits, or settings updates'
+                              withArrow
+                              position='top'
+                            >
+                              <IconInfoCircle
+                                size={14}
+                                style={{ cursor: 'help' }}
+                                color='var(--mantine-color-dimmed)'
+                              />
+                            </Tooltip>
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>0</Table.Td>
+                        <Table.Td>N/A</Table.Td>
+                      </Table.Tr>
+                      <Table.Tr>
+                        <Table.Td>
+                          <Group gap={6} align='center'>
+                            <Text>Security Events</Text>
+                            <Tooltip
+                              label='Security-relevant activities such as lockouts, suspicious login patterns, MFA changes, or policy violations'
+                              withArrow
+                              position='top'
+                            >
+                              <IconInfoCircle
+                                size={14}
+                                style={{ cursor: 'help' }}
+                                color='var(--mantine-color-dimmed)'
+                              />
+                            </Tooltip>
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>0</Table.Td>
+                        <Table.Td>N/A</Table.Td>
+                      </Table.Tr>
+                    </Table.Tbody>
+                  </Table>
+                </Card>
+              </Grid.Col>
+            </Grid>
+          </div>
+        </Stack>
+      )}
 
       {/* Export Modal */}
       <Modal
@@ -886,13 +2126,9 @@ export default function ReportsPage() {
           <Select
             label='Export Format'
             placeholder='Select format'
-            data={[
-              { value: 'pdf', label: 'PDF' },
-              { value: 'excel', label: 'Excel' },
-              { value: 'csv', label: 'CSV' },
-            ]}
+            data={[{ value: 'excel', label: 'Excel' }]}
             value={exportFormat}
-            onChange={value => setExportFormat(value || 'pdf')}
+            onChange={value => setExportFormat(value || 'excel')}
           />
           <Group justify='flex-end'>
             <Button variant='light' onClick={() => setExportModalOpen(false)}>
