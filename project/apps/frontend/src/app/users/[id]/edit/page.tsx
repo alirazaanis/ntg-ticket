@@ -32,7 +32,7 @@ export default function EditUserPage() {
         id: userId,
         data: {
           ...data,
-          role: data.role as UserRole,
+          roles: data.roles as UserRole[],
         },
       });
       notifications.show({
@@ -51,7 +51,7 @@ export default function EditUserPage() {
   };
 
   const handleCancel = () => {
-    router.push(`/users/${userId}`);
+    router.push('/admin/users');
   };
 
   if (isLoading) {
@@ -75,9 +75,9 @@ export default function EditUserPage() {
           <Button
             variant='outline'
             leftSection={<RTLArrowLeft size={16} />}
-            onClick={() => router.back()}
+            onClick={() => router.push('/admin/users')}
           >
-            Go Back
+            Back to Users
           </Button>
         </Group>
       </Container>
@@ -92,7 +92,7 @@ export default function EditUserPage() {
           leftSection={<RTLArrowLeft size={16} />}
           onClick={handleCancel}
         >
-          Back to User
+          Back to Users
         </Button>
         <div>
           <Title order={1}>Edit User</Title>

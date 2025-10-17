@@ -96,9 +96,10 @@ export default function EditTicketPage() {
   };
 
   const canEdit =
-    user?.role === 'ADMIN' ||
-    user?.role === 'SUPPORT_MANAGER' ||
-    (user?.role === 'SUPPORT_STAFF' && ticket?.assignedTo?.id === user?.id);
+    user?.activeRole === 'ADMIN' ||
+    user?.activeRole === 'SUPPORT_MANAGER' ||
+    (user?.activeRole === 'SUPPORT_STAFF' &&
+      ticket?.assignedTo?.id === user?.id);
 
   if (isLoading) {
     return (

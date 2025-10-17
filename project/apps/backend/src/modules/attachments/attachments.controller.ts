@@ -50,7 +50,7 @@ export class AttachmentsController {
       ticketId,
       file,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
 
     return {
@@ -74,7 +74,7 @@ export class AttachmentsController {
     const attachments = await this.attachmentsService.findAll(
       ticketId,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: attachments,
@@ -95,7 +95,7 @@ export class AttachmentsController {
     const attachment = await this.attachmentsService.findOne(
       id,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: attachment,
@@ -116,7 +116,7 @@ export class AttachmentsController {
     const result = await this.attachmentsService.getSignedUrl(
       id,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: result,
@@ -134,7 +134,7 @@ export class AttachmentsController {
     const result = await this.attachmentsService.remove(
       id,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return result;
   }

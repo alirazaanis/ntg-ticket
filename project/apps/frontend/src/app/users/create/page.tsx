@@ -27,7 +27,7 @@ export default function CreateUserPage() {
     try {
       await createUserMutation.mutateAsync({
         ...data,
-        role: data.role as UserRole,
+        roles: data.roles as UserRole[],
         password: data.password || '',
       });
       notifications.show({

@@ -5,7 +5,7 @@ export class User implements PrismaUser {
   email: string;
   name: string;
   password: string;
-  role: UserRole;
+  roles: UserRole[];
   isActive: boolean;
   avatar: string;
   createdAt: Date;

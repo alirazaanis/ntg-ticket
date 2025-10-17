@@ -1,5 +1,11 @@
 'use client';
 
+// Utility function to strip HTML tags from text
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+};
+
 import {
   Card,
   Text,
@@ -13,7 +19,7 @@ import {
   Modal,
   Textarea,
   Select,
-  Alert,
+  // Alert, // Removed unused import
 } from '@mantine/core';
 import {
   IconEye,
@@ -34,7 +40,7 @@ import { Ticket, TicketStatus } from '../../types/unified';
 import { useUpdateTicketStatus } from '../../hooks/useTickets';
 import {
   validateStatusUpdate,
-  statusTransitionRules,
+  // statusTransitionRules, // Removed unused import
 } from '../../lib/statusValidation';
 import {
   showSuccessNotification,
@@ -225,7 +231,7 @@ export function TicketCard({
 
           {/* Description */}
           <Text size='sm' c='dimmed' lineClamp={2}>
-            {ticket.description}
+            {stripHtmlTags(ticket.description)}
           </Text>
 
           {/* Status and Priority */}
@@ -379,16 +385,6 @@ export function TicketCard({
               setNewStatus((value as typeof ticket.status) || ticket.status)
             }
           />
-
-          {/* Show status transition info */}
-          <Alert icon={<IconAlertCircle size={16} />} color='yellow'>
-            <Text size='sm' fw={500} mb='xs'>
-              Status Transition Rules:
-            </Text>
-            <Text size='xs' c='dimmed'>
-              {statusTransitionRules.map(rule => `• ${rule}`).join('\n')}
-            </Text>
-          </Alert>
 
           {(newStatus === 'RESOLVED' || newStatus === 'CLOSED') && (
             <Textarea

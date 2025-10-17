@@ -101,7 +101,7 @@ model User {
   email     String   @unique
   name      String
   password  String
-  role      UserRole @default(END_USER)
+  roles     UserRole[] @default([END_USER])
   isActive  Boolean  @default(true)
   avatar    String?
   createdAt DateTime @default(now())

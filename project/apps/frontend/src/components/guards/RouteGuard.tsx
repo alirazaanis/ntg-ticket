@@ -24,8 +24,8 @@ export function RouteGuard({
 
   useEffect(() => {
     if (!isLoading && user) {
-      // If specific roles are allowed and user's role is not in the list
-      if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+      // If specific roles are allowed and user's active role is not in the list
+      if (allowedRoles.length > 0 && !allowedRoles.includes(user.activeRole)) {
         router.replace(redirectTo);
       }
     }
@@ -42,8 +42,8 @@ export function RouteGuard({
     return null;
   }
 
-  // If user's role is not allowed, show fallback or redirect
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+  // If user's active role is not allowed, show fallback or redirect
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.activeRole)) {
     if (fallbackComponent) {
       return <>{fallbackComponent}</>;
     }

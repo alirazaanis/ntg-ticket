@@ -7,7 +7,8 @@ declare module 'next-auth' {
       id: string;
       email: string;
       name: string;
-      role: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
+      roles: string[];
+      activeRole: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
       image?: string | null;
     };
     accessToken?: string;
@@ -19,7 +20,8 @@ declare module 'next-auth' {
     id: string;
     email: string;
     name: string;
-    role: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
+    roles: string[];
+    activeRole: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
     image?: string | null;
     accessToken?: string;
     refreshToken?: string;
@@ -29,7 +31,8 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
-    role: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
+    roles: string[];
+    activeRole: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpires?: number;

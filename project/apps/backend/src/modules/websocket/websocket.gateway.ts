@@ -69,7 +69,7 @@ export class WebSocketGateway
       const payload = this.jwtService.verify(token);
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
-        select: { id: true, email: true, role: true, name: true },
+        select: { id: true, email: true, roles: true, name: true },
       });
 
       if (!user) {
@@ -80,17 +80,20 @@ export class WebSocketGateway
 
       // Store user info in socket
       client.userId = user.id;
-      client.userRole = user.role;
+      client.userRole = payload.activeRole || user.roles[0]; // Use activeRole from JWT or first role
       this.connectedUsers.set(user.id, client.id);
 
       // Join user to their personal room
       client.join(`user:${user.id}`);
 
       // Join role-based rooms
-      client.join(`role:${user.role}`);
+      client.join(`role:${client.userRole}`);
 
       // Join admin room if user is admin
-      if (user.role === 'ADMIN' || user.role === 'SUPPORT_MANAGER') {
+      if (
+        client.userRole === 'ADMIN' ||
+        client.userRole === 'SUPPORT_MANAGER'
+      ) {
         client.join('admin');
       }
 
@@ -102,7 +105,7 @@ export class WebSocketGateway
         user: {
           id: user.id,
           email: user.email,
-          role: user.role,
+          role: client.userRole,
           name: user.name,
         },
       });

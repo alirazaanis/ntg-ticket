@@ -261,7 +261,7 @@ export class SLAEscalationService {
       // Find available support managers
       const managers = await this.prisma.user.findMany({
         where: {
-          role: 'SUPPORT_MANAGER',
+          roles: { has: 'SUPPORT_MANAGER' },
           isActive: true,
         },
         orderBy: {
@@ -364,7 +364,7 @@ export class SLAEscalationService {
     // Add support managers
     const managers = await this.prisma.user.findMany({
       where: {
-        role: 'SUPPORT_MANAGER',
+        roles: { has: 'SUPPORT_MANAGER' },
         isActive: true,
       },
     });

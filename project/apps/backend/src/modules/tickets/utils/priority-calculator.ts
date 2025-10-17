@@ -192,7 +192,7 @@ export function checkSlaStatus(
 export function autoAssignTicket(
   priority: TicketPriority,
   slaLevel: 'STANDARD' | 'PREMIUM' | 'CRITICAL_SUPPORT',
-  availableStaff: Array<{ id: string; role: string; workload: number }>
+  availableStaff: Array<{ id: string; roles: string[]; workload: number }>
 ): string | null {
   if (availableStaff.length === 0) return null;
 
@@ -202,12 +202,15 @@ export function autoAssignTicket(
   if (slaLevel === 'CRITICAL_SUPPORT') {
     // Only managers and senior staff for critical support
     eligibleStaff = availableStaff.filter(
-      staff => staff.role === 'SUPPORT_MANAGER' || staff.role === 'ADMIN'
+      staff =>
+        staff.roles.includes('SUPPORT_MANAGER') || staff.roles.includes('ADMIN')
     );
   } else if (slaLevel === 'PREMIUM') {
     // Managers and experienced staff for premium support
     eligibleStaff = availableStaff.filter(staff =>
-      ['SUPPORT_MANAGER', 'ADMIN', 'SUPPORT_STAFF'].includes(staff.role)
+      staff.roles.some(role =>
+        ['SUPPORT_MANAGER', 'ADMIN', 'SUPPORT_STAFF'].includes(role)
+      )
     );
   }
 
@@ -222,7 +225,8 @@ export function autoAssignTicket(
   // For critical priority, prefer managers
   if (priority === TicketPriority.CRITICAL) {
     const managers = eligibleStaff.filter(
-      staff => staff.role === 'SUPPORT_MANAGER' || staff.role === 'ADMIN'
+      staff =>
+        staff.roles.includes('SUPPORT_MANAGER') || staff.roles.includes('ADMIN')
     );
     if (managers.length > 0) {
       return managers[0].id;

@@ -7,7 +7,8 @@ const stripHtmlTags = (html: string): string => {
   if (!html) return '';
   return html.replace(/<[^>]*>/g, '').trim();
 };
-import { useTranslations } from 'next-intl';
+
+// import { useTranslations } from 'next-intl'; // Removed unused import
 import {
   Container,
   Title,
@@ -41,27 +42,27 @@ import {
   useTicketsWithPagination,
   useTotalTicketsCount,
   useDeleteTicket,
-} from '../../hooks/useTickets';
-import { useAuthStore } from '../../stores/useAuthStore';
+} from '../../../hooks/useTickets';
+import { useAuthStore } from '../../../stores/useAuthStore';
 import {
   TicketStatus,
   TicketPriority,
   Ticket,
   TicketFilters,
-} from '../../types/unified';
+} from '../../../types/unified';
 import { useRouter } from 'next/navigation';
 import {
   showSuccessNotification,
   showErrorNotification,
 } from '@/lib/notifications';
-import { AdvancedSearchModal } from '../../components/search/AdvancedSearchModal';
-import { SimpleFiltersModal } from '../../components/forms/SimpleFiltersModal';
-import { SearchBar } from '../../components/search/SearchBar';
-import { useSearch } from '../../hooks/useSearch';
-import { BulkActionsBar } from '../../components/bulk/BulkActionsBar';
-import { BulkSelectCheckbox } from '../../components/bulk/BulkSelectCheckbox';
-import { useBulkOperations } from '../../hooks/useBulkOperations';
-import { PAGINATION_CONFIG } from '../../lib/constants';
+import { AdvancedSearchModal } from '../../../components/search/AdvancedSearchModal';
+import { SimpleFiltersModal } from '../../../components/forms/SimpleFiltersModal';
+import { SearchBar } from '../../../components/search/SearchBar';
+import { useSearch } from '../../../hooks/useSearch';
+import { BulkActionsBar } from '../../../components/bulk/BulkActionsBar';
+import { BulkSelectCheckbox } from '../../../components/bulk/BulkSelectCheckbox';
+import { useBulkOperations } from '../../../hooks/useBulkOperations';
+import { PAGINATION_CONFIG } from '../../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
   NEW: 'blue',
@@ -80,8 +81,8 @@ const priorityColors: Record<TicketPriority, string> = {
   CRITICAL: 'red',
 };
 
-export default function TicketsPage() {
-  const t = useTranslations('tickets');
+export default function NewTicketsPage() {
+  // const t = useTranslations('tickets'); // Removed unused variable
   const router = useRouter();
   const {} = useAuthStore();
   const [currentPage, setCurrentPage] = useState(1);
@@ -125,6 +126,7 @@ export default function TicketsPage() {
 
   const ticketsQuery = {
     ...searchQuery,
+    status: ['NEW'] as TicketStatus[], // Only show NEW tickets
     page: needsClientSideFiltering ? 1 : currentPage,
     limit: needsClientSideFiltering
       ? 1000
@@ -148,7 +150,7 @@ export default function TicketsPage() {
     isFetching,
   } = useTicketsWithPagination(ticketsQuery);
 
-  // Get total count of all tickets (no filters)
+  // Get total count of new tickets only
   const { data: totalTicketsCount } = useTotalTicketsCount();
 
   // Extract tickets and pagination from the response
@@ -247,7 +249,7 @@ export default function TicketsPage() {
       <Container size='xl' py='md'>
         <Group justify='center' mt='xl'>
           <Loader size='lg' />
-          <Text>Loading tickets...</Text>
+          <Text>Loading new tickets...</Text>
         </Group>
       </Container>
     );
@@ -257,7 +259,7 @@ export default function TicketsPage() {
     return (
       <Container size='xl' py='md'>
         <Alert icon={<IconAlertCircle size={16} />} title='Error' color='red'>
-          Failed to load tickets: {error.message}
+          Failed to load new tickets: {error.message}
         </Alert>
       </Container>
     );
@@ -267,15 +269,17 @@ export default function TicketsPage() {
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='xl'>
         <div>
-          <Title order={1}>{t('title')}</Title>
-          <Text c='dimmed'>Manage and track support tickets</Text>
+          <Title order={1}>New Tickets</Title>
+          <Text c='dimmed'>
+            Tickets requiring assignment or initial attention
+          </Text>
           {hasActiveFilters() && (
             <Text size='sm' c='blue' mt='xs'>
               Showing {filteredTickets.length} of{' '}
               {needsClientSideFiltering
                 ? allFilteredTickets.length
                 : totalTicketsCount || 0}{' '}
-              tickets
+              new tickets
             </Text>
           )}
         </div>
@@ -468,10 +472,10 @@ export default function TicketsPage() {
           <Stack align='center' gap='md'>
             <IconTicket size={48} color='var(--mantine-color-dimmed)' />
             <Text size='lg' fw={500}>
-              No tickets found
+              No new tickets found
             </Text>
             <Text c='dimmed' ta='center'>
-              No tickets match your current filters.
+              No NEW tickets match your current filters.
             </Text>
           </Stack>
         </Card>

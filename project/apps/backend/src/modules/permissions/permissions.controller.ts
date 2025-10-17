@@ -40,6 +40,7 @@ export class PermissionsController {
       req.user.id,
       resource,
       action,
+      req.user.activeRole,
       context
     );
 

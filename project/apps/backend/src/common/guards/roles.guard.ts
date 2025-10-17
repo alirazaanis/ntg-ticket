@@ -16,11 +16,11 @@ export class RolesGuard implements CanActivate {
     }
     const { user } = context.switchToHttp().getRequest();
 
-    if (!user || !user.role) {
+    if (!user || !user.activeRole) {
       return false;
     }
 
     // Use exact string matching instead of substring matching
-    return requiredRoles.includes(user.role);
+    return requiredRoles.includes(user.activeRole);
   }
 }

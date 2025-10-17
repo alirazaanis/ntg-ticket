@@ -37,12 +37,7 @@ import { useTickets } from '../../../hooks/useTickets';
 import { UserRole, Ticket } from '../../../types/unified';
 import { formatDistanceToNow } from 'date-fns';
 
-const roleColors: Record<UserRole, string> = {
-  [UserRole.END_USER]: 'gray',
-  [UserRole.SUPPORT_STAFF]: 'green',
-  [UserRole.SUPPORT_MANAGER]: 'blue',
-  [UserRole.ADMIN]: 'red',
-};
+import { getRoleColor } from '../../../lib/roleConfig';
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -216,8 +211,13 @@ export default function UserDetailPage() {
                         <Text size='sm' fw={500}>
                           Role
                         </Text>
-                        <Badge color={roleColors[user.role]} variant='light'>
-                          {user.role.replace('_', ' ')}
+                        <Badge
+                          color={getRoleColor(
+                            user.roles?.[0] || UserRole.END_USER
+                          )}
+                          variant='light'
+                        >
+                          {user.roles?.[0]?.replace('_', ' ') || 'Unknown'}
                         </Badge>
                       </div>
                     </Group>

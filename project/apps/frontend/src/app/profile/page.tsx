@@ -34,14 +34,9 @@ import { notifications } from '@mantine/notifications';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useUpdateUser } from '../../hooks/useUsers';
 import { usePasswordValidation } from '../../hooks/usePasswordValidation';
-import { UserRole } from '../../types/unified';
+// import { UserRole } from '../../types/unified'; // Removed unused import
 
-const roleColors: Record<UserRole, string> = {
-  [UserRole.END_USER]: 'gray',
-  [UserRole.SUPPORT_STAFF]: 'green',
-  [UserRole.SUPPORT_MANAGER]: 'blue',
-  [UserRole.ADMIN]: 'red',
-};
+import { getRoleColor } from '../../lib/roleConfig';
 
 export default function ProfilePage() {
   const t = useTranslations('profile');
@@ -236,8 +231,11 @@ export default function ProfilePage() {
                       <Text size='sm' fw={500}>
                         Role
                       </Text>
-                      <Badge color={roleColors[user.role]} variant='light'>
-                        {user.role.replace('_', ' ')}
+                      <Badge
+                        color={getRoleColor(user.activeRole)}
+                        variant='light'
+                      >
+                        {user.activeRole.replace('_', ' ')}
                       </Badge>
                     </Group>
                     <Group justify='space-between'>

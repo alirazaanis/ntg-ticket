@@ -1,20 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
-  isActive: boolean;
-  avatar?: string;
-}
+import { User } from '../types/unified';
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   setUser: (user: User | null) => void;
+  updateUser: (updates: Partial<User>) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
   hasRole: (role: string) => boolean;
@@ -28,15 +21,21 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: true,
       setUser: user => set({ user, isAuthenticated: !!user }),
+      updateUser: (updates: Partial<User>) => {
+        const state = get();
+        if (state.user) {
+          set({ user: { ...state.user, ...updates } });
+        }
+      },
       setLoading: isLoading => set({ isLoading }),
       logout: () => set({ user: null, isAuthenticated: false }),
       hasRole: (role: string): boolean => {
         const state = get();
-        return state.user?.role === role;
+        return state.user?.activeRole === role;
       },
       hasAnyRole: (roles: string[]): boolean => {
         const state = get();
-        return state.user ? roles.includes(state.user.role) : false;
+        return state.user ? roles.includes(state.user.activeRole) : false;
       },
     }),
     {

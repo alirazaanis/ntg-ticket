@@ -122,18 +122,14 @@ export function AdminPanel() {
         const userData = {
           name: data.name,
           email: data.email,
-          role: data.role as
-            | 'ADMIN'
-            | 'SUPPORT_MANAGER'
-            | 'SUPPORT_STAFF'
-            | 'END_USER',
+          roles: data.roles as UserRole[],
           isActive: data.isActive,
           ...(data.password && { password: data.password }),
         };
 
         await updateUserMutation.mutateAsync({
           id: editingItem.id,
-          data: { ...userData, role: userData.role as UserRole },
+          data: userData,
         });
         notifications.show({
           title: 'Success',
@@ -154,19 +150,12 @@ export function AdminPanel() {
         const userData = {
           name: data.name,
           email: data.email,
-          role: data.role as
-            | 'ADMIN'
-            | 'SUPPORT_MANAGER'
-            | 'SUPPORT_STAFF'
-            | 'END_USER',
+          roles: data.roles as UserRole[],
           isActive: data.isActive,
           password: data.password,
         };
 
-        await createUserMutation.mutateAsync({
-          ...userData,
-          role: userData.role as UserRole,
-        });
+        await createUserMutation.mutateAsync(userData);
         notifications.show({
           title: 'Success',
           message: 'User created successfully',
@@ -417,7 +406,7 @@ export function AdminPanel() {
                               {user.email}
                             </Text>
                             <Text size='xs' color='dimmed'>
-                              Role: {user.role} | Status:{' '}
+                              Role: {user.activeRole} | Status:{' '}
                               {user.isActive ? 'Active' : 'Inactive'}
                             </Text>
                           </div>

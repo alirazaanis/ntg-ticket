@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import {
   TextInput,
-  Select,
+  // Select, // Removed unused import
+  MultiSelect,
   Button,
   Group,
   Stack,
@@ -48,7 +49,7 @@ export function UserForm({
     initialValues: {
       name: initialData?.name || '',
       email: initialData?.email || '',
-      role: initialData?.role || 'END_USER',
+      roles: initialData?.roles || ['END_USER'],
       isActive: initialData?.isActive ?? true,
       password: '',
       confirmPassword: '',
@@ -56,7 +57,8 @@ export function UserForm({
     validate: {
       name: value => (!value ? 'Name is required' : null),
       email: value => (!/^\S+@\S+\.\S+$/.test(value) ? 'Invalid email' : null),
-      role: value => (!value ? 'Role is required' : null),
+      roles: value =>
+        !value || value.length === 0 ? 'At least one role is required' : null,
       password: value => {
         if (!isEditing && !value) return 'Password is required';
         if (value) return validatePassword(value);
@@ -111,12 +113,12 @@ export function UserForm({
 
         <Grid>
           <Grid.Col span={6}>
-            <Select
-              label='Role'
-              placeholder='Select role'
+            <MultiSelect
+              label='Roles'
+              placeholder='Select roles'
               required
               data={roles}
-              {...form.getInputProps('role')}
+              {...form.getInputProps('roles')}
             />
           </Grid.Col>
           <Grid.Col span={6}>

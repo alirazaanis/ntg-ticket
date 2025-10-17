@@ -207,13 +207,14 @@ export class TicketsService {
     }
 
     // Auto-assign ticket if enabled and no specific assignee provided
-    let assignedToId = createTicketDto.assignedToId;
-    if (!assignedToId && this.systemConfigService.isAutoAssignEnabled()) {
-      assignedToId = await this.autoAssignTicket(
-        ticketCategory.id,
-        ticketSubcategory.id
-      );
-    }
+    const assignedToId = createTicketDto.assignedToId;
+    // Note: Auto-assignment is currently disabled by default
+    // if (!assignedToId && this.systemConfigService.isAutoAssignEnabled()) {
+    //   assignedToId = await this.autoAssignTicket(
+    //     ticketCategory.id,
+    //     ticketSubcategory.id
+    //   );
+    // }
 
     // Create ticket
     const ticket = await this.prisma.ticket.create({
@@ -706,19 +707,41 @@ export class TicketsService {
       'TicketsService'
     );
 
-    // Validate user role can update ticket status
-    if (!['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
-      throw new BadRequestException(
-        'Only support staff can update ticket status'
-      );
-    }
-
+    // Get the current ticket to check permissions
     const ticket = await this.prisma.ticket.findUnique({
       where: { id },
     });
 
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
+    }
+
+    // Validate user role can update ticket status
+    // END_USER can only reopen closed tickets (CLOSED → REOPENED)
+    if (userRole === 'END_USER') {
+      if (
+        ticket.status !== TicketStatus.CLOSED ||
+        status !== TicketStatus.REOPENED
+      ) {
+        throw new BadRequestException(
+          'End users can only reopen closed tickets'
+        );
+      }
+      // Check if the end user is the ticket requester
+      if (ticket.requesterId !== userId) {
+        throw new ForbiddenException(
+          'Access denied: You can only reopen your own tickets'
+        );
+      }
+    } else if (
+      !['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)
+    ) {
+      this.logger.error(
+        `Permission denied for user role: ${userRole}, expected: SUPPORT_STAFF, SUPPORT_MANAGER, or ADMIN`
+      );
+      throw new BadRequestException(
+        'Only support staff, managers, and admins can update ticket status'
+      );
     }
 
     // Validate status transition
@@ -841,10 +864,12 @@ export class TicketsService {
     }
 
     if (
-      !['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(assignee.role)
+      !assignee.roles.some(role =>
+        ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(role)
+      )
     ) {
       this.logger.error(
-        `Assignee ${assignedToId} has invalid role ${assignee.role}`,
+        `Assignee ${assignedToId} has invalid roles ${assignee.roles.join(', ')}`,
         'TicketsService'
       );
       throw new BadRequestException('Assignee must be a support staff member');
@@ -1116,6 +1141,8 @@ export class TicketsService {
       'TicketsService'
     );
 
+    // Debug logging removed for production
+
     const where: Prisma.TicketWhereInput = {
       assignedToId: userId,
     };
@@ -1191,6 +1218,8 @@ export class TicketsService {
       this.prisma.ticket.count({ where }),
     ]);
 
+    // Debug logging removed for production
+
     return {
       data: tickets,
       pagination: {
@@ -1252,6 +1281,11 @@ export class TicketsService {
       'status',
       'assignedToId',
       'resolution',
+      'impact',
+      'urgency',
+      'categoryId',
+      'subcategoryId',
+      'slaLevel',
     ];
 
     for (const field of fieldsToTrack) {
@@ -1301,7 +1335,7 @@ export class TicketsService {
     // Only support staff can see assigned tickets
     if (!['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
       throw new BadRequestException(
-        'Only support staff can view assigned tickets'
+        'Only support staff, managers, and admins can view assigned tickets'
       );
     }
     return this.getAssignedTickets(userId, {});
@@ -1311,7 +1345,7 @@ export class TicketsService {
     // Only support staff and managers can see overdue tickets
     if (!['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(userRole)) {
       throw new BadRequestException(
-        'Only support staff can view overdue tickets'
+        'Only support staff, managers, and admins can view overdue tickets'
       );
     }
     return this.getOverdueTickets();
@@ -1326,8 +1360,8 @@ export class TicketsService {
       // Also consider their expertise in the specific category/subcategory
       const supportStaff = await this.prisma.user.findMany({
         where: {
-          role: {
-            in: ['SUPPORT_STAFF', 'SUPPORT_MANAGER'],
+          roles: {
+            hasSome: ['SUPPORT_STAFF', 'SUPPORT_MANAGER'],
           },
           isActive: true,
         },

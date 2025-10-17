@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  // Create comprehensive user data
+  // Create comprehensive user data with multi-role support
   const admin = await prisma.user.upsert({
     where: { email: 'admin@ntg-ticket.com' },
     update: {},
@@ -24,7 +24,7 @@ async function main() {
       email: 'admin@ntg-ticket.com',
       name: 'Ahmad Muhammad Ali',
       password: await bcrypt.hash('admin123', 12),
-      role: UserRole.ADMIN,
+      roles: [UserRole.ADMIN],
       isActive: true,
     },
   });
@@ -36,7 +36,7 @@ async function main() {
       email: 'manager@ntg-ticket.com',
       name: 'Fatima Abd al-Rahman',
       password: await bcrypt.hash('manager123', 12),
-      role: UserRole.SUPPORT_MANAGER,
+      roles: [UserRole.SUPPORT_MANAGER],
       isActive: true,
     },
   });
@@ -48,7 +48,7 @@ async function main() {
       email: 'support1@ntg-ticket.com',
       name: 'Muhammad Hassan Ibrahim',
       password: await bcrypt.hash('support123', 12),
-      role: UserRole.SUPPORT_STAFF,
+      roles: [UserRole.SUPPORT_STAFF],
       isActive: true,
     },
   });
@@ -60,7 +60,7 @@ async function main() {
       email: 'support2@ntg-ticket.com',
       name: 'Aisha Ahmad Mahmoud',
       password: await bcrypt.hash('support123', 12),
-      role: UserRole.SUPPORT_STAFF,
+      roles: [UserRole.SUPPORT_STAFF],
       isActive: true,
     },
   });
@@ -72,7 +72,7 @@ async function main() {
       email: 'support3@ntg-ticket.com',
       name: 'Khalid Abd Allah al-Saeed',
       password: await bcrypt.hash('support123', 12),
-      role: UserRole.SUPPORT_STAFF,
+      roles: [UserRole.SUPPORT_STAFF],
       isActive: true,
     },
   });
@@ -84,7 +84,7 @@ async function main() {
       email: 'support4@ntg-ticket.com',
       name: 'Nur al-Din Muhammad',
       password: await bcrypt.hash('support123', 12),
-      role: UserRole.SUPPORT_STAFF,
+      roles: [UserRole.SUPPORT_STAFF],
       isActive: true,
     },
   });
@@ -96,7 +96,7 @@ async function main() {
       email: 'user1@company.com',
       name: 'Maryam Ali Hassan',
       password: await bcrypt.hash('user123', 12),
-      role: UserRole.END_USER,
+      roles: [UserRole.END_USER],
       isActive: true,
     },
   });
@@ -108,7 +108,7 @@ async function main() {
       email: 'user2@company.com',
       name: 'Yusuf Abd al-Aziz',
       password: await bcrypt.hash('user123', 12),
-      role: UserRole.END_USER,
+      roles: [UserRole.END_USER],
       isActive: true,
     },
   });
@@ -120,7 +120,7 @@ async function main() {
       email: 'user3@company.com',
       name: 'Zaynab Muhammad Abd al-Rahman',
       password: await bcrypt.hash('user123', 12),
-      role: UserRole.END_USER,
+      roles: [UserRole.END_USER],
       isActive: true,
     },
   });
@@ -132,7 +132,7 @@ async function main() {
       email: 'user4@company.com',
       name: 'Umar Ahmad al-Sharif',
       password: await bcrypt.hash('user123', 12),
-      role: UserRole.END_USER,
+      roles: [UserRole.END_USER],
       isActive: true,
     },
   });
@@ -144,7 +144,7 @@ async function main() {
       email: 'user5@company.com',
       name: 'Sara Mahmoud Ibrahim',
       password: await bcrypt.hash('user123', 12),
-      role: UserRole.END_USER,
+      roles: [UserRole.END_USER],
       isActive: true,
     },
   });
@@ -156,7 +156,72 @@ async function main() {
       email: 'user6@company.com',
       name: 'Tariq Muhammad Ali',
       password: await bcrypt.hash('user123', 12),
-      role: UserRole.END_USER,
+      roles: [UserRole.END_USER],
+      isActive: true,
+    },
+  });
+
+  // Create multi-role users with Arabic/Egyptian names
+  const multiRoleUser1 = await prisma.user.upsert({
+    where: { email: 'ahmed@company.com' },
+    update: {},
+    create: {
+      email: 'ahmed@company.com',
+      name: 'Ahmed Hassan al-Masri',
+      password: await bcrypt.hash('user123', 12),
+      roles: [UserRole.END_USER, UserRole.SUPPORT_STAFF],
+      isActive: true,
+    },
+  });
+
+  const multiRoleUser2 = await prisma.user.upsert({
+    where: { email: 'nour@company.com' },
+    update: {},
+    create: {
+      email: 'nour@company.com',
+      name: 'Nour al-Din Abd al-Malik',
+      password: await bcrypt.hash('user123', 12),
+      roles: [UserRole.SUPPORT_STAFF, UserRole.SUPPORT_MANAGER],
+      isActive: true,
+    },
+  });
+
+  const multiRoleUser3 = await prisma.user.upsert({
+    where: { email: 'layla@company.com' },
+    update: {},
+    create: {
+      email: 'layla@company.com',
+      name: 'Layla Muhammad al-Zahra',
+      password: await bcrypt.hash('user123', 12),
+      roles: [UserRole.ADMIN, UserRole.SUPPORT_MANAGER],
+      isActive: true,
+    },
+  });
+
+  const multiRoleUser4 = await prisma.user.upsert({
+    where: { email: 'omar@company.com' },
+    update: {},
+    create: {
+      email: 'omar@company.com',
+      name: 'Omar Abd al-Rahman al-Farouk',
+      password: await bcrypt.hash('user123', 12),
+      roles: [
+        UserRole.END_USER,
+        UserRole.SUPPORT_STAFF,
+        UserRole.SUPPORT_MANAGER,
+      ],
+      isActive: true,
+    },
+  });
+
+  const multiRoleUser5 = await prisma.user.upsert({
+    where: { email: 'fatima@company.com' },
+    update: {},
+    create: {
+      email: 'fatima@company.com',
+      name: 'Fatima Zahra al-Batoul',
+      password: await bcrypt.hash('user123', 12),
+      roles: [UserRole.END_USER, UserRole.ADMIN],
       isActive: true,
     },
   });

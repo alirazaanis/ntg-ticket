@@ -42,7 +42,7 @@ export class TicketsController {
     const ticket = await this.ticketsService.create(
       createTicketDto,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: ticket,
@@ -68,7 +68,7 @@ export class TicketsController {
     const result = await this.ticketsService.findAll(
       filters,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: result.data,
@@ -99,10 +99,15 @@ export class TicketsController {
     description: 'Assigned tickets retrieved successfully',
   })
   async getAssignedTickets(@Query() filters: TicketFiltersDto, @Request() req) {
+    // Debug logging removed for production
+
     const result = await this.ticketsService.getAssignedTickets(
       req.user.id,
       filters
     );
+
+    // Debug logging removed for production
+
     return {
       data: result.data,
       pagination: result.pagination,
@@ -161,7 +166,7 @@ export class TicketsController {
     const ticket = await this.ticketsService.findOne(
       id,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: ticket,
@@ -183,12 +188,14 @@ export class TicketsController {
     @Body() body: { status: TicketStatus; resolution?: string },
     @Request() req
   ) {
+    // Debug logging removed for production
+
     const ticket = await this.ticketsService.updateStatus(
       id,
       body.status,
       body.resolution,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: ticket,
@@ -211,7 +218,7 @@ export class TicketsController {
       id,
       assignTicketDto.assignedToId,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: ticket,
@@ -233,7 +240,7 @@ export class TicketsController {
       id,
       updateTicketDto,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: ticket,
@@ -254,7 +261,7 @@ export class TicketsController {
     const result = await this.ticketsService.remove(
       id,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return result;
   }

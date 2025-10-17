@@ -35,6 +35,11 @@ import { RTLChevronDown, RTLChevronRight } from '../ui/RTLIcon';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useTicketsStore } from '../../stores/useTicketsStore';
 import { useNotificationsStore } from '../../stores/useNotificationsStore';
+import {
+  useMyTickets,
+  useAssignedTickets,
+  useAllTicketsForCounting,
+} from '../../hooks/useTickets';
 import { useRouter, usePathname } from 'next/navigation';
 import { Ticket } from '../../types/unified';
 import { ComponentType } from 'react';
@@ -56,6 +61,11 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   const { tickets } = useTicketsStore();
   const { unreadCount } = useNotificationsStore();
 
+  // Use React Query hooks for accurate counts
+  const { data: myTicketsData } = useMyTickets();
+  const { data: assignedTicketsData } = useAssignedTickets();
+  const { data: allTicketsData } = useAllTicketsForCounting();
+
   // Navigation state for collapsible sections
   const [adminExpanded, { toggle: toggleAdmin }] = useDisclosure(false); // Start collapsed
   const [ticketsExpanded, { toggle: toggleTickets }] = useDisclosure(true); // Start expanded
@@ -63,12 +73,20 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   // Defensive programming: ensure tickets is always an array
   const safeTickets = Array.isArray(tickets) ? tickets : [];
 
-  const myTickets = user
-    ? safeTickets.filter((t: Ticket) => t.requester?.id === user.id)
-    : [];
-  const assignedTickets = user
-    ? safeTickets.filter((t: Ticket) => t.assignedTo?.id === user.id)
-    : [];
+  // Use React Query data for accurate counts, fallback to store data
+  const myTickets =
+    myTicketsData ||
+    (user
+      ? safeTickets.filter((t: Ticket) => t.requester?.id === user.id)
+      : []);
+  const assignedTickets =
+    assignedTicketsData ||
+    (user
+      ? safeTickets.filter((t: Ticket) => t.assignedTo?.id === user.id)
+      : []);
+  const allTickets = allTicketsData || safeTickets;
+
+  // Debug logging removed for production
   const slaBreachedTickets = safeTickets.filter((t: Ticket) => {
     if (!t.dueDate) return false;
     return (
@@ -118,28 +136,35 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       label: tTickets('allTickets'),
       icon: IconTicket,
       href: '/tickets',
-      show: true,
-      badge: safeTickets.length,
+      show: hasAnyRole(['SUPPORT_MANAGER', 'ADMIN']), // Only for managers and admins
+      badge: allTickets.length,
+    },
+    {
+      label: 'New Tickets',
+      icon: IconFileText,
+      href: '/tickets/new',
+      show: hasRole('SUPPORT_MANAGER'), // Only for support managers
+      badge: safeTickets.filter((t: Ticket) => t.status === 'NEW').length,
     },
     {
       label: tTickets('myTickets'),
       icon: IconFileText,
       href: '/tickets/my',
-      show: true,
+      show: hasRole('END_USER'), // Only for end users
       badge: myTickets.length,
     },
     {
       label: tTickets('assignedTickets'),
       icon: IconUserCheck,
       href: '/tickets/assigned',
-      show: hasAnyRole(['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN']),
+      show: hasRole('SUPPORT_STAFF'), // Only for support staff
       badge: assignedTickets.length,
     },
     {
       label: tTickets('overdueTickets'),
       icon: IconClock,
       href: '/tickets/overdue',
-      show: hasAnyRole(['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN']),
+      show: hasRole('SUPPORT_MANAGER'), // Only for support managers
       badge: safeTickets.filter((t: Ticket) => {
         if (!t.dueDate) return false;
         return (
@@ -152,14 +177,14 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       label: tTickets('slaBreached'),
       icon: IconExclamationMark,
       href: '/tickets/sla-breached',
-      show: hasAnyRole(['SUPPORT_MANAGER', 'ADMIN']),
+      show: hasRole('SUPPORT_MANAGER'), // Only for support managers
       badge: slaBreachedTickets.length,
     },
     {
       label: tTickets('createTicket'),
       icon: IconPlus,
       href: '/tickets/create',
-      show: true,
+      show: hasRole('END_USER'),
     },
   ];
 
@@ -175,7 +200,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       label: tAdmin('users'),
       icon: IconUsers,
       href: '/admin/users',
-      show: hasAnyRole(['SUPPORT_MANAGER', 'ADMIN']),
+      show: hasRole('ADMIN'), // Only show for ADMIN, not SUPPORT_MANAGER
     },
     {
       label: tAdmin('title'),
@@ -288,7 +313,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
           label={item.label}
           leftSection={<item.icon size={16} />}
           rightSection={
-            item.badge && item.badge > 0 ? (
+            item.badge !== undefined ? (
               <Badge size='sm' variant='light' color={color}>
                 {item.badge}
               </Badge>

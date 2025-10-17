@@ -262,7 +262,7 @@ export class SystemConfigService implements OnModuleInit {
       requireTwoFactor: false,
       sessionTimeout: 30,
       maxLoginAttempts: 5,
-      autoAssignTickets: true,
+      autoAssignTickets: false,
       autoCloseResolved: false,
       autoCloseDays: 7,
       enableAuditLog: true,
@@ -313,7 +313,7 @@ export class SystemConfigService implements OnModuleInit {
 
   isAutoAssignEnabled(): boolean {
     const config = this.getConfig();
-    return config?.autoAssignTickets || true;
+    return config?.autoAssignTickets || false;
   }
 
   isAutoCloseEnabled(): boolean {

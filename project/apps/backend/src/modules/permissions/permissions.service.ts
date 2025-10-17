@@ -139,20 +139,24 @@ export class PermissionsService {
     userId: string,
     resource: string,
     action: string,
+    activeRole?: string,
     context?: Record<string, unknown>
   ): Promise<boolean> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true },
+        select: { roles: true },
       });
 
       if (!user) {
         return false;
       }
 
+      // Use provided activeRole or first role as fallback
+      const userActiveRole = activeRole || user.roles[0];
+
       const rolePermissions = this.getRolePermissions().find(
-        rp => rp.role === user.role
+        rp => rp.role === userActiveRole
       );
 
       if (!rolePermissions) {
@@ -160,7 +164,7 @@ export class PermissionsService {
       }
 
       // Check for admin role (full access)
-      if (user.role === UserRole.ADMIN) {
+      if (userActiveRole === UserRole.ADMIN) {
         return true;
       }
 
@@ -238,25 +242,30 @@ export class PermissionsService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true },
+        select: { roles: true },
       });
 
       if (!user) {
         return false;
       }
 
+      // Get the user's active role from the request context
+      // For now, we'll use the first role as activeRole
+      // This should be passed from the JWT token in a real implementation
+      const activeRole = user.roles[0];
+
       // Admin can access all tickets
-      if (user.role === UserRole.ADMIN) {
+      if (activeRole === UserRole.ADMIN) {
         return true;
       }
 
       // Manager can access all tickets
-      if (user.role === UserRole.SUPPORT_MANAGER) {
+      if (activeRole === UserRole.SUPPORT_MANAGER) {
         return true;
       }
 
       // Staff can access assigned tickets or all tickets for read
-      if (user.role === UserRole.SUPPORT_STAFF) {
+      if (activeRole === UserRole.SUPPORT_STAFF) {
         if (action === 'read') {
           return true; // Can read all tickets
         }
@@ -271,7 +280,7 @@ export class PermissionsService {
       }
 
       // End user can only access own tickets
-      if (user.role === UserRole.END_USER) {
+      if (activeRole === UserRole.END_USER) {
         const ticket = await this.prisma.ticket.findUnique({
           where: { id: ticketId },
           select: { requesterId: true },
@@ -298,35 +307,38 @@ export class PermissionsService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true },
+        select: { roles: true },
       });
 
       if (!user) {
         return false;
       }
 
+      // Get the user's active role from the request context
+      const activeRole = user.roles[0];
+
       // Admin can access all users
-      if (user.role === UserRole.ADMIN) {
+      if (activeRole === UserRole.ADMIN) {
         return true;
       }
 
       // Manager can access support staff
-      if (user.role === UserRole.SUPPORT_MANAGER) {
+      if (activeRole === UserRole.SUPPORT_MANAGER) {
         const targetUser = await this.prisma.user.findUnique({
           where: { id: targetUserId },
-          select: { role: true },
+          select: { roles: true },
         });
 
-        return targetUser?.role === UserRole.SUPPORT_STAFF;
+        return targetUser?.roles.includes(UserRole.SUPPORT_STAFF);
       }
 
       // Staff can read all users
-      if (user.role === UserRole.SUPPORT_STAFF && action === 'read') {
+      if (activeRole === UserRole.SUPPORT_STAFF && action === 'read') {
         return true;
       }
 
       // End user can only access own profile
-      if (user.role === UserRole.END_USER) {
+      if (activeRole === UserRole.END_USER) {
         return userId === targetUserId;
       }
 

@@ -6,7 +6,7 @@ export function useAutoAssignSettings() {
   const { data: settings } = useSystemSettings();
 
   // Only use system settings if user is admin, otherwise use defaults
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.activeRole === 'ADMIN';
   const isAutoAssignEnabled = isAdmin
     ? settings?.autoAssignTickets || false
     : true;

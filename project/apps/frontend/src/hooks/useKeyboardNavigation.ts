@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react';
+import { useAuthStore } from '../stores/useAuthStore';
 
 export interface KeyboardShortcut {
   key: string;
@@ -39,12 +40,16 @@ export const useKeyboardNavigation = (shortcuts: KeyboardShortcut[]) => {
 
 // Common keyboard shortcuts for the ticket system
 export const useTicketKeyboardShortcuts = () => {
+  const { user } = useAuthStore();
+
   const shortcuts: KeyboardShortcut[] = [
     {
       key: 'n',
       ctrlKey: true,
       action: () => {
-        window.location.href = '/tickets/create';
+        if (user?.activeRole === 'END_USER') {
+          window.location.href = '/tickets/create';
+        }
       },
       description: 'Create new ticket',
     },

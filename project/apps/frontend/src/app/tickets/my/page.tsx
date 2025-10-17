@@ -28,12 +28,12 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '../../../stores/useAuthStore';
 import { useState } from 'react';
 import {
   useTicketsWithPagination,
   useTotalTicketsCount,
 } from '../../../hooks/useTickets';
-import { useAuthStore } from '../../../stores/useAuthStore';
 import { Ticket, TicketStatus, TicketPriority } from '../../../types/unified';
 import { SearchBar } from '../../../components/search/SearchBar';
 import { AdvancedSearchModal } from '../../../components/search/AdvancedSearchModal';
@@ -174,12 +174,14 @@ export default function MyTicketsPage() {
             </Text>
           )}
         </div>
-        <Button
-          leftSection={<IconPlus size={16} />}
-          onClick={() => router.push('/tickets/create')}
-        >
-          Create Ticket
-        </Button>
+        {user?.activeRole === 'END_USER' && (
+          <Button
+            leftSection={<IconPlus size={16} />}
+            onClick={() => router.push('/tickets/create')}
+          >
+            Create Ticket
+          </Button>
+        )}
       </Group>
 
       <Grid mb='md'>
@@ -318,9 +320,11 @@ export default function MyTicketsPage() {
             <Text c='dimmed' ta='center'>
               No tickets match your current filters.
             </Text>
-            <Button onClick={() => router.push('/tickets/create')}>
-              Create your first ticket
-            </Button>
+            {user?.activeRole === 'END_USER' && (
+              <Button onClick={() => router.push('/tickets/create')}>
+                Create your first ticket
+              </Button>
+            )}
           </Stack>
         </Card>
       )}

@@ -65,7 +65,23 @@
     "redirectingToDashboard": "Redirecting to your dashboard...",
     "dontHaveAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?",
-    "resetPassword": "Reset Password"
+    "resetPassword": "Reset Password",
+    "selectYourRole": "Select Your Role",
+    "youHaveMultipleRoles": "You have multiple roles assigned. Please select which role you want to use for this session.",
+    "chooseActiveRole": "Choose Active Role",
+    "continue": "Continue",
+    "roleSelectionFailed": "Failed to select role. Please try again.",
+    "roles": {
+      "end_user": "End User",
+      "support_staff": "Support Staff", 
+      "support_manager": "Support Manager",
+      "admin": "Administrator"
+    },
+    "switchRole": "Switch Role",
+    "roleSwitched": "Role Switched",
+    "roleSwitchedMessage": "Successfully switched to {role} role",
+    "roleSwitchFailed": "Role Switch Failed",
+    "roleSwitchFailedMessage": "Failed to switch role. Please try again."
   },
   "dashboard": {
     "welcome": "Welcome back",

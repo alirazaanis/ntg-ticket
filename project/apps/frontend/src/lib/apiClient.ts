@@ -171,6 +171,45 @@ apiClient.interceptors.response.use(
   }
 );
 
+// ===== AUTH API =====
+export const authApi = {
+  login: (credentials: {
+    email: string;
+    password: string;
+    activeRole?: string;
+  }) =>
+    apiClient.post<
+      ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+    >('/auth/login', credentials),
+
+  getCurrentUser: () => apiClient.get<ApiResponse<User>>('/auth/me'),
+
+  logout: () => apiClient.post<ApiResponse<void>>('/auth/logout'),
+
+  refreshToken: (refreshToken: string) =>
+    apiClient.post<
+      ApiResponse<{ access_token: string; refresh_token: string }>
+    >('/auth/refresh', { refresh_token: refreshToken }),
+
+  updateUserRole: (userId: string, role: string) =>
+    apiClient.patch<ApiResponse<User>>(`/auth/users/${userId}/role`, { role }),
+
+  switchRole: (data: { activeRole: string }) =>
+    apiClient.post<
+      ApiResponse<{
+        access_token: string;
+        refresh_token: string;
+        user: {
+          id: string;
+          email: string;
+          name: string;
+          roles: string[];
+          activeRole: string;
+        };
+      }>
+    >('/auth/switch-role', data),
+};
+
 // ===== USER API =====
 export const userApi = {
   getUsers: (filters?: UserFilters) =>
@@ -447,8 +486,9 @@ export const reportsApi = {
     format: string,
     filters?: ReportFilters,
     data?: unknown
-  ) =>
-    apiClient.post(
+  ) => {
+    // Debug logging removed for production
+    return apiClient.post(
       `/reports/export/${type}`,
       {
         format,
@@ -458,7 +498,8 @@ export const reportsApi = {
       {
         responseType: 'blob',
       }
-    ),
+    );
+  },
 
   exportReports: (filters?: ReportFilters) =>
     apiClient.post<Blob>('/reports/export', filters, {
@@ -511,21 +552,6 @@ export const notificationsApi = {
         message,
       }
     ),
-};
-
-// ===== AUTH API =====
-export const authApi = {
-  getCurrentUser: () => apiClient.get<ApiResponse<User>>('/auth/me'),
-
-  logout: () => apiClient.post<ApiResponse<void>>('/auth/logout'),
-
-  refreshToken: (refreshToken: string) =>
-    apiClient.post<
-      ApiResponse<{ access_token: string; refresh_token: string }>
-    >('/auth/refresh', { refresh_token: refreshToken }),
-
-  updateUserRole: (userId: string, role: string) =>
-    apiClient.patch<ApiResponse<User>>(`/auth/users/${userId}/role`, { role }),
 };
 
 // ===== ELASTICSEARCH API =====

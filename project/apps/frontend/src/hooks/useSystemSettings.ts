@@ -14,7 +14,7 @@ export function useSystemSettings() {
       return response.data.data as SystemSettings;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: status === 'authenticated' && user?.role === 'ADMIN', // Only fetch when user is authenticated and is admin
+    enabled: status === 'authenticated' && user?.activeRole === 'ADMIN', // Only fetch when user is authenticated and is admin
   });
 }
 

@@ -21,7 +21,15 @@ export class UsersService {
     private validationService: ValidationService
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(
+    createUserDto: CreateUserDto
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    roles: string[];
+    isActive: boolean;
+  }> {
     try {
       // Validate password
       if (!createUserDto.password) {
@@ -71,7 +79,13 @@ export class UsersService {
     role?: UserRole;
     isActive?: boolean;
   }): Promise<{
-    data: User[];
+    data: {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    }[];
     pagination: {
       page: number;
       limit: number;
@@ -92,7 +106,9 @@ export class UsersService {
           | { name: { contains: string; mode: 'insensitive' } }
           | { email: { contains: string; mode: 'insensitive' } }
         >;
-        role?: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
+        roles?: {
+          has: 'END_USER' | 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN';
+        };
         isActive?: boolean;
       } = {};
 
@@ -104,7 +120,7 @@ export class UsersService {
       }
 
       if (role) {
-        where.role = role;
+        where.roles = { has: role };
       }
 
       if (isActive !== undefined) {
@@ -144,7 +160,15 @@ export class UsersService {
     }
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(
+    id: string
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    roles: string[];
+    isActive: boolean;
+  } | null> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -190,7 +214,16 @@ export class UsersService {
     }
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    roles: string[];
+    isActive: boolean;
+  }> {
     try {
       const user = await this.prisma.user.update({
         where: { id },
@@ -216,7 +249,15 @@ export class UsersService {
     }
   }
 
-  async remove(id: string): Promise<User> {
+  async remove(
+    id: string
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    roles: string[];
+    isActive: boolean;
+  }> {
     try {
       const user = await this.prisma.user.update({
         where: { id },
@@ -242,11 +283,21 @@ export class UsersService {
     }
   }
 
-  async getUsersByRole(role: UserRole): Promise<User[]> {
+  async getUsersByRole(
+    role: UserRole
+  ): Promise<
+    {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    }[]
+  > {
     try {
       const users = await this.prisma.user.findMany({
         where: {
-          role,
+          roles: { has: role },
           isActive: true,
         },
         include: {
@@ -267,15 +318,39 @@ export class UsersService {
     }
   }
 
-  async getSupportStaff(): Promise<User[]> {
+  async getSupportStaff(): Promise<
+    {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    }[]
+  > {
     return this.getUsersByRole(UserRole.SUPPORT_STAFF);
   }
 
-  async getSupportManagers(): Promise<User[]> {
+  async getSupportManagers(): Promise<
+    {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    }[]
+  > {
     return this.getUsersByRole(UserRole.SUPPORT_MANAGER);
   }
 
-  async getAdmins(): Promise<User[]> {
+  async getAdmins(): Promise<
+    {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    }[]
+  > {
     return this.getUsersByRole(UserRole.ADMIN);
   }
 }

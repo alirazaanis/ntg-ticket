@@ -44,7 +44,8 @@ export const getStatusTransitionErrorMessage = (
 export const validateStatusUpdate = (
   currentStatus: TicketStatus,
   newStatus: TicketStatus,
-  resolution?: string
+  resolution?: string,
+  userRole?: string
 ): { isValid: boolean; errorMessage?: string } => {
   // Check if transition is valid
   if (!isValidStatusTransition(currentStatus, newStatus)) {
@@ -52,6 +53,20 @@ export const validateStatusUpdate = (
       isValid: false,
       errorMessage: `Invalid status transition from "${currentStatus.replace('_', ' ')}" to "${newStatus.replace('_', ' ')}"`,
     };
+  }
+
+  // Check role-based permissions
+  if (userRole === 'END_USER') {
+    // End users can only reopen closed tickets
+    if (
+      currentStatus !== TicketStatus.CLOSED ||
+      newStatus !== TicketStatus.REOPENED
+    ) {
+      return {
+        isValid: false,
+        errorMessage: 'End users can only reopen closed tickets',
+      };
+    }
   }
 
   // Check if resolution is required for RESOLVED status

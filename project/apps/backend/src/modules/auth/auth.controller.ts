@@ -20,7 +20,7 @@ import {
 import { AuthService } from './auth.service';
 import { NextAuthJwtGuard } from './guards/nextauth-jwt.guard';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
-import { User } from '../users/entities/user.entity';
+// import { User } from '../users/entities/user.entity'; // Removed unused import
 import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
 import { SanitizationService } from '../../common/validation/sanitization.service';
 import { TokenBlacklistService } from '../../common/security/token-blacklist.service';
@@ -44,10 +44,19 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
-  async login(@Body() body: { email: string; password: string }): Promise<{
+  async login(
+    @Body() body: { email: string; password: string; activeRole?: string },
+    @Request() req
+  ): Promise<{
     data: {
       access_token: string;
-      user: { id: string; email: string; name: string; role: string };
+      user: {
+        id: string;
+        email: string;
+        name: string;
+        roles: string[];
+        activeRole: string;
+      };
     };
     message: string;
   }> {
@@ -65,8 +74,38 @@ export class AuthController {
         throw new UnauthorizedException('Invalid credentials');
       }
 
+      // If user has multiple roles and no activeRole specified, they need to select one
+      if (user.roles.length > 1 && !body.activeRole) {
+        return {
+          data: {
+            access_token: '',
+            user: {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              roles: user.roles,
+              activeRole: '',
+            },
+          },
+          message: 'Role selection required',
+        };
+      }
+
       // Generate JWT token
-      const loginResult = await this.authService.login(user);
+      const ipAddress =
+        req.ip ||
+        req.connection?.remoteAddress ||
+        req.headers['x-forwarded-for'];
+      const userAgent = req.headers['user-agent'];
+
+      const loginResult = await this.authService.login(
+        {
+          ...user,
+          activeRole: body.activeRole,
+        },
+        ipAddress,
+        userAgent
+      );
 
       return {
         data: loginResult,
@@ -160,7 +199,9 @@ export class AuthController {
   async validateCredentials(
     @Body() body: { email: string; password: string }
   ): Promise<{
-    data: { user: { id: string; email: string; name: string; role: string } };
+    data: {
+      user: { id: string; email: string; name: string; roles: string[] };
+    };
     message: string;
   }> {
     try {
@@ -203,7 +244,16 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(
     @Request() req
-  ): Promise<{ data: User; message: string }> {
+  ): Promise<{
+    data: {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    } | null;
+    message: string;
+  }> {
     const user = await this.authService.getCurrentUser(req.user.id);
     return {
       data: user,
@@ -224,21 +274,76 @@ export class AuthController {
   async updateUserRole(
     @Request() req,
     @Body() updateUserRoleDto: UpdateUserRoleDto
-  ): Promise<{ data: User; message: string }> {
+  ): Promise<{
+    data: {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    };
+    message: string;
+  }> {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 
-    const user = await this.authService.updateUserRole(
-      req.params.userId,
-      updateUserRoleDto.role
-    );
+    const user = await this.authService.updateUserRoles(req.params.userId, [
+      updateUserRoleDto.role,
+    ]);
 
     return {
       data: user,
       message: 'User role updated successfully',
     };
+  }
+
+  @Post('switch-role')
+  @UseGuards(NextAuthJwtGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Switch active role for multi-role user' })
+  @ApiResponse({ status: 200, description: 'Role switched successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 400, description: 'Invalid role' })
+  async switchRole(
+    @Request() req,
+    @Body() body: { activeRole: string }
+  ): Promise<{
+    data: {
+      access_token: string;
+      refresh_token: string;
+    };
+    message: string;
+  }> {
+    try {
+      const ipAddress =
+        req.ip ||
+        req.connection?.remoteAddress ||
+        req.headers['x-forwarded-for'];
+      const userAgent = req.headers['user-agent'];
+
+      const result = await this.authService.switchActiveRole(
+        req.user.id,
+        body.activeRole,
+        ipAddress,
+        userAgent
+      );
+
+      return {
+        data: {
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        },
+        message: 'Role switched successfully',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Invalid role');
+    }
   }
 
   @Post('users/:userId/deactivate')
@@ -254,9 +359,18 @@ export class AuthController {
   })
   async deactivateUser(
     @Request() req
-  ): Promise<{ data: User; message: string }> {
+  ): Promise<{
+    data: {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      isActive: boolean;
+    };
+    message: string;
+  }> {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 

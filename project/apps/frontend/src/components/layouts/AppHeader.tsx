@@ -20,6 +20,7 @@ import {
   IconSettings,
   IconUser,
   IconHelp,
+  // IconCheck, // Removed unused import
 } from '@tabler/icons-react';
 import { RTLChevronDown } from '../ui/RTLIcon';
 import { useAuthStore } from '../../stores/useAuthStore';
@@ -27,12 +28,17 @@ import { useNotificationsStore } from '../../stores/useNotificationsStore';
 import { useSiteBranding } from '../../hooks/useSiteBranding';
 import { useMarkNotificationAsRead } from '../../hooks/useNotifications';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { LanguageSwitcher } from '../language/LanguageSwitcher';
 import { authApi } from '../../lib/apiClient';
 import { useMediaQuery } from '@mantine/hooks';
 import { useTranslations } from 'next-intl';
+import { UserRole } from '../../types/unified';
+import { notifications } from '@mantine/notifications';
+import { RoleSelectionModal } from '../modals/RoleSelectionModal';
+import { useState } from 'react';
+import { getRoleColor, getRoleLabel } from '../../lib/roleConfig';
 
 interface AppHeaderProps {
   onHelpClick?: () => void;
@@ -46,13 +52,19 @@ export function AppHeader({
   toggleMobile,
 }: AppHeaderProps) {
   const t = useTranslations('common');
-  const { user, logout } = useAuthStore();
+  const tAuth = useTranslations('auth');
+  const { user, logout, updateUser } = useAuthStore();
+  const { update: updateSession } = useSession();
   const { unreadCount, getRecentNotifications } = useNotificationsStore();
   const { siteName } = useSiteBranding();
   const router = useRouter();
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const markAsReadMutation = useMarkNotificationAsRead();
+  const [showRoleModal, setShowRoleModal] = useState(false);
+
+  // Debug log
+  // Debug logging removed for production
 
   const handleLogout = async () => {
     try {
@@ -70,33 +82,83 @@ export function AppHeader({
     });
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeColor = (role: UserRole) => {
+    return getRoleColor(role);
+  };
+
+  const getRoleLabelText = (role: UserRole) => {
     switch (role) {
-      case 'ADMIN':
-        return 'red';
-      case 'SUPPORT_MANAGER':
-        return 'orange';
-      case 'SUPPORT_STAFF':
-        return 'cyan';
-      case 'END_USER':
-        return 'green';
+      case UserRole.ADMIN:
+        return tAuth('roles.admin');
+      case UserRole.SUPPORT_MANAGER:
+        return tAuth('roles.support_manager');
+      case UserRole.SUPPORT_STAFF:
+        return tAuth('roles.support_staff');
+      case UserRole.END_USER:
+        return tAuth('roles.end_user');
       default:
-        return 'gray';
+        return role;
     }
   };
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return t('administrator');
-      case 'SUPPORT_MANAGER':
-        return t('supportManager');
-      case 'SUPPORT_STAFF':
-        return t('supportStaff');
-      case 'END_USER':
-        return t('endUser');
-      default:
-        return t('user');
+  const handleRoleSelect = async (selectedRole: UserRole) => {
+    if (selectedRole === user?.activeRole) {
+      setShowRoleModal(false);
+      return;
+    }
+
+    try {
+      const result = await authApi.switchRole({ activeRole: selectedRole });
+
+      // Store the new tokens in localStorage for NextAuth to pick up
+      if (result.data.data.access_token) {
+        localStorage.setItem('access_token', result.data.data.access_token);
+      }
+      if (result.data.data.refresh_token) {
+        localStorage.setItem('refresh_token', result.data.data.refresh_token);
+      }
+
+      // Update the auth store with new user data
+      updateUser({
+        ...user,
+        activeRole: selectedRole,
+      });
+
+      notifications.show({
+        title: tAuth('roleSwitched'),
+        message: tAuth('roleSwitchedMessage', {
+          role: getRoleLabel(selectedRole),
+        }),
+        color: 'green',
+      });
+
+      setShowRoleModal(false);
+
+      // Force NextAuth to think the token is expired so it will refresh
+      // This makes NextAuth pick up our new tokens
+      const nextAuthToken = localStorage.getItem('next-auth.session-token');
+      if (nextAuthToken) {
+        try {
+          const tokenData = JSON.parse(atob(nextAuthToken.split('.')[1]));
+          // Set the token expiration to the past to force refresh
+          tokenData.exp = Math.floor(Date.now() / 1000) - 1;
+          const newToken = btoa(JSON.stringify(tokenData));
+          localStorage.setItem('next-auth.session-token', newToken);
+        } catch (e) {
+          // Ignore token modification errors
+        }
+      }
+
+      // Trigger NextAuth session update
+      await updateSession();
+      // No need to reload - the role has been switched successfully
+    } catch (error) {
+      // Error logging removed for production
+      notifications.show({
+        title: tAuth('roleSwitchFailed'),
+        message: tAuth('roleSwitchFailedMessage'),
+        color: 'red',
+      });
     }
   };
 
@@ -290,9 +352,13 @@ export function AppHeader({
                       </Text>
                       <Badge
                         size='xs'
-                        color={getRoleBadgeColor(user?.role || 'END_USER')}
+                        color={getRoleBadgeColor(
+                          user?.activeRole || UserRole.END_USER
+                        )}
                       >
-                        {getRoleLabel(user?.role || 'END_USER')}
+                        {getRoleLabelText(
+                          user?.activeRole || UserRole.END_USER
+                        )}
                       </Badge>
                     </div>
                     <RTLChevronDown size={14} />
@@ -309,12 +375,54 @@ export function AppHeader({
                   </Text>
                   <Badge
                     size='xs'
-                    color={getRoleBadgeColor(user?.role || 'END_USER')}
+                    color={getRoleBadgeColor(
+                      user?.activeRole || UserRole.END_USER
+                    )}
                   >
-                    {getRoleLabel(user?.role || 'END_USER')}
+                    {getRoleLabelText(user?.activeRole || UserRole.END_USER)}
                   </Badge>
                 </Menu.Item>
               )}
+
+              {/* Role Switching - Only show if user has multiple roles */}
+              {user?.roles && user.roles.length > 1 && (
+                <>
+                  <Menu.Item
+                    leftSection={<IconUser size={14} />}
+                    onClick={() => {
+                      // Debug logging removed for production
+                      setShowRoleModal(true);
+                    }}
+                    style={{
+                      transition: 'background-color 0.2s ease',
+                      marginBottom: '4px',
+                    }}
+                    onMouseEnter={e => {
+                      const isDarkMode =
+                        document.documentElement.getAttribute(
+                          'data-mantine-color-scheme'
+                        ) === 'dark';
+                      if (isDarkMode) {
+                        e.currentTarget.style.backgroundColor =
+                          'var(--mantine-color-red-2)';
+                        e.currentTarget.style.color =
+                          'var(--mantine-color-red-8)';
+                      } else {
+                        e.currentTarget.style.backgroundColor =
+                          'var(--mantine-color-red-0)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = 'inherit';
+                    }}
+                  >
+                    <Text size='sm'>{tAuth('switchRole')}</Text>
+                  </Menu.Item>
+                  <Menu.Divider />
+                </>
+              )}
+
               <Menu.Item
                 leftSection={<IconUser size={14} />}
                 onClick={() => router.push('/profile')}
@@ -447,6 +555,19 @@ export function AppHeader({
           )}
         </Group>
       </Group>
+
+      {/* Role Selection Modal */}
+      {user?.roles && user.roles.length > 1 && (
+        <RoleSelectionModal
+          opened={showRoleModal}
+          onClose={() => setShowRoleModal(false)}
+          roles={user.roles}
+          activeRole={user.activeRole}
+          onRoleSelect={handleRoleSelect}
+          loading={false}
+          error={null}
+        />
+      )}
     </AppShell.Header>
   );
 }

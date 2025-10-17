@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Container,
@@ -36,18 +36,29 @@ import {
 import { useRouter } from 'next/navigation';
 import { useUsers, useDeleteUser } from '../../../hooks/useUsers';
 import { User } from '../../../lib/apiClient';
+import { useAuthStore } from '../../../stores/useAuthStore';
+import { UserRole } from '../../../types/unified';
+import { notifications } from '@mantine/notifications';
 
-const roleColors: Record<string, string> = {
-  ADMIN: 'red',
-  SUPPORT_MANAGER: 'blue',
-  SUPPORT_STAFF: 'green',
-  END_USER: 'gray',
-};
+import { getRoleColor } from '../../../lib/roleConfig';
 
 export default function UsersPage() {
   const t = useTranslations('common');
   const tUsers = useTranslations('users');
   const router = useRouter();
+  const { user } = useAuthStore();
+
+  // Check if user has admin role
+  useEffect(() => {
+    if (user && user.activeRole !== UserRole.ADMIN) {
+      notifications.show({
+        title: 'Access Denied',
+        message: 'Only administrators can manage users',
+        color: 'red',
+      });
+      router.push('/dashboard');
+    }
+  }, [user, router]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -199,9 +210,24 @@ export default function UsersPage() {
                       </Group>
                     </Table.Td>
                     <Table.Td>
-                      <Badge color={roleColors[user.role]} variant='light'>
-                        {user.role.replace('_', ' ')}
-                      </Badge>
+                      <Group gap='xs'>
+                        {user.roles && user.roles.length > 0 ? (
+                          user.roles.map(role => (
+                            <Badge
+                              key={role}
+                              color={getRoleColor(role as UserRole)}
+                              variant='light'
+                              size='sm'
+                            >
+                              {role.replace('_', ' ')}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge color='gray' variant='light'>
+                            Unknown
+                          </Badge>
+                        )}
+                      </Group>
                     </Table.Td>
                     <Table.Td>
                       <Badge

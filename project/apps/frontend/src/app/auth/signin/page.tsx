@@ -28,6 +28,8 @@ import { RTLArrowRight } from '../../../components/ui/RTLIcon';
 import Link from 'next/link';
 import { useLoginAttempts } from '../../../hooks/useLoginAttempts';
 import { AuthLayout } from '../../../components/layouts/AuthLayout';
+import { RoleSelectionModal } from '../../../components/modals/RoleSelectionModal';
+import { UserRole } from '../../../types/unified';
 
 export default function SignInPage() {
   const t = useTranslations('auth');
@@ -40,6 +42,12 @@ export default function SignInPage() {
     'email' | 'password' | 'complete'
   >('email');
   const [emailValid, setEmailValid] = useState(false);
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [roleSelectionLoading, setRoleSelectionLoading] = useState(false);
+  const [roleSelectionError, setRoleSelectionError] = useState<string | null>(
+    null
+  );
   const router = useRouter();
   const {
     attempts,
@@ -90,13 +98,19 @@ export default function SignInPage() {
     setError('');
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
+      // First, validate credentials by making a direct API call to backend
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
-      if (result?.error) {
+      if (!response.ok) {
         incrementAttempts();
         if (remainingAttempts <= 1) {
           setError(
@@ -108,7 +122,27 @@ export default function SignInPage() {
           );
         }
         setCurrentStep('password'); // Stay on password step to retry
-      } else if (result?.ok) {
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.message === 'Role selection required') {
+        // User has multiple roles, show role selection modal
+        setUserRoles(data.data.user.roles);
+        setShowRoleSelection(true);
+        setLoading(false);
+        return;
+      }
+
+      // User has single role, proceed with NextAuth signIn
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.ok) {
         // Reset attempts on successful login
         resetAttempts();
         setCurrentStep('complete');
@@ -122,6 +156,53 @@ export default function SignInPage() {
       setError(t('errorOccurred'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRoleSelection = async (selectedRole: UserRole) => {
+    setRoleSelectionLoading(true);
+    setRoleSelectionError(null);
+
+    try {
+      // Make API call to login with selected role
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password, activeRole: selectedRole }),
+        }
+      );
+
+      if (!response.ok) {
+        setRoleSelectionError(t('roleSelectionFailed'));
+        return;
+      }
+
+      // Proceed with NextAuth signIn
+      const result = await signIn('credentials', {
+        email,
+        password,
+        activeRole: selectedRole,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        // Reset attempts on successful login
+        resetAttempts();
+        setShowRoleSelection(false);
+        setCurrentStep('complete');
+        // Redirect immediately after successful login
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
+      }
+    } catch (error) {
+      setRoleSelectionError(t('roleSelectionFailed'));
+    } finally {
+      setRoleSelectionLoading(false);
     }
   };
 
@@ -366,6 +447,16 @@ export default function SignInPage() {
   return (
     <AuthLayout title={t('welcome')} subtitle={t('subtitle')} type='signin'>
       {renderStepContent()}
+
+      <RoleSelectionModal
+        opened={showRoleSelection}
+        onClose={() => setShowRoleSelection(false)}
+        roles={userRoles}
+        activeRole={userRoles[0] || UserRole.END_USER}
+        onRoleSelect={handleRoleSelection}
+        loading={roleSelectionLoading}
+        error={roleSelectionError}
+      />
     </AuthLayout>
   );
 }

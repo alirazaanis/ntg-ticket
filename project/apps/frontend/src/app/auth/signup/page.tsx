@@ -87,7 +87,7 @@ export default function SignUpPage() {
     try {
       const response = await userApi.createUser({
         ...sanitizedData,
-        role: sanitizedData.role as UserRole,
+        roles: [sanitizedData.role as UserRole],
       });
 
       if (response.status === 201) {

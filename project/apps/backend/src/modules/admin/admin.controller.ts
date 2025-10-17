@@ -34,7 +34,7 @@ export class AdminController {
   })
   async getSystemStats(@Request() req) {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 
@@ -57,7 +57,7 @@ export class AdminController {
   })
   async getSystemHealth(@Request() req) {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 
@@ -80,7 +80,7 @@ export class AdminController {
   })
   async getSystemConfiguration(@Request() req) {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 
@@ -106,7 +106,7 @@ export class AdminController {
     @Body() config: Record<string, unknown>
   ) {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 
@@ -140,7 +140,7 @@ export class AdminController {
   })
   async getFieldConfig(@Request() req) {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 
@@ -166,7 +166,7 @@ export class AdminController {
     @Body() fieldConfig: Record<string, unknown>
   ) {
     // Check if user is admin
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.activeRole !== 'ADMIN') {
       throw new Error('Forbidden - Admin access required');
     }
 

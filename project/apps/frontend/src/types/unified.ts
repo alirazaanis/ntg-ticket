@@ -68,7 +68,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
+  roles: UserRole[];
+  activeRole: UserRole;
   isActive: boolean;
   avatar: string | null;
   createdAt: string;
@@ -79,7 +80,7 @@ export interface CreateUserInput {
   email: string;
   name: string;
   password: string;
-  role: UserRole;
+  roles: UserRole[];
   isActive?: boolean;
   avatar?: string;
 }
@@ -92,8 +93,17 @@ export interface UserFilters {
   page?: number;
   limit?: number;
   search?: string;
-  role?: string;
+  roles?: string[];
   isActive?: boolean;
+}
+
+export interface UserFormData {
+  name: string;
+  email: string;
+  roles: string[];
+  isActive: boolean;
+  password?: string;
+  confirmPassword?: string;
 }
 
 // Ticket interfaces
@@ -582,7 +592,7 @@ export interface EmailTemplateFormData {
 export interface UserFormData {
   name: string;
   email: string;
-  role: string;
+  roles: string[];
   isActive: boolean;
   password?: string;
   confirmPassword?: string;
@@ -799,6 +809,21 @@ export interface AuditLogsFilters {
 export interface AttachmentDownloadUrl {
   downloadUrl: string;
   expiresAt: string;
+}
+
+// ===== REPORT INTERFACES =====
+export interface ReportFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  monthYear?: string[];
+  status?: string[];
+  priority?: string[];
+  category?: string[];
+  assignedTo?: string;
+  department?: string[];
+  role?: string[];
+  requesterId?: string;
+  userRole?: string;
 }
 
 // ===== SYSTEM INTERFACES =====

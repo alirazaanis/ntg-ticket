@@ -32,7 +32,7 @@ import {
   IconTag,
   IconMail,
   IconAlertCircle,
-  IconInfoCircle,
+  // IconInfoCircle, // Removed unused import
 } from '@tabler/icons-react';
 
 import { useUsers } from '../../hooks/useUsers';
@@ -44,7 +44,7 @@ import {
 import {
   isValidStatusTransition,
   getStatusTransitionErrorMessage,
-  statusTransitionRules,
+  // statusTransitionRules, // Removed unused import
 } from '../../lib/statusValidation';
 import { notifications } from '@mantine/notifications';
 
@@ -313,15 +313,6 @@ export function BulkActionsBar({
             {newStatus.replace('_', ' ')}".
           </Alert>
 
-          {/* Show status transition info */}
-          <Alert icon={<IconInfoCircle size={16} />} color='yellow'>
-            <Text size='sm' fw={500} mb='xs'>
-              Status Transition Rules:
-            </Text>
-            <Text size='xs' c='dimmed'>
-              {statusTransitionRules.map(rule => `• ${rule}`).join('\n')}
-            </Text>
-          </Alert>
           <Textarea
             label={
               newStatus === 'RESOLVED'
@@ -372,12 +363,15 @@ export function BulkActionsBar({
               users
                 ?.filter((user: User) =>
                   ROLE_GROUPS.SUPPORT_TEAM.includes(
-                    user.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
+                    user.activeRole as
+                      | 'SUPPORT_STAFF'
+                      | 'SUPPORT_MANAGER'
+                      | 'ADMIN'
                   )
                 )
                 .map((user: User) => ({
                   value: user.id,
-                  label: `${user.name} (${user.role})`,
+                  label: `${user.name} (${user.activeRole})`,
                 })) || []
             }
             value={selectedAssignee}

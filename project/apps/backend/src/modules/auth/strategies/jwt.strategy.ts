@@ -22,16 +22,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: {
     sub: string;
     email: string;
-    role: string;
+    roles: string[];
+    activeRole: string;
     iat: number;
     exp: number;
   }) {
     try {
-      const user = await this.authService.validateUser(payload.email);
+      // Debug logging removed for production
+
+      // Use the user ID from the JWT payload instead of email
+      const user = await this.authService.getCurrentUser(payload.sub);
       if (!user) {
         throw new UnauthorizedException('User not found or inactive');
       }
-      return user;
+
+      // Debug logging removed for production
+
+      // Add activeRole to the user object for easy access
+      return {
+        ...user,
+        activeRole: payload.activeRole,
+      };
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
     }

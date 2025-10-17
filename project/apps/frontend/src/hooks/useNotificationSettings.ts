@@ -7,7 +7,7 @@ export function useNotificationSettings() {
   const { data: settings } = useSystemSettings();
 
   // Only use system settings if user is admin, otherwise use defaults
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.activeRole === 'ADMIN';
   const emailNotifications = isAdmin
     ? settings?.emailNotifications || false
     : true;

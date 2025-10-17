@@ -28,32 +28,38 @@ interface TicketFilters {
   startDate?: string;
   endDate?: string;
   userId?: string;
+  requesterId?: string;
+  assignedTo?: string;
   status?: string;
   priority?: string;
   category?: string;
+  userRole?: string;
 }
 
 interface ExportTicketReportParams {
   startDate?: string;
   endDate?: string;
   userId?: string;
+  requesterId?: string;
+  assignedTo?: string;
   status?: string;
   priority?: string;
   category?: string;
+  userRole?: string;
 }
 
-interface TeamPerformanceUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  assignedTickets: Array<{
-    id: string;
-    status: string;
-    createdAt: Date;
-  }>;
-}
+// interface TeamPerformanceUser { // Removed unused interface
+//   id: string;
+//   name: string;
+//   email: string;
+//   roles: string[];
+//   isActive: boolean;
+//   assignedTickets: Array<{
+//     id: string;
+//     status: string;
+//     createdAt: Date;
+//   }>;
+// }
 
 interface MonthlyData {
   totalTime: number;
@@ -217,7 +223,17 @@ export class ReportsService {
       }
 
       if (userId) {
-        where.OR = [{ requesterId: userId }, { assignedToId: userId }];
+        // For export, we need to distinguish between requester and assignedTo
+        // If requesterId is provided, only show tickets where user is the requester
+        // If assignedTo is provided, only show tickets where user is assigned
+        if (params.requesterId) {
+          where.requesterId = userId;
+        } else if (params.assignedTo) {
+          where.assignedToId = userId;
+        } else {
+          // Default behavior: show tickets where user is either requester or assigned
+          where.OR = [{ requesterId: userId }, { assignedToId: userId }];
+        }
       }
 
       if (status) {
@@ -482,9 +498,9 @@ export class ReportsService {
         where.assignedToId = userId;
       }
 
-      const users = (await this.prisma.user.findMany({
+      const users = await this.prisma.user.findMany({
         where: {
-          role: { in: ['SUPPORT_STAFF', 'SUPPORT_MANAGER'] },
+          roles: { hasSome: ['SUPPORT_STAFF', 'SUPPORT_MANAGER'] },
           isActive: true,
         },
         include: {
@@ -496,7 +512,7 @@ export class ReportsService {
             },
           },
         },
-      })) as TeamPerformanceUser[];
+      });
 
       const teamPerformance = await Promise.all(
         users.map(async user => {
@@ -542,21 +558,25 @@ export class ReportsService {
 
   async getUserDistribution(): Promise<UserDistribution[]> {
     try {
-      const userCounts = await this.prisma.user.groupBy({
-        by: ['role'],
-        _count: { role: true },
+      // Get all active users and count roles manually
+      const users = await this.prisma.user.findMany({
         where: { isActive: true },
+        select: { roles: true },
       });
 
-      const totalUsers = userCounts.reduce(
-        (sum, item) => sum + item._count.role,
-        0
-      );
+      const roleCounts: Record<string, number> = {};
+      users.forEach(user => {
+        user.roles.forEach(role => {
+          roleCounts[role] = (roleCounts[role] || 0) + 1;
+        });
+      });
 
-      return userCounts.map(item => ({
-        role: item.role.replace('_', ' '),
-        count: item._count.role,
-        percentage: Math.round((item._count.role / totalUsers) * 100),
+      const totalUsers = users.length;
+
+      return Object.entries(roleCounts).map(([role, count]) => ({
+        role: role.replace('_', ' '),
+        count,
+        percentage: Math.round((count / totalUsers) * 100),
       }));
     } catch (error) {
       this.logger.error('Error getting user distribution:', error);
@@ -927,7 +947,17 @@ export class ReportsService {
       }
 
       if (userId) {
-        where.OR = [{ requesterId: userId }, { assignedToId: userId }];
+        // For export, we need to distinguish between requester and assignedTo
+        // If requesterId is provided, only show tickets where user is the requester
+        // If assignedTo is provided, only show tickets where user is assigned
+        if (params.requesterId) {
+          where.requesterId = userId;
+        } else if (params.assignedTo) {
+          where.assignedToId = userId;
+        } else {
+          // Default behavior: show tickets where user is either requester or assigned
+          where.OR = [{ requesterId: userId }, { assignedToId: userId }];
+        }
       }
 
       if (status) {
@@ -976,6 +1006,7 @@ export class ReportsService {
         'Querying tickets with where clause:',
         JSON.stringify(where, null, 2)
       );
+      this.logger.log('ExportTicketReport params received:', params);
 
       const tickets = await this.prisma.ticket.findMany({
         where,
@@ -1003,6 +1034,14 @@ export class ReportsService {
       });
 
       this.logger.log('Found tickets:', tickets.length);
+      if (tickets.length > 0) {
+        this.logger.log('Sample ticket:', {
+          id: tickets[0].id,
+          ticketNumber: tickets[0].ticketNumber,
+          requesterId: tickets[0].requesterId,
+          requesterName: tickets[0].requester?.name,
+        });
+      }
 
       // Convert to export format based on type
       const exportData = tickets.map(ticket => ({

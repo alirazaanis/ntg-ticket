@@ -3,13 +3,31 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
+  Ticket,
   TicketStatus,
   TicketPriority,
   TicketImpact,
   TicketUrgency,
   Comment,
   Attachment,
+  UserRole,
 } from '../../../types/unified';
+
+// Define types for ticket history
+interface TicketHistoryItem {
+  id: string;
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+  user?: {
+    name: string;
+  };
+}
+
+interface TicketWithHistory extends Ticket {
+  history?: TicketHistoryItem[];
+}
 import {
   Container,
   Title,
@@ -32,6 +50,7 @@ import {
   Progress,
   Grid,
   Select,
+  ScrollArea,
 } from '@mantine/core';
 import {
   IconEdit,
@@ -64,11 +83,7 @@ import { useAuthStore } from '../../../stores/useAuthStore';
 
 import { notifications } from '@mantine/notifications';
 import { formatDistanceToNow } from 'date-fns';
-import {
-  PAGINATION_CONFIG,
-  ROLE_GROUPS,
-  STATUS_FILTERS,
-} from '../../../lib/constants';
+import { PAGINATION_CONFIG, ROLE_GROUPS } from '../../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
   NEW: 'blue',
@@ -127,23 +142,84 @@ export default function TicketDetailPage() {
   const addCommentMutation = useCreateComment();
 
   const canEdit =
-    ROLE_GROUPS.ADMIN_ONLY.includes(user?.role as 'ADMIN') ||
+    ROLE_GROUPS.ADMIN_ONLY.includes(user?.activeRole as 'ADMIN') ||
     ROLE_GROUPS.MANAGEMENT.includes(
-      user?.role as 'SUPPORT_MANAGER' | 'ADMIN'
+      user?.activeRole as 'SUPPORT_MANAGER' | 'ADMIN'
     ) ||
-    (user?.role === 'SUPPORT_STAFF' && ticket?.assignedTo?.id === user?.id);
-  const canAssign = ROLE_GROUPS.SUPPORT_TEAM.includes(
-    user?.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
+    (user?.activeRole === 'SUPPORT_STAFF' &&
+      ticket?.assignedTo?.id === user?.id) ||
+    (user?.activeRole === 'END_USER' &&
+      ticket?.status === 'CLOSED' &&
+      ticket?.requester?.id === user?.id);
+  const canAssign = ROLE_GROUPS.MANAGEMENT.includes(
+    user?.activeRole as 'SUPPORT_MANAGER' | 'ADMIN'
   );
-  const canDelete = ROLE_GROUPS.ADMIN_ONLY.includes(user?.role as 'ADMIN');
+  const canDelete = ROLE_GROUPS.ADMIN_ONLY.includes(
+    user?.activeRole as 'ADMIN'
+  );
+
+  const handleReopenTicket = async () => {
+    try {
+      await updateStatusMutation.mutateAsync({
+        id: ticketId,
+        status: 'REOPENED',
+        resolution: undefined,
+        currentStatus: ticket?.status || '',
+        userRole: user?.activeRole,
+      });
+      notifications.show({
+        title: 'Success',
+        message: 'Ticket reopened successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to reopen ticket',
+        color: 'red',
+      });
+    }
+  };
 
   const handleStatusUpdate = async () => {
+    // Check if user is trying to resolve/close ticket but doesn't have permission
+    if (
+      (newStatus === 'RESOLVED' || newStatus === 'CLOSED') &&
+      user?.activeRole !== 'SUPPORT_STAFF' &&
+      user?.activeRole !== 'SUPPORT_MANAGER' &&
+      user?.activeRole !== 'ADMIN'
+    ) {
+      notifications.show({
+        title: 'Access Denied',
+        message:
+          'Only support staff, managers, and admins can resolve or close tickets',
+        color: 'red',
+      });
+      return;
+    }
+
+    // Check if end user is trying to do anything other than reopen closed tickets
+    if (
+      user?.activeRole === 'END_USER' &&
+      !(ticket?.status === 'CLOSED' && newStatus === 'REOPENED')
+    ) {
+      notifications.show({
+        title: 'Access Denied',
+        message: 'End users can only reopen closed tickets',
+        color: 'red',
+      });
+      return;
+    }
+
     try {
+      // Debug logging removed for production
+
       await updateStatusMutation.mutateAsync({
         id: ticketId,
         status: newStatus,
         resolution: resolution || undefined,
         currentStatus: ticket?.status || '',
+        userRole: user?.activeRole,
       });
       notifications.show({
         title: 'Success',
@@ -153,9 +229,13 @@ export default function TicketDetailPage() {
       setStatusModalOpen(false);
       setResolution('');
     } catch (error) {
+      // Error logging removed for production
       notifications.show({
         title: 'Error',
-        message: 'Failed to update ticket status',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to update ticket status',
         color: 'red',
       });
     }
@@ -484,37 +564,96 @@ export default function TicketDetailPage() {
                 <Title order={3} mb='md'>
                   Ticket History
                 </Title>
-                <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                  <Timeline.Item
-                    bullet={<IconCheck size={12} />}
-                    title='Ticket Created'
-                  >
-                    <Text c='dimmed' size='sm'>
-                      Created by {ticket.requester?.name} on{' '}
-                      {new Date(ticket.createdAt).toLocaleString()}
-                    </Text>
-                  </Timeline.Item>
-                  {ticket.updatedAt !== ticket.createdAt && (
+                <ScrollArea h={400} type='scroll'>
+                  <Timeline active={-1} bulletSize={24} lineWidth={2}>
+                    {/* Ticket Creation */}
                     <Timeline.Item
-                      bullet={<IconEdit size={12} />}
-                      title='Last Updated'
+                      bullet={<IconCheck size={12} />}
+                      title='Ticket Created'
                     >
                       <Text c='dimmed' size='sm'>
-                        Updated on {new Date(ticket.updatedAt).toLocaleString()}
+                        Created by {ticket.requester?.name} on{' '}
+                        {new Date(ticket.createdAt).toLocaleString()}
                       </Text>
                     </Timeline.Item>
-                  )}
-                  {ticket.closedAt && (
-                    <Timeline.Item
-                      bullet={<IconX size={12} />}
-                      title='Ticket Closed'
-                    >
-                      <Text c='dimmed' size='sm'>
-                        Closed on {new Date(ticket.closedAt).toLocaleString()}
-                      </Text>
-                    </Timeline.Item>
-                  )}
-                </Timeline>
+
+                    {/* All History Changes - Reverse Chronological Order */}
+                    {(() => {
+                      const ticketHistory = (ticket as TicketWithHistory)
+                        .history;
+                      return (
+                        ticketHistory &&
+                        ticketHistory.length > 0 &&
+                        [...ticketHistory]
+                          .sort(
+                            (a: TicketHistoryItem, b: TicketHistoryItem) =>
+                              new Date(b.createdAt).getTime() -
+                              new Date(a.createdAt).getTime()
+                          )
+                          .map((historyItem: TicketHistoryItem) => (
+                            <Timeline.Item
+                              key={historyItem.id}
+                              bullet={<IconEdit size={12} />}
+                              title={`${historyItem.fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())} Changed`}
+                            >
+                              <Text c='dimmed' size='sm' mb={4}>
+                                Changed by{' '}
+                                {historyItem.user?.name || 'Unknown User'} on{' '}
+                                {new Date(
+                                  historyItem.createdAt
+                                ).toLocaleString()}
+                              </Text>
+                              <Group gap='xs' mb={4}>
+                                <Badge size='sm' variant='outline' color='red'>
+                                  {historyItem.oldValue || 'Empty'}
+                                </Badge>
+                                <Text size='sm' c='dimmed'>
+                                  →
+                                </Text>
+                                <Badge size='sm' variant='filled' color='green'>
+                                  {historyItem.newValue || 'Empty'}
+                                </Badge>
+                              </Group>
+                            </Timeline.Item>
+                          ))
+                      );
+                    })()}
+
+                    {/* Last Updated (if no history or different from last history item) */}
+                    {ticket.updatedAt !== ticket.createdAt &&
+                      (!(ticket as TicketWithHistory).history ||
+                        (ticket as TicketWithHistory).history?.length === 0 ||
+                        new Date(ticket.updatedAt).getTime() !==
+                          new Date(
+                            ((ticket as TicketWithHistory).history || [])[
+                              ((ticket as TicketWithHistory).history || [])
+                                .length - 1
+                            ]?.createdAt
+                          ).getTime()) && (
+                        <Timeline.Item
+                          bullet={<IconEdit size={12} />}
+                          title='Last Updated'
+                        >
+                          <Text c='dimmed' size='sm'>
+                            Updated on{' '}
+                            {new Date(ticket.updatedAt).toLocaleString()}
+                          </Text>
+                        </Timeline.Item>
+                      )}
+
+                    {/* Ticket Closed */}
+                    {ticket.closedAt && (
+                      <Timeline.Item
+                        bullet={<IconX size={12} />}
+                        title='Ticket Closed'
+                      >
+                        <Text c='dimmed' size='sm'>
+                          Closed on {new Date(ticket.closedAt).toLocaleString()}
+                        </Text>
+                      </Timeline.Item>
+                    )}
+                  </Timeline>
+                </ScrollArea>
               </Paper>
             </Tabs.Panel>
           </Tabs>
@@ -574,16 +713,33 @@ export default function TicketDetailPage() {
                   </Badge>
                 </Group>
                 {canEdit && (
-                  <Button
-                    variant='light'
-                    size='sm'
-                    onClick={() => {
-                      setNewStatus(ticket.status as TicketStatus);
-                      setStatusModalOpen(true);
-                    }}
-                  >
-                    Update Status
-                  </Button>
+                  <>
+                    {/* Show "Reopen Ticket" button for End Users with closed tickets */}
+                    {user?.activeRole === 'END_USER' &&
+                    ticket?.status === 'CLOSED' ? (
+                      <Button
+                        variant='light'
+                        size='sm'
+                        color='green'
+                        onClick={handleReopenTicket}
+                        loading={updateStatusMutation.isPending}
+                      >
+                        Reopen Ticket
+                      </Button>
+                    ) : (
+                      /* Show "Update Status" button for other roles */
+                      <Button
+                        variant='light'
+                        size='sm'
+                        onClick={() => {
+                          setNewStatus(ticket.status as TicketStatus);
+                          setStatusModalOpen(true);
+                        }}
+                      >
+                        Update Status
+                      </Button>
+                    )}
+                  </>
                 )}
               </Stack>
             </Card>
@@ -726,18 +882,24 @@ export default function TicketDetailPage() {
         <Stack gap='md'>
           <Select
             label='New Status'
-            data={Object.values(TicketStatus).map(status => ({
-              value: status,
-              label: status?.replace('_', ' ') || status,
-            }))}
+            data={
+              user?.activeRole === 'END_USER' && ticket?.status === 'CLOSED'
+                ? [{ value: 'REOPENED', label: 'Reopened' }]
+                : Object.values(TicketStatus).map(status => ({
+                    value: status,
+                    label: status?.replace('_', ' ') || status,
+                  }))
+            }
             value={newStatus}
             onChange={value => setNewStatus(value as TicketStatus)}
           />
-          {STATUS_FILTERS.RESOLVED.includes(
-            newStatus as 'RESOLVED' | 'CLOSED'
-          ) && (
+          {(newStatus === 'RESOLVED' || newStatus === 'CLOSED') && (
             <Textarea
-              label='Resolution Notes'
+              label={
+                <span>
+                  Resolution Notes <span style={{ color: 'red' }}>*</span>
+                </span>
+              }
               placeholder='Describe how the issue was resolved...'
               value={resolution}
               onChange={e => setResolution(e.target.value)}
@@ -751,6 +913,10 @@ export default function TicketDetailPage() {
             <Button
               onClick={handleStatusUpdate}
               loading={updateStatusMutation.isPending}
+              disabled={
+                (newStatus === 'RESOLVED' || newStatus === 'CLOSED') &&
+                !resolution?.trim()
+              }
             >
               Update Status
             </Button>
@@ -771,14 +937,10 @@ export default function TicketDetailPage() {
             placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
             data={
               users
-                ?.filter(user =>
-                  ROLE_GROUPS.SUPPORT_TEAM.includes(
-                    user.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
-                  )
-                )
+                ?.filter(user => user.roles?.includes(UserRole.SUPPORT_STAFF))
                 .map(user => ({
                   value: user.id,
-                  label: `${user.name} (${user.role})`,
+                  label: user.name,
                 })) || []
             }
             value={selectedAssignee}
@@ -819,8 +981,8 @@ export default function TicketDetailPage() {
             minRows={4}
             required
           />
-          {ROLE_GROUPS.SUPPORT_TEAM.includes(
-            user?.role as 'SUPPORT_STAFF' | 'SUPPORT_MANAGER' | 'ADMIN'
+          {user?.roles?.some(role =>
+            ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(role)
           ) && (
             <Group>
               <input

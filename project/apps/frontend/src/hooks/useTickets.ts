@@ -266,17 +266,20 @@ export function useUpdateTicketStatus() {
       status,
       resolution,
       currentStatus,
+      userRole,
     }: {
       id: string;
       status: string;
       resolution?: string;
       currentStatus: string;
+      userRole?: string;
     }) => {
       // Validate status transition before making API call
       const validation = validateStatusUpdate(
         currentStatus as TicketStatus,
         status as TicketStatus,
-        resolution
+        resolution,
+        userRole
       );
 
       if (!validation.isValid) {

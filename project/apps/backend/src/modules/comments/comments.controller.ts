@@ -38,7 +38,7 @@ export class CommentsController {
     const comment = await this.commentsService.create(
       createCommentDto,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: comment,
@@ -58,7 +58,7 @@ export class CommentsController {
     const comments = await this.commentsService.findAll(
       ticketId,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: comments,
@@ -76,7 +76,7 @@ export class CommentsController {
     const comment = await this.commentsService.findOne(
       id,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: comment,
@@ -99,7 +99,7 @@ export class CommentsController {
       id,
       updateCommentDto,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return {
       data: comment,
@@ -117,7 +117,7 @@ export class CommentsController {
     const result = await this.commentsService.remove(
       id,
       req.user.id,
-      req.user.role
+      req.user.activeRole
     );
     return result;
   }

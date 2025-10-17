@@ -10,7 +10,7 @@ async function refreshAccessToken(token: {
 }) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/auth/refresh`,
       {
         method: 'POST',
         headers: {
@@ -49,6 +49,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        activeRole: { label: 'Active Role', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -58,7 +59,7 @@ export const authOptions: NextAuthOptions = {
         try {
           // Call backend API to login and get JWT token
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/auth/login`,
             {
               method: 'POST',
               headers: {
@@ -67,6 +68,7 @@ export const authOptions: NextAuthOptions = {
               body: JSON.stringify({
                 email: credentials.email,
                 password: credentials.password,
+                activeRole: credentials.activeRole,
               }),
             }
           );
@@ -93,7 +95,8 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role,
+            roles: user.roles,
+            activeRole: user.activeRole,
             image: user.avatar || null,
             accessToken: access_token,
             refreshToken: loginData.data.refresh_token,
@@ -118,13 +121,42 @@ export const authOptions: NextAuthOptions = {
       if (user && account) {
         return {
           ...token,
-          role: user.role,
+          roles: user.roles,
+          activeRole: user.activeRole,
           id: user.id,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
           accessTokenExpires:
             Date.now() + AUTH_CONFIG.TOKEN.ACCESS_TOKEN_EXPIRY,
         };
+      }
+
+      // Check if there are new tokens in localStorage (from role switching)
+      if (typeof window !== 'undefined') {
+        const newAccessToken = localStorage.getItem('access_token');
+        const newRefreshToken = localStorage.getItem('refresh_token');
+
+        if (newAccessToken && newRefreshToken) {
+          // Clear the stored tokens
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+
+          // Decode the new token to get the updated activeRole
+          try {
+            const payload = JSON.parse(atob(newAccessToken.split('.')[1]));
+
+            return {
+              ...token,
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
+              activeRole: payload.activeRole,
+              roles: payload.roles,
+              accessTokenExpires: payload.exp * 1000,
+            };
+          } catch (e) {
+            // Ignore token decoding errors
+          }
+        }
       }
 
       // Return previous token if the access token has not expired yet
@@ -138,7 +170,8 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as
+        session.user.roles = token.roles as string[];
+        session.user.activeRole = token.activeRole as
           | 'END_USER'
           | 'SUPPORT_STAFF'
           | 'SUPPORT_MANAGER'

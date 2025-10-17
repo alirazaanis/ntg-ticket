@@ -46,7 +46,7 @@ import { useSlaReport, useExportReport } from '../../hooks/useReports';
 import { useUsers } from '../../hooks/useUsers';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useTickets, useAllTicketsForCounting } from '../../hooks/useTickets';
-import { Ticket } from '../../types/unified';
+import { Ticket, UserRole, ReportFilters } from '../../types/unified';
 import { notifications } from '@mantine/notifications';
 import { DatePickerInput } from '@mantine/dates';
 import {
@@ -54,19 +54,6 @@ import {
   PRIORITY_OPTIONS,
   STATUS_OPTIONS,
 } from '@/lib/constants';
-
-interface ReportFilters {
-  dateFrom?: string;
-  dateTo?: string;
-  monthYear?: string[];
-  status?: string[];
-  priority?: string[];
-  category?: string[];
-  assignedTo?: string;
-  department?: string[];
-  role?: string[];
-  requesterId?: string;
-}
 
 interface MetricCardProps {
   title: string;
@@ -128,16 +115,17 @@ export default function ReportsPage() {
   const { data: allTicketsForStats } = useAllTicketsForCounting();
   const { data: slaReport } = useSlaReport({
     ...filters,
-    assignedTo: user?.role === 'SUPPORT_STAFF' ? user.id : filters.assignedTo,
+    assignedTo:
+      user?.activeRole === 'SUPPORT_STAFF' ? user.id : filters.assignedTo,
   });
   const { data: users } = useUsers({ limit: 1000 });
   const exportReport = useExportReport();
 
-  // Filter tickets based on user role
+  // Filter tickets based on user active role
   const myTickets = useMemo(() => {
     if (!user) return [];
 
-    switch (user.role) {
+    switch (user.activeRole) {
       case 'END_USER':
         if (!tickets) return [];
         return tickets.filter(
@@ -268,11 +256,14 @@ export default function ReportsPage() {
   // Use filteredTickets for calculations, but ensure consistency with overview when no filters
   const ticketsForBreakdown = useMemo(() => {
     // For Support Manager, when no filters are applied, use allTicketsForStats for consistency with overview
-    if (user?.role === 'SUPPORT_MANAGER' && Object.keys(filters).length === 0) {
+    if (
+      user?.activeRole === 'SUPPORT_MANAGER' &&
+      Object.keys(filters).length === 0
+    ) {
       return allTicketsForStats || [];
     }
     return filteredTickets;
-  }, [filteredTickets, allTicketsForStats, user?.role, filters]);
+  }, [filteredTickets, allTicketsForStats, user?.activeRole, filters]);
 
   // Admin-specific filtering logic
   const filteredUsers = useMemo(() => {
@@ -411,7 +402,7 @@ export default function ReportsPage() {
 
   // Staff performance calculation for Support Manager
   const staffPerformance = useMemo(() => {
-    if (user?.role !== 'SUPPORT_MANAGER') return [];
+    if (user?.activeRole !== 'SUPPORT_MANAGER') return [];
 
     const staffMap = new Map<
       string,
@@ -483,7 +474,7 @@ export default function ReportsPage() {
   const handleExportReport = async (format: string) => {
     try {
       // Special handling for Administrator reports
-      if (user?.role === 'ADMIN') {
+      if (user?.activeRole === 'ADMIN') {
         await handleAdminExport();
         return;
       }
@@ -491,35 +482,48 @@ export default function ReportsPage() {
       // Set export filters based on user role
       let exportFilters: ReportFilters;
 
-      if (user?.role === 'END_USER') {
+      if (user?.activeRole === 'END_USER') {
         exportFilters = {
           ...filters,
           requesterId: user.id, // Only export current user's tickets
+          userRole: user.activeRole, // Add user role for filename
         };
-      } else if (user?.role === 'SUPPORT_STAFF') {
+      } else if (user?.activeRole === 'SUPPORT_STAFF') {
         exportFilters = {
           ...filters,
           assignedTo: user.id, // Only export tickets assigned to current staff
+          userRole: user.activeRole, // Add user role for filename
         };
       } else {
         // For Support Manager - export all filtered tickets
         exportFilters = {
           ...filters,
           assignedTo: filters.assignedTo,
+          userRole: user?.activeRole, // Add user role for filename
         };
       }
+
+      // Debug logging removed for production
 
       const blob = await exportReport.mutateAsync({
         type: 'tickets', // Always export tickets data
         format,
         filters: exportFilters,
+        data: undefined, // No structured data for regular ticket exports
       });
+
+      // Create role-based filename since we can't access headers with blob response
+      // Ensure we get the correct file extension based on format
+      const fileExtension =
+        format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+      const filename = `${user?.activeRole || 'USER'}-report-${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+      // Debug logging removed for production
 
       // Create download link for the blob
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `report-${format}-${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -533,9 +537,26 @@ export default function ReportsPage() {
         color: 'green',
       });
     } catch (error) {
+      // Error logging removed for production
+
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error.response as {
+          data?: { message?: string };
+          statusText?: string;
+        };
+        if (errorResponse.data?.message) {
+          errorMessage = errorResponse.data.message;
+        } else if (errorResponse.statusText) {
+          errorMessage = errorResponse.statusText;
+        }
+      }
+
       notifications.show({
         title: 'Error',
-        message: `Failed to export report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to export report: ${errorMessage}`,
         color: 'red',
       });
     }
@@ -557,13 +578,15 @@ export default function ReportsPage() {
           },
           {
             title: 'Support Staff',
-            value: filteredUsers.filter(user => user.role === 'SUPPORT_STAFF')
-              .length,
+            value: filteredUsers.filter(
+              user => user.activeRole === 'SUPPORT_STAFF'
+            ).length,
           },
           {
             title: 'Support Managers',
-            value: filteredUsers.filter(user => user.role === 'SUPPORT_MANAGER')
-              .length,
+            value: filteredUsers.filter(
+              user => user.activeRole === 'SUPPORT_MANAGER'
+            ).length,
           },
           {
             title: 'New Users',
@@ -595,20 +618,26 @@ export default function ReportsPage() {
         usersByRole: [
           {
             role: 'END_USER',
-            count: filteredUsers.filter(u => u.role === 'END_USER').length,
+            count: filteredUsers.filter(u =>
+              u.roles?.includes(UserRole.END_USER)
+            ).length,
           },
           {
             role: 'SUPPORT_STAFF',
-            count: filteredUsers.filter(u => u.role === 'SUPPORT_STAFF').length,
+            count: filteredUsers.filter(u =>
+              u.roles?.includes(UserRole.SUPPORT_STAFF)
+            ).length,
           },
           {
             role: 'SUPPORT_MANAGER',
-            count: filteredUsers.filter(u => u.role === 'SUPPORT_MANAGER')
-              .length,
+            count: filteredUsers.filter(u =>
+              u.roles?.includes(UserRole.SUPPORT_MANAGER)
+            ).length,
           },
           {
             role: 'ADMIN',
-            count: filteredUsers.filter(u => u.role === 'ADMIN').length,
+            count: filteredUsers.filter(u => u.roles?.includes(UserRole.ADMIN))
+              .length,
           },
         ],
         usersByRegistrationPeriod: Array.from({ length: 4 }, (_, i) => {
@@ -760,11 +789,13 @@ export default function ReportsPage() {
 
   // For End Users, Support Staff, and Support Manager, show simplified report with filters and summary boxes
   if (
-    ['END_USER', 'SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(user?.role || '')
+    ['END_USER', 'SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(
+      user?.activeRole || ''
+    )
   ) {
-    // Define stats based on user role
+    // Define stats based on user active role
     const stats =
-      user?.role === 'END_USER'
+      user?.activeRole === 'END_USER'
         ? [
             {
               title: 'Total Tickets',
@@ -804,7 +835,7 @@ export default function ReportsPage() {
               icon: IconTicket,
               color: 'red',
               tooltip:
-                user?.role === 'SUPPORT_STAFF'
+                user?.activeRole === 'SUPPORT_STAFF'
                   ? 'Total tickets assigned to you'
                   : 'Total tickets in the system',
             },
@@ -884,16 +915,16 @@ export default function ReportsPage() {
           <Group justify='space-between'>
             <div>
               <Title order={2}>
-                {user?.role === 'END_USER'
+                {user?.activeRole === 'END_USER'
                   ? 'My Ticket Reports'
-                  : user?.role === 'SUPPORT_STAFF'
+                  : user?.activeRole === 'SUPPORT_STAFF'
                     ? 'Assigned Ticket Reports'
                     : 'Team Ticket Reports'}
               </Title>
               <Text c='dimmed' size='sm'>
-                {user?.role === 'END_USER'
+                {user?.activeRole === 'END_USER'
                   ? 'View and filter your ticket statistics'
-                  : user?.role === 'SUPPORT_STAFF'
+                  : user?.activeRole === 'SUPPORT_STAFF'
                     ? 'View and filter your assigned ticket statistics'
                     : 'View and filter team ticket statistics'}
               </Text>
@@ -1021,8 +1052,8 @@ export default function ReportsPage() {
                 key={stat.title}
                 span={{
                   base: 12,
-                  sm: user?.role === 'END_USER' ? 6 : 6,
-                  md: user?.role === 'END_USER' ? 3 : 2.4,
+                  sm: user?.activeRole === 'END_USER' ? 6 : 6,
+                  md: user?.activeRole === 'END_USER' ? 3 : 2.4,
                 }}
               >
                 <MetricCard
@@ -1037,7 +1068,9 @@ export default function ReportsPage() {
           </Grid>
 
           {/* SLA Performance Section - Support Staff and Manager */}
-          {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(user?.role || '') && (
+          {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(
+            user?.activeRole || ''
+          ) && (
             <Paper withBorder p='md'>
               <Title order={3} mb='md'>
                 SLA Performance
@@ -1102,7 +1135,9 @@ export default function ReportsPage() {
           )}
 
           {/* Breakdown Tables - Support Staff and Manager */}
-          {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(user?.role || '') && (
+          {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(
+            user?.activeRole || ''
+          ) && (
             <Grid>
               <Grid.Col span={{ base: 12, md: 6 }}>
                 <Paper withBorder p='md'>
@@ -1284,181 +1319,182 @@ export default function ReportsPage() {
           )}
 
           {/* Staff Performance Section - Support Manager Only */}
-          {user?.role === 'SUPPORT_MANAGER' && staffPerformance.length > 0 && (
-            <Paper withBorder p='md'>
-              <Title order={3} mb='md'>
-                Staff Performance
-              </Title>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Staff Member</Table.Th>
-                    <Table.Th>
-                      <Group gap='xs' align='center'>
-                        Assigned
-                        <Tooltip
-                          label='Total tickets assigned to this staff member'
-                          position='top'
-                          withArrow
-                        >
-                          <IconInfoCircle
-                            size={12}
-                            color='var(--mantine-color-dimmed)'
-                            style={{ cursor: 'help' }}
-                          />
-                        </Tooltip>
-                      </Group>
-                    </Table.Th>
-                    <Table.Th>
-                      <Group gap='xs' align='center'>
-                        Resolved
-                        <Tooltip
-                          label='Tickets resolved or closed by this staff member'
-                          position='top'
-                          withArrow
-                        >
-                          <IconInfoCircle
-                            size={12}
-                            color='var(--mantine-color-dimmed)'
-                            style={{ cursor: 'help' }}
-                          />
-                        </Tooltip>
-                      </Group>
-                    </Table.Th>
-                    <Table.Th>
-                      <Group gap='xs' align='center'>
-                        Open
-                        <Tooltip
-                          label='Currently open tickets assigned to this staff member'
-                          position='top'
-                          withArrow
-                        >
-                          <IconInfoCircle
-                            size={12}
-                            color='var(--mantine-color-dimmed)'
-                            style={{ cursor: 'help' }}
-                          />
-                        </Tooltip>
-                      </Group>
-                    </Table.Th>
-                    <Table.Th>
-                      <Group gap='xs' align='center'>
-                        Overdue
-                        <Tooltip
-                          label='Open tickets that have passed their due date'
-                          position='top'
-                          withArrow
-                        >
-                          <IconInfoCircle
-                            size={12}
-                            color='var(--mantine-color-dimmed)'
-                            style={{ cursor: 'help' }}
-                          />
-                        </Tooltip>
-                      </Group>
-                    </Table.Th>
-                    <Table.Th>
-                      <Group gap='xs' align='center'>
-                        SLA Breached
-                        <Tooltip
-                          label='Resolved tickets that exceeded their due date'
-                          position='top'
-                          withArrow
-                        >
-                          <IconInfoCircle
-                            size={12}
-                            color='var(--mantine-color-dimmed)'
-                            style={{ cursor: 'help' }}
-                          />
-                        </Tooltip>
-                      </Group>
-                    </Table.Th>
-                    <Table.Th>
-                      <Group gap='xs' align='center'>
-                        Performance
-                        <Tooltip
-                          label='SLA compliance percentage based on resolved tickets only'
-                          position='top'
-                          withArrow
-                        >
-                          <IconInfoCircle
-                            size={12}
-                            color='var(--mantine-color-dimmed)'
-                            style={{ cursor: 'help' }}
-                          />
-                        </Tooltip>
-                      </Group>
-                    </Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {staffPerformance.map(staff => {
-                    const slaCompliance =
-                      staff.resolvedTickets > 0
-                        ? Math.round(
-                            ((staff.resolvedTickets -
-                              staff.slaBreachedTickets) /
-                              staff.resolvedTickets) *
-                              100
-                          )
-                        : 100;
-
-                    return (
-                      <Table.Tr key={staff.name}>
-                        <Table.Td>
-                          <Group gap='sm'>
-                            <Avatar size='sm' color='blue'>
-                              {staff.name.charAt(0).toUpperCase()}
-                            </Avatar>
-                            <Text fw={500}>{staff.name}</Text>
-                          </Group>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge variant='light' color='blue'>
-                            {staff.assignedTickets}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge variant='light' color='green'>
-                            {staff.resolvedTickets}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge variant='light' color='orange'>
-                            {staff.openTickets}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge variant='light' color='red'>
-                            {staff.overdueTickets}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge variant='light' color='red'>
-                            {staff.slaBreachedTickets}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge
-                            variant='light'
-                            color={
-                              slaCompliance >= 90
-                                ? 'green'
-                                : slaCompliance >= 70
-                                  ? 'yellow'
-                                  : 'red'
-                            }
+          {user?.activeRole === 'SUPPORT_MANAGER' &&
+            staffPerformance.length > 0 && (
+              <Paper withBorder p='md'>
+                <Title order={3} mb='md'>
+                  Staff Performance
+                </Title>
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Staff Member</Table.Th>
+                      <Table.Th>
+                        <Group gap='xs' align='center'>
+                          Assigned
+                          <Tooltip
+                            label='Total tickets assigned to this staff member'
+                            position='top'
+                            withArrow
                           >
-                            {slaCompliance}%
-                          </Badge>
-                        </Table.Td>
-                      </Table.Tr>
-                    );
-                  })}
-                </Table.Tbody>
-              </Table>
-            </Paper>
-          )}
+                            <IconInfoCircle
+                              size={12}
+                              color='var(--mantine-color-dimmed)'
+                              style={{ cursor: 'help' }}
+                            />
+                          </Tooltip>
+                        </Group>
+                      </Table.Th>
+                      <Table.Th>
+                        <Group gap='xs' align='center'>
+                          Resolved
+                          <Tooltip
+                            label='Tickets resolved or closed by this staff member'
+                            position='top'
+                            withArrow
+                          >
+                            <IconInfoCircle
+                              size={12}
+                              color='var(--mantine-color-dimmed)'
+                              style={{ cursor: 'help' }}
+                            />
+                          </Tooltip>
+                        </Group>
+                      </Table.Th>
+                      <Table.Th>
+                        <Group gap='xs' align='center'>
+                          Open
+                          <Tooltip
+                            label='Currently open tickets assigned to this staff member'
+                            position='top'
+                            withArrow
+                          >
+                            <IconInfoCircle
+                              size={12}
+                              color='var(--mantine-color-dimmed)'
+                              style={{ cursor: 'help' }}
+                            />
+                          </Tooltip>
+                        </Group>
+                      </Table.Th>
+                      <Table.Th>
+                        <Group gap='xs' align='center'>
+                          Overdue
+                          <Tooltip
+                            label='Open tickets that have passed their due date'
+                            position='top'
+                            withArrow
+                          >
+                            <IconInfoCircle
+                              size={12}
+                              color='var(--mantine-color-dimmed)'
+                              style={{ cursor: 'help' }}
+                            />
+                          </Tooltip>
+                        </Group>
+                      </Table.Th>
+                      <Table.Th>
+                        <Group gap='xs' align='center'>
+                          SLA Breached
+                          <Tooltip
+                            label='Resolved tickets that exceeded their due date'
+                            position='top'
+                            withArrow
+                          >
+                            <IconInfoCircle
+                              size={12}
+                              color='var(--mantine-color-dimmed)'
+                              style={{ cursor: 'help' }}
+                            />
+                          </Tooltip>
+                        </Group>
+                      </Table.Th>
+                      <Table.Th>
+                        <Group gap='xs' align='center'>
+                          Performance
+                          <Tooltip
+                            label='SLA compliance percentage based on resolved tickets only'
+                            position='top'
+                            withArrow
+                          >
+                            <IconInfoCircle
+                              size={12}
+                              color='var(--mantine-color-dimmed)'
+                              style={{ cursor: 'help' }}
+                            />
+                          </Tooltip>
+                        </Group>
+                      </Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {staffPerformance.map(staff => {
+                      const slaCompliance =
+                        staff.resolvedTickets > 0
+                          ? Math.round(
+                              ((staff.resolvedTickets -
+                                staff.slaBreachedTickets) /
+                                staff.resolvedTickets) *
+                                100
+                            )
+                          : 100;
+
+                      return (
+                        <Table.Tr key={staff.name}>
+                          <Table.Td>
+                            <Group gap='sm'>
+                              <Avatar size='sm' color='blue'>
+                                {staff.name.charAt(0).toUpperCase()}
+                              </Avatar>
+                              <Text fw={500}>{staff.name}</Text>
+                            </Group>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge variant='light' color='blue'>
+                              {staff.assignedTickets}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge variant='light' color='green'>
+                              {staff.resolvedTickets}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge variant='light' color='orange'>
+                              {staff.openTickets}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge variant='light' color='red'>
+                              {staff.overdueTickets}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge variant='light' color='red'>
+                              {staff.slaBreachedTickets}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge
+                              variant='light'
+                              color={
+                                slaCompliance >= 90
+                                  ? 'green'
+                                  : slaCompliance >= 70
+                                    ? 'yellow'
+                                    : 'red'
+                              }
+                            >
+                              {slaCompliance}%
+                            </Badge>
+                          </Table.Td>
+                        </Table.Tr>
+                      );
+                    })}
+                  </Table.Tbody>
+                </Table>
+              </Paper>
+            )}
         </Stack>
 
         {/* Export Modal */}
@@ -1524,7 +1560,7 @@ export default function ReportsPage() {
       </Group>
 
       {/* Administrator Reports */}
-      {user?.role === 'ADMIN' && (
+      {user?.activeRole === 'ADMIN' && (
         <Stack gap='md'>
           {/* Filters */}
           <Card>
@@ -1626,7 +1662,7 @@ export default function ReportsPage() {
               {
                 title: 'Support Staff',
                 value: filteredUsers.filter(
-                  user => user.role === 'SUPPORT_STAFF'
+                  user => user.activeRole === 'SUPPORT_STAFF'
                 ).length,
                 icon: IconUsers,
                 color: 'cyan',
@@ -1635,7 +1671,7 @@ export default function ReportsPage() {
               {
                 title: 'Support Managers',
                 value: filteredUsers.filter(
-                  user => user.role === 'SUPPORT_MANAGER'
+                  user => user.activeRole === 'SUPPORT_MANAGER'
                 ).length,
                 icon: IconUsers,
                 color: 'purple',
@@ -1735,15 +1771,18 @@ export default function ReportsPage() {
                 </Title>
                 <Stack gap={0}>
                   {Object.entries({
-                    END_USER: filteredUsers.filter(u => u.role === 'END_USER')
-                      .length,
-                    SUPPORT_STAFF: filteredUsers.filter(
-                      u => u.role === 'SUPPORT_STAFF'
+                    END_USER: filteredUsers.filter(u =>
+                      u.roles?.includes(UserRole.END_USER)
                     ).length,
-                    SUPPORT_MANAGER: filteredUsers.filter(
-                      u => u.role === 'SUPPORT_MANAGER'
+                    SUPPORT_STAFF: filteredUsers.filter(u =>
+                      u.roles?.includes(UserRole.SUPPORT_STAFF)
                     ).length,
-                    ADMIN: filteredUsers.filter(u => u.role === 'ADMIN').length,
+                    SUPPORT_MANAGER: filteredUsers.filter(u =>
+                      u.roles?.includes(UserRole.SUPPORT_MANAGER)
+                    ).length,
+                    ADMIN: filteredUsers.filter(u =>
+                      u.roles?.includes(UserRole.ADMIN)
+                    ).length,
                   }).map(([role, count], index, array) => (
                     <div
                       key={role}

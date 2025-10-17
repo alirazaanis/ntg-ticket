@@ -14,7 +14,7 @@ export function DashboardContent() {
 
   // Redirect End Users to Reports page since they don't have access to Overview
   useEffect(() => {
-    if (user?.role === 'END_USER') {
+    if (user?.activeRole === 'END_USER') {
       router.replace('/reports');
     }
   }, [user, router]);
@@ -24,7 +24,7 @@ export function DashboardContent() {
   }
 
   // End Users are redirected, so this won't render for them
-  switch (user.role) {
+  switch (user.activeRole) {
     case 'SUPPORT_STAFF':
       return <SupportStaffDashboard />;
     case 'SUPPORT_MANAGER':
