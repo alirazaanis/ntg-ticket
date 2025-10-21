@@ -24,9 +24,8 @@ import {
 import { showErrorNotification } from '@/lib/notifications';
 import { useTranslations } from 'next-intl';
 import { useAutoAssignSettings } from '../../hooks/useAutoAssignSettings';
-import { useActiveCategories } from '../../hooks/useCategories';
+import { useActiveCategories, useSubcategories } from '../../hooks/useCategories';
 import { useCustomFields } from '../../hooks/useCustomFields';
-import { Category, Subcategory } from '../../types/unified';
 import {
   URGENCY_OPTIONS,
   IMPACT_OPTIONS,
@@ -86,28 +85,6 @@ export function TicketForm({
   const { data: categoriesData } = useActiveCategories();
   const { data: customFieldsData } = useCustomFields();
 
-  // Dynamic form behavior based on category selection
-  useEffect(() => {
-    if (selectedCategory && categoriesData) {
-      const category = categoriesData.find(
-        cat => cat.name === selectedCategory
-      );
-      if (category && 'subcategories' in category && category.subcategories) {
-        setAvailableSubcategories(
-          (
-            category as Category & { subcategories: Subcategory[] }
-          ).subcategories.map((sub: Subcategory) => ({
-            value: sub.name,
-            label: sub.description || sub.name,
-          }))
-        );
-      } else {
-        setAvailableSubcategories([]);
-      }
-    } else {
-      setAvailableSubcategories([]);
-    }
-  }, [selectedCategory, categoriesData]);
 
   // Load custom fields based on category
   useEffect(() => {
@@ -147,13 +124,29 @@ export function TicketForm({
       title: value => (!value ? 'Title is required' : null),
       description: value => (!value ? 'Description is required' : null),
       category: value => (!value ? 'Category is required' : null),
-      subcategory: value => null, // Subcategory is now optional
+      subcategory: () => null, // Subcategory is now optional
     },
   });
 
+  const { data: subcategoriesData } = useSubcategories(form.values.category);
+
+  // Dynamic form behavior based on category selection
+  useEffect(() => {
+    if (subcategoriesData) {
+      setAvailableSubcategories(
+        subcategoriesData.map(sub => ({
+          value: sub.name,
+          label: sub.description || sub.name,
+        }))
+      );
+    } else {
+      setAvailableSubcategories([]);
+    }
+  }, [subcategoriesData]);
+
   const handleCategoryChange = (value: string) => {
     form.setFieldValue('category', value);
-    form.setFieldValue('subcategory', undefined);
+    form.setFieldValue('subcategory', '');
   };
 
   const handleFileDrop = (acceptedFiles: File[]) => {
@@ -179,7 +172,7 @@ export function TicketForm({
       
       // Filter out empty subcategory
       if (!formData.subcategory || formData.subcategory.trim() === '') {
-        delete formData.subcategory;
+        formData.subcategory = '';
       }
       
       await onSubmit(formData);
@@ -191,13 +184,11 @@ export function TicketForm({
   };
 
   // Get subcategories for the selected category
-  const currentSubcategories = form.values.category && categoriesData
-    ? categoriesData
-        .find(cat => cat.id === form.values.category)
-        ?.subcategories?.map(sub => ({
-          value: sub.name,
-          label: sub.description || sub.name,
-        })) || []
+  const currentSubcategories = subcategoriesData
+    ? subcategoriesData.map(sub => ({
+        value: sub.name,
+        label: sub.description || sub.name,
+      }))
     : [];
 
   return (

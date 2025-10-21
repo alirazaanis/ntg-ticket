@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Modal,
@@ -144,7 +144,7 @@ export function AdvancedSearchModal({
         customFields: initialCriteria.customFields || {},
       });
     }
-  }, [opened, initialCriteria]);
+  }, [opened, initialCriteria,form]);
 
   // Update active filters when form values change
   const activeFilters = useMemo(() => {

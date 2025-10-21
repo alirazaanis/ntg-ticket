@@ -121,26 +121,15 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   async config => {
-    console.log('=== API REQUEST ===');
-    console.log('URL:', config.url);
-    console.log('Method:', config.method);
-    console.log('Data:', config.data);
-    
     const session = await getSession();
-    console.log('Session:', session ? 'exists' : 'null');
-    console.log('Access token:', session?.accessToken ? 'exists' : 'null');
     
     if (session?.accessToken) {
       config.headers.Authorization = `Bearer ${session.accessToken}`;
-      console.log('Authorization header set');
-    } else {
-      console.log('No access token available');
     }
     
     return config;
   },
   error => {
-    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -148,18 +137,9 @@ apiClient.interceptors.request.use(
 // Response interceptor for error handling and token refresh
 apiClient.interceptors.response.use(
   response => {
-    console.log('=== API RESPONSE ===');
-    console.log('Status:', response.status);
-    console.log('URL:', response.config.url);
     return response;
   },
   async error => {
-    console.log('=== API ERROR ===');
-    console.log('Status:', error.response?.status);
-    console.log('URL:', error.config?.url);
-    console.log('Error message:', error.message);
-    console.log('Error response:', error.response?.data);
-    
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {

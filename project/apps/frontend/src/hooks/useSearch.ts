@@ -5,7 +5,6 @@ import {
   TicketFilters,
   TicketStatus,
   TicketPriority,
-  TicketCategory,
   SearchCriteria,
   SavedSearch,
 } from '../types/unified';

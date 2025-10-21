@@ -37,7 +37,6 @@ import {
 
 import { useSupportStaff } from '../../hooks/useUsers';
 import {
-  PAGINATION_CONFIG,
   STATUS_OPTIONS,
 } from '../../lib/constants';
 import {

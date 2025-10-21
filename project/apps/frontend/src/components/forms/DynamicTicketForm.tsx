@@ -101,7 +101,7 @@ export function DynamicTicketForm({
         return null;
       },
       category: value => (!value ? 'Category is required' : null),
-      subcategory: value => null, // Subcategory is now optional
+      subcategory: () => null, // Subcategory is now optional
     },
   });
 

@@ -74,19 +74,14 @@ export default function CategoriesPage() {
     },
     validate: {
       name: (value: string) => (!value ? 'Category type is required' : null),
-      customName: (value: string, values: any) => 
+      customName: (value: string, values: typeof createForm.values) => 
         values.name === TicketCategory.CUSTOM && !value ? 'Custom name is required for custom categories' : null,
     },
   });
 
   const handleCreateCategory = async (values: typeof createForm.values) => {
     try {
-      console.log('=== FRONTEND: Creating category ===');
-      console.log('Form values:', JSON.stringify(values, null, 2));
-      console.log('Mutation function:', createCategoryMutation.mutateAsync);
-      
-      const result = await createCategoryMutation.mutateAsync(values);
-      console.log('Category creation result:', result);
+      await createCategoryMutation.mutateAsync(values);
       
       notifications.show({
         title: 'Success',
@@ -96,16 +91,11 @@ export default function CategoriesPage() {
       setCreateModalOpen(false);
       createForm.reset();
     } catch (error) {
-      console.error('=== FRONTEND: Error creating category ===');
-      console.error('Error object:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error response:', error?.response);
-      console.error('Error status:', error?.status);
-      console.error('Full error:', JSON.stringify(error, null, 2));
+
       
       notifications.show({
         title: 'Error',
-        message: `Failed to create category: ${error?.message || 'Unknown error'}`,
+        message: `Failed to create category: ${error instanceof Error ? error.message : 'Unknown error'}`,
         color: 'red',
       });
     }
