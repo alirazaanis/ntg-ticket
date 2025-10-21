@@ -19,6 +19,7 @@ import {
   TextInput,
   Textarea,
   Switch,
+  Select,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -37,7 +38,7 @@ import {
   useUpdateCategory,
   useDeleteCategory,
 } from '../../../hooks/useCategories';
-import { Category } from '../../../types/unified';
+import { Category, TicketCategory } from '../../../types/unified';
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
@@ -54,29 +55,39 @@ export default function CategoriesPage() {
 
   const createForm = useForm({
     initialValues: {
-      name: '',
+      name: TicketCategory.CUSTOM,
+      customName: '',
       description: '',
       isActive: true,
     },
     validate: {
-      name: value => (!value ? 'Name is required' : null),
+      customName: (value: string) => (!value ? 'Category name is required' : null),
     },
   });
 
   const editForm = useForm({
     initialValues: {
-      name: '',
+      name: TicketCategory.HARDWARE,
+      customName: '',
       description: '',
       isActive: true,
     },
     validate: {
-      name: value => (!value ? 'Name is required' : null),
+      name: (value: string) => (!value ? 'Category type is required' : null),
+      customName: (value: string, values: any) => 
+        values.name === TicketCategory.CUSTOM && !value ? 'Custom name is required for custom categories' : null,
     },
   });
 
   const handleCreateCategory = async (values: typeof createForm.values) => {
     try {
-      await createCategoryMutation.mutateAsync(values);
+      console.log('=== FRONTEND: Creating category ===');
+      console.log('Form values:', JSON.stringify(values, null, 2));
+      console.log('Mutation function:', createCategoryMutation.mutateAsync);
+      
+      const result = await createCategoryMutation.mutateAsync(values);
+      console.log('Category creation result:', result);
+      
       notifications.show({
         title: 'Success',
         message: 'Category created successfully',
@@ -85,9 +96,16 @@ export default function CategoriesPage() {
       setCreateModalOpen(false);
       createForm.reset();
     } catch (error) {
+      console.error('=== FRONTEND: Error creating category ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error response:', error?.response);
+      console.error('Error status:', error?.status);
+      console.error('Full error:', JSON.stringify(error, null, 2));
+      
       notifications.show({
         title: 'Error',
-        message: 'Failed to create category',
+        message: `Failed to create category: ${error?.message || 'Unknown error'}`,
         color: 'red',
       });
     }
@@ -141,6 +159,7 @@ export default function CategoriesPage() {
     setSelectedCategory(category);
     editForm.setValues({
       name: category.name,
+      customName: category.customName || '',
       description: category.description || '',
       isActive: category.isActive,
     });
@@ -173,7 +192,7 @@ export default function CategoriesPage() {
       <Group justify='space-between' mb='xl'>
         <div>
           <Title order={1}>Categories</Title>
-          <Text c='dimmed'>Manage ticket categories and subcategories</Text>
+          <Text c='dimmed'>Create and manage custom ticket categories (active and inactive)</Text>
         </div>
         <Button
           leftSection={<IconPlus size={16} />}
@@ -196,11 +215,28 @@ export default function CategoriesPage() {
           </Table.Thead>
           <Table.Tbody>
             {categories?.map((category: Category) => (
-              <Table.Tr key={category.id}>
+              <Table.Tr 
+                key={category.id}
+                style={{
+                  opacity: category.isActive ? 1 : 0.7,
+                  backgroundColor: category.isActive ? 'transparent' : 'var(--mantine-color-gray-0)',
+                }}
+              >
                 <Table.Td>
                   <Group gap='sm'>
                     <IconClipboardList size={16} />
-                    <Text fw={500}>{category.name}</Text>
+                    <Text 
+                      fw={500}
+                      c={category.isActive ? undefined : 'dimmed'}
+                      td={category.isActive ? undefined : 'line-through'}
+                    >
+                      {category.customName || category.name.charAt(0) + category.name.slice(1).toLowerCase()}
+                    </Text>
+                    {category.customName && (
+                      <Badge size='xs' color='blue' variant='light'>
+                        Custom
+                      </Badge>
+                    )}
                   </Group>
                 </Table.Td>
                 <Table.Td>
@@ -271,7 +307,7 @@ export default function CategoriesPage() {
               No categories found
             </Text>
             <Text c='dimmed' ta='center'>
-              Create your first category to organize tickets.
+              Create your first custom category to organize tickets.
             </Text>
             <Button onClick={() => setCreateModalOpen(true)}>
               Create Category
@@ -284,16 +320,16 @@ export default function CategoriesPage() {
       <Modal
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title='Create New Category'
+        title='Create Custom Category'
         centered
       >
         <form onSubmit={createForm.onSubmit(handleCreateCategory)}>
           <Stack gap='md'>
             <TextInput
               label='Category Name'
-              placeholder='Enter category name'
+              placeholder='Enter your custom category name'
               required
-              {...createForm.getInputProps('name')}
+              {...createForm.getInputProps('customName')}
             />
             <Textarea
               label='Description'
@@ -329,12 +365,24 @@ export default function CategoriesPage() {
       >
         <form onSubmit={editForm.onSubmit(handleUpdateCategory)}>
           <Stack gap='md'>
-            <TextInput
-              label='Category Name'
-              placeholder='Enter category name'
+            <Select
+              label='Category Type'
+              placeholder='Select category type'
               required
+              data={Object.values(TicketCategory).map(category => ({
+                value: category,
+                label: category === TicketCategory.CUSTOM ? 'Custom Category' : category.charAt(0) + category.slice(1).toLowerCase()
+              }))}
               {...editForm.getInputProps('name')}
             />
+            {editForm.values.name === TicketCategory.CUSTOM && (
+              <TextInput
+                label='Custom Category Name'
+                placeholder='Enter your custom category name'
+                required
+                {...editForm.getInputProps('customName')}
+              />
+            )}
             <Textarea
               label='Description'
               placeholder='Enter category description (optional)'

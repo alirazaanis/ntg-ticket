@@ -489,6 +489,9 @@ export class ReportsController {
           // Create structured Excel file with multiple sheets
           const workbook = XLSX.utils.book_new();
 
+          // Get user role from filters to determine export structure
+          const userRole = (body.filters as { userRole?: string })?.userRole;
+
           // Calculate breakdowns
           const totalTickets = report.data.length;
           const statusBreakdown = report.data.reduce(
@@ -500,205 +503,224 @@ export class ReportsController {
             {}
           );
 
-          const priorityBreakdown = report.data.reduce(
-            (acc: Record<string, number>, ticket: Record<string, unknown>) => {
-              const priority = ticket.priority as string;
-              acc[priority] = (acc[priority] || 0) + 1;
-              return acc;
-            },
-            {}
-          );
+          // For END_USER, only show the 4 basic metrics that match the UI
+          if (userRole === 'END_USER') {
+            const openTickets = (statusBreakdown['NEW'] || 0) + (statusBreakdown['OPEN'] || 0) + (statusBreakdown['IN_PROGRESS'] || 0);
+            const resolvedTickets = statusBreakdown['RESOLVED'] || 0;
+            const closedTickets = statusBreakdown['CLOSED'] || 0;
 
-          const categoryBreakdown = report.data.reduce(
-            (acc: Record<string, number>, ticket: Record<string, unknown>) => {
-              const category = ticket.category as string;
-              acc[category] = (acc[category] || 0) + 1;
-              return acc;
-            },
-            {}
-          );
+            // Single sheet with only the 4 metrics shown in the UI
+            const endUserData = [
+              { Metric: 'Total Tickets', Value: totalTickets },
+              { Metric: 'Open Tickets', Value: openTickets },
+              { Metric: 'Resolved Tickets', Value: resolvedTickets },
+              { Metric: 'Closed Tickets', Value: closedTickets },
+            ];
 
-          const impactBreakdown = report.data.reduce(
-            (acc: Record<string, number>, ticket: Record<string, unknown>) => {
-              const impact =
-                (ticket as { impact?: string }).impact || 'UNKNOWN';
-              acc[impact] = (acc[impact] || 0) + 1;
-              return acc;
-            },
-            {}
-          );
+            const endUserSheet = XLSX.utils.json_to_sheet(endUserData);
+            XLSX.utils.book_append_sheet(workbook, endUserSheet, 'My Ticket Summary');
+          } else {
+            // For Support Staff and Managers, show detailed breakdowns
+            const priorityBreakdown = report.data.reduce(
+              (acc: Record<string, number>, ticket: Record<string, unknown>) => {
+                const priority = ticket.priority as string;
+                acc[priority] = (acc[priority] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
 
-          const urgencyBreakdown = report.data.reduce(
-            (acc: Record<string, number>, ticket: Record<string, unknown>) => {
-              const urgency =
-                (ticket as { urgency?: string }).urgency || 'UNKNOWN';
-              acc[urgency] = (acc[urgency] || 0) + 1;
-              return acc;
-            },
-            {}
-          );
+            const categoryBreakdown = report.data.reduce(
+              (acc: Record<string, number>, ticket: Record<string, unknown>) => {
+                const category = ticket.category as string;
+                acc[category] = (acc[category] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
 
-          // Calculate SLA metrics
-          const openTickets = statusBreakdown['OPEN'] || 0;
-          const inProgressTickets = statusBreakdown['IN_PROGRESS'] || 0;
-          const resolvedTickets = statusBreakdown['RESOLVED'] || 0;
-          const closedTickets = statusBreakdown['CLOSED'] || 0;
-          const overdueTickets = report.data.filter(
-            (ticket: Record<string, unknown>) => {
-              if (!ticket.dueDate) return false;
-              return (
-                new Date(ticket.dueDate as string) < new Date() &&
-                !['RESOLVED', 'CLOSED'].includes(ticket.status as string)
-              );
-            }
-          ).length;
+            const impactBreakdown = report.data.reduce(
+              (acc: Record<string, number>, ticket: Record<string, unknown>) => {
+                const impact =
+                  (ticket as { impact?: string }).impact || 'UNKNOWN';
+                acc[impact] = (acc[impact] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
 
-          const slaBreachedTickets = report.data.filter(
-            (ticket: Record<string, unknown>) => {
-              if (!ticket.dueDate || !ticket.closedAt) return false;
-              return (
-                new Date(ticket.closedAt as string) >
-                new Date(ticket.dueDate as string)
-              );
-            }
-          ).length;
+            const urgencyBreakdown = report.data.reduce(
+              (acc: Record<string, number>, ticket: Record<string, unknown>) => {
+                const urgency =
+                  (ticket as { urgency?: string }).urgency || 'UNKNOWN';
+                acc[urgency] = (acc[urgency] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
 
-          // Sheet 1: Summary Cards
-          const summaryCardsData = [
-            { Metric: 'Total Tickets', Value: totalTickets },
-            { Metric: 'Open Tickets', Value: openTickets },
-            { Metric: 'In Progress', Value: inProgressTickets },
-            { Metric: 'Resolved', Value: resolvedTickets },
-            { Metric: 'Closed', Value: closedTickets },
-            { Metric: 'Overdue Tickets', Value: overdueTickets },
-            { Metric: 'SLA Breached', Value: slaBreachedTickets },
-            {
-              Metric: 'Critical Priority',
-              Value: priorityBreakdown['CRITICAL'] || 0,
-            },
-            { Metric: 'High Priority', Value: priorityBreakdown['HIGH'] || 0 },
-            {
-              Metric: 'Medium Priority',
-              Value: priorityBreakdown['MEDIUM'] || 0,
-            },
-            { Metric: 'Low Priority', Value: priorityBreakdown['LOW'] || 0 },
-            { Metric: 'Major Impact', Value: impactBreakdown['MAJOR'] || 0 },
-            { Metric: 'High Urgency', Value: urgencyBreakdown['HIGH'] || 0 },
-          ];
+            // Calculate SLA metrics
+            const openTickets = statusBreakdown['OPEN'] || 0;
+            const inProgressTickets = statusBreakdown['IN_PROGRESS'] || 0;
+            const resolvedTickets = statusBreakdown['RESOLVED'] || 0;
+            const closedTickets = statusBreakdown['CLOSED'] || 0;
+            const overdueTickets = report.data.filter(
+              (ticket: Record<string, unknown>) => {
+                if (!ticket.dueDate) return false;
+                return (
+                  new Date(ticket.dueDate as string) < new Date() &&
+                  !['RESOLVED', 'CLOSED'].includes(ticket.status as string)
+                );
+              }
+            ).length;
 
-          const summaryCardsSheet = XLSX.utils.json_to_sheet(summaryCardsData);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            summaryCardsSheet,
-            'Summary Cards'
-          );
+            const slaBreachedTickets = report.data.filter(
+              (ticket: Record<string, unknown>) => {
+                if (!ticket.dueDate || !ticket.closedAt) return false;
+                return (
+                  new Date(ticket.closedAt as string) >
+                  new Date(ticket.dueDate as string)
+                );
+              }
+            ).length;
 
-          // Sheet 2: SLA Performance
-          const slaPerformanceData = [
-            {
-              Metric: 'Response Time (Last 30 days)',
-              Value: '85%',
-              Status: 'Within SLA',
-            },
-            {
-              Metric: 'Resolution Time (Last 30 days)',
-              Value: '78%',
-              Status: 'Within SLA',
-            },
-            {
-              Metric: 'Customer Satisfaction',
-              Value: '4.2/5.0',
-              Status: 'Good',
-            },
-            {
-              Metric: 'SLA Compliance Rate',
-              Value: `${Math.round(((totalTickets - slaBreachedTickets) / totalTickets) * 100)}%`,
-              Status: 'Compliant',
-            },
-          ];
+            // Sheet 1: Summary Cards
+            const summaryCardsData = [
+              { Metric: 'Total Tickets', Value: totalTickets },
+              { Metric: 'Open Tickets', Value: openTickets },
+              { Metric: 'In Progress', Value: inProgressTickets },
+              { Metric: 'Resolved', Value: resolvedTickets },
+              { Metric: 'Closed', Value: closedTickets },
+              { Metric: 'Overdue Tickets', Value: overdueTickets },
+              { Metric: 'SLA Breached', Value: slaBreachedTickets },
+              {
+                Metric: 'Critical Priority',
+                Value: priorityBreakdown['CRITICAL'] || 0,
+              },
+              { Metric: 'High Priority', Value: priorityBreakdown['HIGH'] || 0 },
+              {
+                Metric: 'Medium Priority',
+                Value: priorityBreakdown['MEDIUM'] || 0,
+              },
+              { Metric: 'Low Priority', Value: priorityBreakdown['LOW'] || 0 },
+              { Metric: 'Major Impact', Value: impactBreakdown['MAJOR'] || 0 },
+              { Metric: 'High Urgency', Value: urgencyBreakdown['HIGH'] || 0 },
+            ];
 
-          const slaPerformanceSheet =
-            XLSX.utils.json_to_sheet(slaPerformanceData);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            slaPerformanceSheet,
-            'SLA Performance'
-          );
+            const summaryCardsSheet = XLSX.utils.json_to_sheet(summaryCardsData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              summaryCardsSheet,
+              'Summary Cards'
+            );
 
-          // Sheet 3: Tickets by Category
-          const categoryData = Object.entries(categoryBreakdown).map(
-            ([category, count]) => ({
-              Category: category,
-              Count: count,
-              Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
-            })
-          );
-          const categorySheet = XLSX.utils.json_to_sheet(categoryData);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            categorySheet,
-            'Tickets by Category'
-          );
+            // Sheet 2: SLA Performance
+            const slaPerformanceData = [
+              {
+                Metric: 'Response Time (Last 30 days)',
+                Value: '85%',
+                Status: 'Within SLA',
+              },
+              {
+                Metric: 'Resolution Time (Last 30 days)',
+                Value: '78%',
+                Status: 'Within SLA',
+              },
+              {
+                Metric: 'Customer Satisfaction',
+                Value: '4.2/5.0',
+                Status: 'Good',
+              },
+              {
+                Metric: 'SLA Compliance Rate',
+                Value: `${Math.round(((totalTickets - slaBreachedTickets) / totalTickets) * 100)}%`,
+                Status: 'Compliant',
+              },
+            ];
 
-          // Sheet 4: Tickets by Status
-          const statusData = Object.entries(statusBreakdown).map(
-            ([status, count]) => ({
-              Status: status,
-              Count: count,
-              Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
-            })
-          );
-          const statusSheet = XLSX.utils.json_to_sheet(statusData);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            statusSheet,
-            'Tickets by Status'
-          );
+            const slaPerformanceSheet =
+              XLSX.utils.json_to_sheet(slaPerformanceData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              slaPerformanceSheet,
+              'SLA Performance'
+            );
 
-          // Sheet 5: Tickets by Impact
-          const impactData = Object.entries(impactBreakdown).map(
-            ([impact, count]) => ({
-              Impact: impact,
-              Count: count,
-              Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
-            })
-          );
-          const impactSheet = XLSX.utils.json_to_sheet(impactData);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            impactSheet,
-            'Tickets by Impact'
-          );
+            // Sheet 3: Tickets by Category
+            const categoryData = Object.entries(categoryBreakdown).map(
+              ([category, count]) => ({
+                Category: category,
+                Count: count,
+                Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
+              })
+            );
+            const categorySheet = XLSX.utils.json_to_sheet(categoryData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              categorySheet,
+              'Tickets by Category'
+            );
 
-          // Sheet 6: Tickets by Urgency
-          const urgencyData = Object.entries(urgencyBreakdown).map(
-            ([urgency, count]) => ({
-              Urgency: urgency,
-              Count: count,
-              Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
-            })
-          );
-          const urgencySheet = XLSX.utils.json_to_sheet(urgencyData);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            urgencySheet,
-            'Tickets by Urgency'
-          );
+            // Sheet 4: Tickets by Status
+            const statusData = Object.entries(statusBreakdown).map(
+              ([status, count]) => ({
+                Status: status,
+                Count: count,
+                Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
+              })
+            );
+            const statusSheet = XLSX.utils.json_to_sheet(statusData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              statusSheet,
+              'Tickets by Status'
+            );
 
-          // Sheet 7: Tickets by Priority
-          const priorityData = Object.entries(priorityBreakdown).map(
-            ([priority, count]) => ({
-              Priority: priority,
-              Count: count,
-              Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
-            })
-          );
-          const prioritySheet = XLSX.utils.json_to_sheet(priorityData);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            prioritySheet,
-            'Tickets by Priority'
-          );
+            // Sheet 5: Tickets by Impact
+            const impactData = Object.entries(impactBreakdown).map(
+              ([impact, count]) => ({
+                Impact: impact,
+                Count: count,
+                Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
+              })
+            );
+            const impactSheet = XLSX.utils.json_to_sheet(impactData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              impactSheet,
+              'Tickets by Impact'
+            );
+
+            // Sheet 6: Tickets by Urgency
+            const urgencyData = Object.entries(urgencyBreakdown).map(
+              ([urgency, count]) => ({
+                Urgency: urgency,
+                Count: count,
+                Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
+              })
+            );
+            const urgencySheet = XLSX.utils.json_to_sheet(urgencyData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              urgencySheet,
+              'Tickets by Urgency'
+            );
+
+            // Sheet 7: Tickets by Priority
+            const priorityData = Object.entries(priorityBreakdown).map(
+              ([priority, count]) => ({
+                Priority: priority,
+                Count: count,
+                Percentage: `${((count / totalTickets) * 100).toFixed(1)}%`,
+              })
+            );
+            const prioritySheet = XLSX.utils.json_to_sheet(priorityData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              prioritySheet,
+              'Tickets by Priority'
+            );
+          }
 
           content = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
           mimeType =
@@ -711,74 +733,104 @@ export class ReportsController {
           // Create proper PDF
           const doc = new jsPDF();
 
+          // Get user role from filters to determine export structure
+          const userRole = (body.filters as { userRole?: string })?.userRole;
+
           // Add title
           doc.setFontSize(16);
-          doc.text('TICKET REPORT', 20, 20);
+          doc.text(userRole === 'END_USER' ? 'MY TICKET SUMMARY' : 'TICKET REPORT', 20, 20);
 
           // Add generation info
           doc.setFontSize(10);
           doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
           doc.text(`Total Tickets: ${report.data.length}`, 20, 35);
 
-          // Add table headers
-          doc.setFontSize(8);
-          let yPosition = 50;
-          const colWidths = [25, 40, 20, 20, 30, 30, 20, 20];
-          const headers = [
-            'Ticket #',
-            'Title',
-            'Status',
-            'Priority',
-            'Requester',
-            'Assigned To',
-            'Category',
-            'Created',
-          ];
+          if (userRole === 'END_USER') {
+            // For end users, show only the 4 metrics in a simple format
+            const statusBreakdown = report.data.reduce(
+              (acc: Record<string, number>, ticket: Record<string, unknown>) => {
+                const status = ticket.status as string;
+                acc[status] = (acc[status] || 0) + 1;
+                return acc;
+              },
+              {}
+            );
 
-          // Draw table headers
-          let xPosition = 20;
-          headers.forEach((header, index) => {
-            doc.rect(xPosition, yPosition - 5, colWidths[index], 8);
-            doc.text(header, xPosition + 2, yPosition);
-            xPosition += colWidths[index];
-          });
+            const openTickets = (statusBreakdown['NEW'] || 0) + (statusBreakdown['OPEN'] || 0) + (statusBreakdown['IN_PROGRESS'] || 0);
+            const resolvedTickets = statusBreakdown['RESOLVED'] || 0;
+            const closedTickets = statusBreakdown['CLOSED'] || 0;
 
-          yPosition += 10;
-
-          // Add ticket data
-          report.data.forEach((ticket: Record<string, unknown>) => {
-            // Check if we need a new page
-            if (yPosition > 280) {
-              doc.addPage();
-              yPosition = 20;
-            }
-
-            xPosition = 20;
-            const rowData = [
-              ticket.ticketNumber,
-              (ticket.title as string).length > 30
-                ? (ticket.title as string).substring(0, 30) + '...'
-                : ticket.title,
-              ticket.status,
-              ticket.priority,
-              (ticket.requester as string).length > 20
-                ? (ticket.requester as string).substring(0, 20) + '...'
-                : ticket.requester,
-              (ticket.assignedTo as string).length > 20
-                ? (ticket.assignedTo as string).substring(0, 20) + '...'
-                : ticket.assignedTo,
-              ticket.category,
-              new Date(ticket.createdAt as string).toLocaleDateString(),
+            // Add summary metrics
+            doc.setFontSize(12);
+            doc.text('Summary Metrics:', 20, 50);
+            
+            doc.setFontSize(10);
+            doc.text(`Total Tickets: ${report.data.length}`, 20, 65);
+            doc.text(`Open Tickets: ${openTickets}`, 20, 75);
+            doc.text(`Resolved Tickets: ${resolvedTickets}`, 20, 85);
+            doc.text(`Closed Tickets: ${closedTickets}`, 20, 95);
+          } else {
+            // For Support Staff and Managers, show detailed table
+            // Add table headers
+            doc.setFontSize(8);
+            let yPosition = 50;
+            const colWidths = [25, 40, 20, 20, 30, 30, 20, 20];
+            const headers = [
+              'Ticket #',
+              'Title',
+              'Status',
+              'Priority',
+              'Requester',
+              'Assigned To',
+              'Category',
+              'Created',
             ];
 
-            rowData.forEach((cell, cellIndex) => {
-              doc.rect(xPosition, yPosition - 5, colWidths[cellIndex], 8);
-              doc.text(cell.toString(), xPosition + 2, yPosition);
-              xPosition += colWidths[cellIndex];
+            // Draw table headers
+            let xPosition = 20;
+            headers.forEach((header, index) => {
+              doc.rect(xPosition, yPosition - 5, colWidths[index], 8);
+              doc.text(header, xPosition + 2, yPosition);
+              xPosition += colWidths[index];
             });
 
             yPosition += 10;
-          });
+
+            // Add ticket data
+            report.data.forEach((ticket: Record<string, unknown>) => {
+              // Check if we need a new page
+              if (yPosition > 280) {
+                doc.addPage();
+                yPosition = 20;
+              }
+
+              xPosition = 20;
+              const rowData = [
+                ticket.ticketNumber,
+                (ticket.title as string).length > 30
+                  ? (ticket.title as string).substring(0, 30) + '...'
+                  : ticket.title,
+                ticket.status,
+                ticket.priority,
+                (ticket.requester as string).length > 20
+                  ? (ticket.requester as string).substring(0, 20) + '...'
+                  : ticket.requester,
+                (ticket.assignedTo as string).length > 20
+                  ? (ticket.assignedTo as string).substring(0, 20) + '...'
+                  : ticket.assignedTo,
+                ticket.category,
+                new Date(ticket.createdAt as string).toLocaleDateString(),
+              ];
+
+              rowData.forEach((cell, cellIndex) => {
+                doc.rect(xPosition, yPosition - 5, colWidths[cellIndex], 8);
+                doc.text(cell.toString(), xPosition + 2, yPosition);
+                xPosition += colWidths[cellIndex];
+              });
+
+              yPosition += 10;
+            });
+          }
 
           content = Buffer.from(doc.output('arraybuffer'));
           mimeType = 'application/pdf';

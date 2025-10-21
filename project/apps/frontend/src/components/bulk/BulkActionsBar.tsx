@@ -35,10 +35,9 @@ import {
   // IconInfoCircle, // Removed unused import
 } from '@tabler/icons-react';
 
-import { useUsers } from '../../hooks/useUsers';
+import { useSupportStaff } from '../../hooks/useUsers';
 import {
   PAGINATION_CONFIG,
-  ROLE_GROUPS,
   STATUS_OPTIONS,
 } from '../../lib/constants';
 import {
@@ -81,10 +80,8 @@ export function BulkActionsBar({
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [bulkNote, setBulkNote] = useState('');
 
-  // Fetch users for assignment
-  const { data: users, isLoading: usersLoading } = useUsers({
-    limit: PAGINATION_CONFIG.BULK_ACTIONS_LIMIT,
-  });
+  // Fetch support staff for assignment
+  const { data: supportStaff, isLoading: usersLoading } = useSupportStaff();
 
   const selectedCount = selectedTickets.length;
   const isAllSelected = selectedCount === totalTickets;
@@ -360,19 +357,10 @@ export function BulkActionsBar({
             label='Assign To'
             placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
             data={
-              users
-                ?.filter((user: User) =>
-                  ROLE_GROUPS.SUPPORT_TEAM.includes(
-                    user.activeRole as
-                      | 'SUPPORT_STAFF'
-                      | 'SUPPORT_MANAGER'
-                      | 'ADMIN'
-                  )
-                )
-                .map((user: User) => ({
-                  value: user.id,
-                  label: `${user.name} (${user.activeRole})`,
-                })) || []
+              supportStaff?.map((user: User) => ({
+                value: user.id,
+                label: user.name,
+              })) || []
             }
             value={selectedAssignee}
             onChange={value => setSelectedAssignee(value || '')}

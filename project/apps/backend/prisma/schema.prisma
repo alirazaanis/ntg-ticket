@@ -40,6 +40,7 @@ enum TicketCategory {
   NETWORK
   ACCESS
   OTHER
+  CUSTOM
 }
 
 enum TicketImpact {
@@ -124,7 +125,8 @@ model User {
 
 model Category {
   id          String        @id @default(uuid())
-  name        TicketCategory @unique
+  name        TicketCategory
+  customName  String?       @unique
   description String?
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
@@ -164,7 +166,7 @@ model Ticket {
   title         String
   description   String
   categoryId    String
-  subcategoryId String
+  subcategoryId String?
   priority      TicketPriority @default(MEDIUM)
   status        TicketStatus   @default(NEW)
   impact        TicketImpact   @default(MODERATE)
@@ -182,7 +184,7 @@ model Ticket {
   requester     User            @relation("TicketRequester", fields: [requesterId], references: [id])
   assignedTo    User?           @relation("TicketAssignee", fields: [assignedToId], references: [id])
   category      Category        @relation(fields: [categoryId], references: [id])
-  subcategory   Subcategory     @relation(fields: [subcategoryId], references: [id])
+  subcategory   Subcategory?    @relation(fields: [subcategoryId], references: [id])
   comments      Comment[]
   attachments   Attachment[]
   history       TicketHistory[]

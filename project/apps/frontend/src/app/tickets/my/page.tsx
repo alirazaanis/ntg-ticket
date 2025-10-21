@@ -1,5 +1,11 @@
 'use client';
 
+// Utility function to strip HTML tags from text
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+};
+
 import {
   Container,
   Title,
@@ -289,7 +295,7 @@ export default function MyTicketsPage() {
             </Text>
 
             <Text size='sm' c='dimmed' mb='sm' lineClamp={2}>
-              {ticket.description}
+              {stripHtmlTags(ticket.description)}
             </Text>
 
             <Group justify='space-between'>
@@ -303,7 +309,7 @@ export default function MyTicketsPage() {
                 )}
               </Group>
               <Badge variant='light' color='gray'>
-                {ticket.category?.name || 'Unknown'}
+                {ticket.category?.customName || ticket.category?.name || 'Unknown'}
               </Badge>
             </Group>
           </Card>

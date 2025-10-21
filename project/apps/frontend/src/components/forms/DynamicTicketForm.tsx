@@ -34,7 +34,7 @@ import {
   Subcategory,
 } from '../../types/unified';
 import {
-  useCategories,
+  useActiveCategories,
   useDynamicFields as useCategoryDynamicFields,
   useSubcategories as useCategorySubcategories,
 } from '../../hooks/useCategories';
@@ -60,7 +60,7 @@ export function DynamicTicketForm({
 
   // Use hooks for API calls
   const { data: categories = [], isLoading: loadingCategories } =
-    useCategories();
+    useActiveCategories();
   const {
     data: dynamicFields = [],
     isLoading: loadingFields,
@@ -101,7 +101,7 @@ export function DynamicTicketForm({
         return null;
       },
       category: value => (!value ? 'Category is required' : null),
-      subcategory: value => (!value ? 'Subcategory is required' : null),
+      subcategory: value => null, // Subcategory is now optional
     },
   });
 
@@ -139,13 +139,18 @@ export function DynamicTicketForm({
       if (category) {
         setSelectedCategoryName(category.name);
       }
-      form.setFieldValue('subcategory', ''); // Reset subcategory
+      form.setFieldValue('subcategory', undefined); // Reset subcategory
     }
   };
 
   const handleSubmit = (values: DynamicTicketFormValues) => {
     // Filter out empty dynamic field values
     const filteredValues: DynamicTicketFormValues = { ...values };
+
+    // Filter out empty subcategory
+    if (!filteredValues.subcategory || filteredValues.subcategory.trim() === '') {
+      delete filteredValues.subcategory;
+    }
 
     // Ensure dynamicFields is an array before calling forEach
     if (Array.isArray(dynamicFields)) {
@@ -255,7 +260,7 @@ export function DynamicTicketForm({
                   required
                   data={categories.map(cat => ({
                     value: cat.id,
-                    label: cat.name.replace('_', ' '),
+                    label: cat.customName || cat.name.replace('_', ' '),
                   }))}
                   disabled={loadingCategories}
                   {...form.getInputProps('category')}
@@ -269,8 +274,7 @@ export function DynamicTicketForm({
               <Grid.Col span={6}>
                 <Select
                   label='Subcategory'
-                  placeholder='Select subcategory'
-                  required
+                  placeholder='Select subcategory (optional)'
                   data={subcategories.map((sub: Subcategory) => ({
                     value: sub.id,
                     label: sub.name,

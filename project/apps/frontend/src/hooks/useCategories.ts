@@ -12,6 +12,17 @@ export function useCategories() {
   });
 }
 
+export function useActiveCategories() {
+  return useQuery({
+    queryKey: ['categories', 'active'],
+    queryFn: async () => {
+      const response = await categoriesApi.getActiveCategories();
+      return response.data.data as Category[];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
 export function useCategory(id: string) {
   return useQuery({
     queryKey: ['category', id],

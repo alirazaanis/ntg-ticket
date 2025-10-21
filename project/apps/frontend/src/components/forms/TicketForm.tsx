@@ -24,15 +24,13 @@ import {
 import { showErrorNotification } from '@/lib/notifications';
 import { useTranslations } from 'next-intl';
 import { useAutoAssignSettings } from '../../hooks/useAutoAssignSettings';
-import { useCategories } from '../../hooks/useCategories';
+import { useActiveCategories } from '../../hooks/useCategories';
 import { useCustomFields } from '../../hooks/useCustomFields';
 import { Category, Subcategory } from '../../types/unified';
 import {
-  CATEGORY_OPTIONS,
   URGENCY_OPTIONS,
   IMPACT_OPTIONS,
   PRIORITY_OPTIONS,
-  SUBCATEGORY_OPTIONS,
   SLA_LEVEL_OPTIONS,
 } from '@/lib/constants';
 
@@ -63,9 +61,7 @@ interface TicketFormProps {
   isEditing?: boolean;
 }
 
-const categories = CATEGORY_OPTIONS;
-
-const subcategories = SUBCATEGORY_OPTIONS;
+// Categories and subcategories are now loaded dynamically from the database
 
 const priorities = PRIORITY_OPTIONS;
 const impacts = IMPACT_OPTIONS;
@@ -87,7 +83,7 @@ export function TicketForm({
   // const [availableCustomFields] = useState<CustomField[]>([]);
 
   const { getAutoAssignMessage, getAutoCloseMessage } = useAutoAssignSettings();
-  const { data: categoriesData } = useCategories();
+  const { data: categoriesData } = useActiveCategories();
   const { data: customFieldsData } = useCustomFields();
 
   // Dynamic form behavior based on category selection
@@ -151,13 +147,13 @@ export function TicketForm({
       title: value => (!value ? 'Title is required' : null),
       description: value => (!value ? 'Description is required' : null),
       category: value => (!value ? 'Category is required' : null),
-      subcategory: value => (!value ? 'Subcategory is required' : null),
+      subcategory: value => null, // Subcategory is now optional
     },
   });
 
   const handleCategoryChange = (value: string) => {
     form.setFieldValue('category', value);
-    form.setFieldValue('subcategory', '');
+    form.setFieldValue('subcategory', undefined);
   };
 
   const handleFileDrop = (acceptedFiles: File[]) => {
@@ -180,6 +176,12 @@ export function TicketForm({
         ...values,
         files,
       };
+      
+      // Filter out empty subcategory
+      if (!formData.subcategory || formData.subcategory.trim() === '') {
+        delete formData.subcategory;
+      }
+      
       await onSubmit(formData);
     } catch (error) {
       showErrorNotification(t('error'), tTickets('submitFailed'));
@@ -188,8 +190,14 @@ export function TicketForm({
     }
   };
 
-  const currentSubcategories = form.values.category
-    ? subcategories[form.values.category as keyof typeof subcategories] || []
+  // Get subcategories for the selected category
+  const currentSubcategories = form.values.category && categoriesData
+    ? categoriesData
+        .find(cat => cat.id === form.values.category)
+        ?.subcategories?.map(sub => ({
+          value: sub.name,
+          label: sub.description || sub.name,
+        })) || []
     : [];
 
   return (
@@ -220,7 +228,10 @@ export function TicketForm({
               label={tTickets('category')}
               placeholder={tTickets('selectCategory')}
               required
-              data={categories}
+              data={categoriesData?.map(cat => ({
+                value: cat.id, // Use category ID instead of name
+                label: cat.customName || cat.name.replace('_', ' '),
+              })) || []}
               {...form.getInputProps('category')}
               onChange={value => handleCategoryChange(value || '')}
             />
@@ -228,8 +239,7 @@ export function TicketForm({
           <Grid.Col span={{ base: 12, sm: 6 }}>
             <Select
               label={tTickets('subcategory')}
-              placeholder={tTickets('selectSubcategory')}
-              required
+              placeholder={tTickets('selectSubcategory') + ' (optional)'}
               data={currentSubcategories}
               disabled={!form.values.category}
               {...form.getInputProps('subcategory')}

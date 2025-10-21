@@ -261,20 +261,14 @@ export class ReportsService {
       }
 
       if (category) {
-        // Handle comma-separated category values
+        // Handle comma-separated category IDs
         const categoryArray = category
           .split(',')
-          .map(c => c.trim()) as TicketCategory[];
-        const categoryRecords = await this.prisma.category.findMany({
-          where: { name: { in: categoryArray } },
-        });
-        if (categoryRecords.length > 0) {
-          const categoryIds = categoryRecords.map(c => c.id);
-          if (categoryIds.length === 1) {
-            where.categoryId = categoryIds[0];
-          } else {
-            where.categoryId = { in: categoryIds };
-          }
+          .map(c => c.trim());
+        if (categoryArray.length === 1) {
+          where.categoryId = categoryArray[0];
+        } else {
+          where.categoryId = { in: categoryArray };
         }
       }
 
@@ -883,20 +877,14 @@ export class ReportsService {
       }
 
       if (category) {
-        // Handle comma-separated category values
+        // Handle comma-separated category IDs
         const categoryArray = category
           .split(',')
-          .map(c => c.trim()) as TicketCategory[];
-        const categoryRecords = await this.prisma.category.findMany({
-          where: { name: { in: categoryArray } },
-        });
-        if (categoryRecords.length > 0) {
-          const categoryIds = categoryRecords.map(c => c.id);
-          if (categoryIds.length === 1) {
-            where.categoryId = categoryIds[0];
-          } else {
-            where.categoryId = { in: categoryIds };
-          }
+          .map(c => c.trim());
+        if (categoryArray.length === 1) {
+          where.categoryId = categoryArray[0];
+        } else {
+          where.categoryId = { in: categoryArray };
         }
       }
 
@@ -985,20 +973,14 @@ export class ReportsService {
       }
 
       if (category) {
-        // Handle comma-separated category values
+        // Handle comma-separated category IDs
         const categoryArray = category
           .split(',')
-          .map(c => c.trim()) as TicketCategory[];
-        const categoryRecords = await this.prisma.category.findMany({
-          where: { name: { in: categoryArray } },
-        });
-        if (categoryRecords.length > 0) {
-          const categoryIds = categoryRecords.map(c => c.id);
-          if (categoryIds.length === 1) {
-            where.categoryId = categoryIds[0];
-          } else {
-            where.categoryId = { in: categoryIds };
-          }
+          .map(c => c.trim());
+        if (categoryArray.length === 1) {
+          where.categoryId = categoryArray[0];
+        } else {
+          where.categoryId = { in: categoryArray };
         }
       }
 
@@ -1049,10 +1031,10 @@ export class ReportsService {
         title: ticket.title,
         status: ticket.status,
         priority: ticket.priority,
-        requester: ticket.requester.name,
+        requester: ticket.requester?.name || 'Unknown',
         assignedTo: ticket.assignedTo?.name || 'Unassigned',
-        category: ticket.category.name,
-        subcategory: ticket.subcategory.name,
+        category: ticket.category?.name || 'Unknown',
+        subcategory: ticket.subcategory?.name || 'Unknown',
         createdAt: ticket.createdAt.toISOString(),
         updatedAt: ticket.updatedAt.toISOString(),
       }));

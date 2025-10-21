@@ -264,7 +264,7 @@ export function TicketCard({
           {/* Category and Subcategory */}
           <Group gap='xs'>
             <Text size='xs' c='dimmed'>
-              {ticket.category?.name || t('unknown')} •{' '}
+              {ticket.category?.customName || ticket.category?.name || t('unknown')} •{' '}
               {ticket.subcategory?.name || t('unknown')}
             </Text>
           </Group>

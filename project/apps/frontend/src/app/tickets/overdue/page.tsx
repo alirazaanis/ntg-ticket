@@ -1,5 +1,11 @@
 'use client';
 
+// Utility function to strip HTML tags from text
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+};
+
 import { useState } from 'react';
 import { StaffAndAbove } from '../../../components/guards/RouteGuard';
 import {
@@ -257,7 +263,7 @@ function OverdueTicketsPageContent() {
             </Text>
 
             <Text size='sm' c='dimmed' mb='sm' lineClamp={2}>
-              {ticket.description}
+              {stripHtmlTags(ticket.description)}
             </Text>
 
             <Group justify='space-between'>

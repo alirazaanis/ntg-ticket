@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { TicketStatus, TicketPriority, TicketCategory } from '@prisma/client';
+import { TicketStatus, TicketPriority } from '@prisma/client';
 
 export class TicketFiltersDto {
   @ApiProperty({
@@ -52,15 +52,14 @@ export class TicketFiltersDto {
   priority?: TicketPriority[];
 
   @ApiProperty({
-    description: 'Filter by ticket category',
-    enum: TicketCategory,
-    isArray: true,
+    description: 'Filter by ticket category IDs',
+    type: [String],
     required: false,
   })
   @IsArray()
-  @IsEnum(TicketCategory, { each: true })
+  @IsUUID(4, { each: true })
   @IsOptional()
-  category?: TicketCategory[];
+  category?: string[];
 
   @ApiProperty({
     description: 'Filter by assigned user IDs',

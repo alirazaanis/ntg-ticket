@@ -175,7 +175,7 @@ export const useSearch = () => {
     if (filters.priority && filters.priority.length > 0)
       query.priority = filters.priority as TicketPriority[];
     if (filters.category && filters.category.length > 0)
-      query.category = filters.category as TicketCategory[];
+      query.category = filters.category;
     if (filters.assignedTo && filters.assignedTo.length > 0)
       query.assignedTo = filters.assignedTo[0];
     if (filters.requester && filters.requester.length > 0)

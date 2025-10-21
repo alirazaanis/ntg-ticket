@@ -456,7 +456,7 @@ export default function TicketsPage() {
                 )}
               </Group>
               <Badge variant='light' color='gray'>
-                {ticket.category?.name || 'Unknown'}
+                {ticket.category?.customName || ticket.category?.name || 'Unknown'}
               </Badge>
             </Group>
           </Card>

@@ -31,6 +31,7 @@ export enum TicketCategory {
   NETWORK = 'NETWORK',
   ACCESS = 'ACCESS',
   OTHER = 'OTHER',
+  CUSTOM = 'CUSTOM',
 }
 
 export enum TicketImpact {
@@ -113,13 +114,14 @@ export interface Ticket {
   title: string;
   description: string;
   categoryId: string;
-  subcategoryId: string;
+  subcategoryId: string | null;
   category: {
     id: string;
     name: string;
+    customName?: string; // Custom display name for categories
     description?: string;
   };
-  subcategory: {
+  subcategory?: {
     id: string;
     name: string;
     description?: string;
@@ -149,7 +151,7 @@ export interface CreateTicketInput {
   title: string;
   description: string;
   category: string; // Category ID
-  subcategory: string; // Subcategory ID
+  subcategory?: string; // Subcategory ID (optional)
   priority?: TicketPriority;
   impact?: TicketImpact;
   urgency?: TicketUrgency;
@@ -170,7 +172,7 @@ export interface TicketFilters {
   search?: string;
   status?: TicketStatus[];
   priority?: TicketPriority[];
-  category?: TicketCategory[];
+  category?: string[]; // Category IDs
   assignedTo?: string;
   requester?: string;
   dateFrom?: string;
@@ -229,12 +231,13 @@ export interface UpdateCustomFieldInput
 // Category interfaces
 export interface Category {
   id: string;
-  name: string;
+  name: TicketCategory;
+  customName?: string;
   description?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  createdBy: User;
+  createdBy: string;
 }
 
 export interface Subcategory {
@@ -447,7 +450,7 @@ export interface TicketFormData {
   title: string;
   description: string;
   category: TicketCategory;
-  subcategory: string;
+  subcategory?: string;
   priority: TicketPriority;
   impact: TicketImpact;
   urgency: TicketUrgency;
@@ -460,7 +463,7 @@ export interface DynamicTicketFormValues {
   title: string;
   description: string;
   category: string; // Category ID
-  subcategory: string; // Subcategory ID
+  subcategory?: string; // Subcategory ID (optional)
   priority: TicketPriority;
   impact: TicketImpact;
   urgency: TicketUrgency;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Modal,
@@ -86,9 +86,7 @@ export function AdvancedSearchModal({
 }: AdvancedSearchModalProps) {
   const t = useTranslations('common');
   const tTickets = useTranslations('tickets');
-  const [activeFilters, setActiveFilters] = useState<
-    Array<{ id: string; label: string }>
-  >([]);
+  // activeFilters is now computed using useMemo
 
   const { data: categories } = useCategories();
   const { data: users } = useUsers();
@@ -146,10 +144,10 @@ export function AdvancedSearchModal({
         customFields: initialCriteria.customFields || {},
       });
     }
-  }, [opened, initialCriteria, form]);
+  }, [opened, initialCriteria]);
 
   // Update active filters when form values change
-  useEffect(() => {
+  const activeFilters = useMemo(() => {
     const filters: Array<{ id: string; label: string }> = [];
     const values = form.values;
     if (values.query) filters.push({ id: 'query', label: 'Search Query' });
@@ -203,7 +201,7 @@ export function AdvancedSearchModal({
     if (values.minSlaBreachTime || values.maxSlaBreachTime)
       filters.push({ id: 'slaBreachTime', label: 'SLA Breach Duration' });
 
-    setActiveFilters(filters);
+    return filters;
   }, [form.values]);
 
   const handleSubmit = (values: AdvancedSearchCriteria) => {
@@ -319,13 +317,13 @@ export function AdvancedSearchModal({
 
   const categoryOptions =
     categories?.map(cat => ({
-      value: cat.name,
-      label: cat.description || cat.name,
+      value: cat.id, // Use category ID instead of name
+      label: cat.customName || cat.name.replace('_', ' '),
     })) || [];
 
   const subcategoryOptions =
     categories
-      ?.filter(cat => form.values.category?.includes(cat.name))
+      ?.filter(cat => form.values.category?.includes(cat.id))
       ?.flatMap(
         cat =>
           (

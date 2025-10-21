@@ -7,6 +7,7 @@ import {
   MaxLength,
   IsArray,
   IsObject,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -51,10 +52,12 @@ export class CreateTicketDto {
   @ApiProperty({
     description: 'Ticket subcategory',
     example: 'email_client',
+    required: false,
   })
+  @IsOptional()
+  @ValidateIf((o) => o.subcategory !== undefined && o.subcategory !== null && o.subcategory !== '')
   @IsString()
-  @IsNotEmpty()
-  subcategory: string;
+  subcategory?: string;
 
   @ApiProperty({
     description: 'Ticket priority',

@@ -101,7 +101,7 @@ export function SupportStaffDashboard() {
   const categoryBreakdown = useMemo(() => {
     const breakdown = new Map<string, number>();
     assignedTickets?.forEach((ticket: Ticket) => {
-      const category = ticket.category?.name || 'Unknown';
+      const category = ticket.category?.customName || ticket.category?.name || 'Unknown';
       breakdown.set(category, (breakdown.get(category) || 0) + 1);
     });
     return Array.from(breakdown.entries())
@@ -302,179 +302,179 @@ export function SupportStaffDashboard() {
 
         {/* Breakdown Tables */}
         <Grid>
+          {/* Left Column - Category, Impact, and Priority stacked with spacing */}
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper withBorder p='md'>
-              <Title order={4} mb='md'>
-                Tickets by Category
-              </Title>
-              <Stack gap={0}>
-                {categoryBreakdown.map(
-                  ([category, count]: [string, number], index: number) => (
-                    <div
-                      key={category}
-                      style={{
-                        padding: '12px 16px',
-                        borderBottom:
-                          index < categoryBreakdown.length - 1
-                            ? '1px solid var(--mantine-color-gray-2)'
-                            : 'none',
-                        backgroundColor:
-                          index % 2 === 0
-                            ? 'var(--mantine-color-gray-0)'
-                            : 'transparent',
-                      }}
-                    >
-                      <Group justify='space-between' align='center'>
-                        <Text size='sm'>{category}</Text>
-                        <Badge variant='light' color='blue'>
-                          {count}
-                        </Badge>
-                      </Group>
-                    </div>
-                  )
-                )}
-              </Stack>
-            </Paper>
+            <Stack gap='sm'>
+              <Paper withBorder p='md'>
+                <Title order={4} mb='md'>
+                  Tickets by Category
+                </Title>
+                <Stack gap={0}>
+                  {categoryBreakdown.map(
+                    ([category, count]: [string, number], index: number) => (
+                      <div
+                        key={category}
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom:
+                            index < categoryBreakdown.length - 1
+                              ? '1px solid var(--mantine-color-gray-2)'
+                              : 'none',
+                          backgroundColor:
+                            index % 2 === 0
+                              ? 'var(--mantine-color-gray-0)'
+                              : 'transparent',
+                        }}
+                      >
+                        <Group justify='space-between' align='center'>
+                          <Text size='sm'>{category}</Text>
+                          <Badge variant='light' color='blue'>
+                            {count}
+                          </Badge>
+                        </Group>
+                      </div>
+                    )
+                  )}
+                </Stack>
+              </Paper>
+              
+              <Paper withBorder p='md'>
+                <Title order={4} mb='md'>
+                  Tickets by Impact
+                </Title>
+                <Stack gap={0}>
+                  {impactBreakdown.map(
+                    ([impact, count]: [string, number], index: number) => (
+                      <div
+                        key={impact}
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom:
+                            index < impactBreakdown.length - 1
+                              ? '1px solid var(--mantine-color-gray-2)'
+                              : 'none',
+                          backgroundColor:
+                            index % 2 === 0
+                              ? 'var(--mantine-color-gray-0)'
+                              : 'transparent',
+                        }}
+                      >
+                        <Group justify='space-between' align='center'>
+                          <Text size='sm'>{impact}</Text>
+                          <Badge variant='light' color='red'>
+                            {count}
+                          </Badge>
+                        </Group>
+                      </div>
+                    )
+                  )}
+                </Stack>
+              </Paper>
+
+              <Paper withBorder p='md'>
+                <Title order={4} mb='md'>
+                  Tickets by Priority
+                </Title>
+                <Stack gap={0}>
+                  {priorityBreakdown.map(
+                    ([priority, count]: [string, number], index: number) => (
+                      <div
+                        key={priority}
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom:
+                            index < priorityBreakdown.length - 1
+                              ? '1px solid var(--mantine-color-gray-2)'
+                              : 'none',
+                          backgroundColor:
+                            index % 2 === 0
+                              ? 'var(--mantine-color-gray-0)'
+                              : 'transparent',
+                        }}
+                      >
+                        <Group justify='space-between' align='center'>
+                          <Text size='sm'>{priority}</Text>
+                          <Badge variant='light' color='purple'>
+                            {count}
+                          </Badge>
+                        </Group>
+                      </div>
+                    )
+                  )}
+                </Stack>
+              </Paper>
+            </Stack>
           </Grid.Col>
 
+          {/* Right Column - Status and Urgency stacked */}
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper withBorder p='md'>
-              <Title order={4} mb='md'>
-                Tickets by Status
-              </Title>
-              <Stack gap={0}>
-                {statusBreakdown.map(
-                  ([status, count]: [string, number], index: number) => (
-                    <div
-                      key={status}
-                      style={{
-                        padding: '12px 16px',
-                        borderBottom:
-                          index < statusBreakdown.length - 1
-                            ? '1px solid var(--mantine-color-gray-2)'
-                            : 'none',
-                        backgroundColor:
-                          index % 2 === 0
-                            ? 'var(--mantine-color-gray-0)'
-                            : 'transparent',
-                      }}
-                    >
-                      <Group justify='space-between' align='center'>
-                        <Text size='sm'>{status.replace('_', ' ')}</Text>
-                        <Badge variant='light' color='green'>
-                          {count}
-                        </Badge>
-                      </Group>
-                    </div>
-                  )
-                )}
-              </Stack>
-            </Paper>
-          </Grid.Col>
-
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper withBorder p='md'>
-              <Title order={4} mb='md'>
-                Tickets by Impact
-              </Title>
-              <Stack gap={0}>
-                {impactBreakdown.map(
-                  ([impact, count]: [string, number], index: number) => (
-                    <div
-                      key={impact}
-                      style={{
-                        padding: '12px 16px',
-                        borderBottom:
-                          index < impactBreakdown.length - 1
-                            ? '1px solid var(--mantine-color-gray-2)'
-                            : 'none',
-                        backgroundColor:
-                          index % 2 === 0
-                            ? 'var(--mantine-color-gray-0)'
-                            : 'transparent',
-                      }}
-                    >
-                      <Group justify='space-between' align='center'>
-                        <Text size='sm'>{impact}</Text>
-                        <Badge variant='light' color='red'>
-                          {count}
-                        </Badge>
-                      </Group>
-                    </div>
-                  )
-                )}
-              </Stack>
-            </Paper>
-          </Grid.Col>
-
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper withBorder p='md'>
-              <Title order={4} mb='md'>
-                Tickets by Urgency
-              </Title>
-              <Stack gap={0}>
-                {urgencyBreakdown.map(
-                  ([urgency, count]: [string, number], index: number) => (
-                    <div
-                      key={urgency}
-                      style={{
-                        padding: '12px 16px',
-                        borderBottom:
-                          index < urgencyBreakdown.length - 1
-                            ? '1px solid var(--mantine-color-gray-2)'
-                            : 'none',
-                        backgroundColor:
-                          index % 2 === 0
-                            ? 'var(--mantine-color-gray-0)'
-                            : 'transparent',
-                      }}
-                    >
-                      <Group justify='space-between' align='center'>
-                        <Text size='sm'>{urgency}</Text>
-                        <Badge variant='light' color='orange'>
-                          {count}
-                        </Badge>
-                      </Group>
-                    </div>
-                  )
-                )}
-              </Stack>
-            </Paper>
-          </Grid.Col>
-
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Paper withBorder p='md'>
-              <Title order={4} mb='md'>
-                Tickets by Priority
-              </Title>
-              <Stack gap={0}>
-                {priorityBreakdown.map(
-                  ([priority, count]: [string, number], index: number) => (
-                    <div
-                      key={priority}
-                      style={{
-                        padding: '12px 16px',
-                        borderBottom:
-                          index < priorityBreakdown.length - 1
-                            ? '1px solid var(--mantine-color-gray-2)'
-                            : 'none',
-                        backgroundColor:
-                          index % 2 === 0
-                            ? 'var(--mantine-color-gray-0)'
-                            : 'transparent',
-                      }}
-                    >
-                      <Group justify='space-between' align='center'>
-                        <Text size='sm'>{priority}</Text>
-                        <Badge variant='light' color='purple'>
-                          {count}
-                        </Badge>
-                      </Group>
-                    </div>
-                  )
-                )}
-              </Stack>
-            </Paper>
+            <Stack gap='md'>
+              <Paper withBorder p='md'>
+                <Title order={4} mb='md'>
+                  Tickets by Status
+                </Title>
+                <Stack gap={0}>
+                  {statusBreakdown.map(
+                    ([status, count]: [string, number], index: number) => (
+                      <div
+                        key={status}
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom:
+                            index < statusBreakdown.length - 1
+                              ? '1px solid var(--mantine-color-gray-2)'
+                              : 'none',
+                          backgroundColor:
+                            index % 2 === 0
+                              ? 'var(--mantine-color-gray-0)'
+                              : 'transparent',
+                        }}
+                      >
+                        <Group justify='space-between' align='center'>
+                          <Text size='sm'>{status.replace('_', ' ')}</Text>
+                          <Badge variant='light' color='green'>
+                            {count}
+                          </Badge>
+                        </Group>
+                      </div>
+                    )
+                  )}
+                </Stack>
+              </Paper>
+              
+              <Paper withBorder p='md'>
+                <Title order={4} mb='md'>
+                  Tickets by Urgency
+                </Title>
+                <Stack gap={0}>
+                  {urgencyBreakdown.map(
+                    ([urgency, count]: [string, number], index: number) => (
+                      <div
+                        key={urgency}
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom:
+                            index < urgencyBreakdown.length - 1
+                              ? '1px solid var(--mantine-color-gray-2)'
+                              : 'none',
+                          backgroundColor:
+                            index % 2 === 0
+                              ? 'var(--mantine-color-gray-0)'
+                              : 'transparent',
+                        }}
+                      >
+                        <Group justify='space-between' align='center'>
+                          <Text size='sm'>{urgency}</Text>
+                          <Badge variant='light' color='orange'>
+                            {count}
+                          </Badge>
+                        </Group>
+                      </div>
+                    )
+                  )}
+                </Stack>
+              </Paper>
+            </Stack>
           </Grid.Col>
         </Grid>
 

@@ -12,6 +12,7 @@ import {
   Badge,
 } from '@mantine/core';
 import { IconFilter } from '@tabler/icons-react';
+import { useActiveCategories } from '../../hooks/useCategories';
 interface SimpleFiltersModalProps {
   opened: boolean;
   onClose: () => void;
@@ -44,13 +45,7 @@ const priorityOptions = [
   { value: 'CRITICAL', label: 'Critical' },
 ];
 
-const categoryOptions = [
-  { value: 'HARDWARE', label: 'Hardware' },
-  { value: 'SOFTWARE', label: 'Software' },
-  { value: 'NETWORK', label: 'Network' },
-  { value: 'ACCESS', label: 'Access' },
-  { value: 'OTHER', label: 'Other' },
-];
+// Category options will be loaded dynamically from the database
 
 export function SimpleFiltersModal({
   opened,
@@ -61,6 +56,15 @@ export function SimpleFiltersModal({
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [selectedPriority, setSelectedPriority] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
+
+  // Load active categories from the database
+  const { data: categories = [] } = useActiveCategories();
+  
+  // Create category options from the loaded categories
+  const categoryOptions = categories.map(cat => ({
+    value: cat.id, // Use category ID instead of name
+    label: cat.customName || cat.name.replace('_', ' '),
+  }));
 
   // Update state when initialFilters change
   useEffect(() => {

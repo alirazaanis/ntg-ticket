@@ -229,70 +229,80 @@ async function main() {
   console.log('✅ Users created');
 
   // Create categories
-  const hardwareCategory = await prisma.category.upsert({
+  let hardwareCategory = await prisma.category.findFirst({
     where: { name: 'HARDWARE' },
-    update: {},
-    create: {
-      name: 'HARDWARE',
-      description: 'Hardware-related issues',
-      isActive: true,
-      creator: {
-        connect: { id: admin.id },
-      },
-    },
   });
+  
+  if (!hardwareCategory) {
+    hardwareCategory = await prisma.category.create({
+      data: {
+        name: 'HARDWARE',
+        description: 'Hardware-related issues',
+        isActive: true,
+        createdBy: admin.id,
+      },
+    });
+  }
 
-  const softwareCategory = await prisma.category.upsert({
+  let softwareCategory = await prisma.category.findFirst({
     where: { name: 'SOFTWARE' },
-    update: {},
-    create: {
-      name: 'SOFTWARE',
-      description: 'Software-related issues',
-      isActive: true,
-      creator: {
-        connect: { id: admin.id },
-      },
-    },
   });
+  
+  if (!softwareCategory) {
+    softwareCategory = await prisma.category.create({
+      data: {
+        name: 'SOFTWARE',
+        description: 'Software-related issues',
+        isActive: true,
+        createdBy: admin.id,
+      },
+    });
+  }
 
-  const networkCategory = await prisma.category.upsert({
+  let networkCategory = await prisma.category.findFirst({
     where: { name: 'NETWORK' },
-    update: {},
-    create: {
-      name: 'NETWORK',
-      description: 'Network-related issues',
-      isActive: true,
-      creator: {
-        connect: { id: admin.id },
-      },
-    },
   });
+  
+  if (!networkCategory) {
+    networkCategory = await prisma.category.create({
+      data: {
+        name: 'NETWORK',
+        description: 'Network-related issues',
+        isActive: true,
+        createdBy: admin.id,
+      },
+    });
+  }
 
-  const accessCategory = await prisma.category.upsert({
+  let accessCategory = await prisma.category.findFirst({
     where: { name: 'ACCESS' },
-    update: {},
-    create: {
-      name: 'ACCESS',
-      description: 'Access and permissions issues',
-      isActive: true,
-      creator: {
-        connect: { id: admin.id },
-      },
-    },
   });
+  
+  if (!accessCategory) {
+    accessCategory = await prisma.category.create({
+      data: {
+        name: 'ACCESS',
+        description: 'Access and permissions issues',
+        isActive: true,
+        createdBy: admin.id,
+      },
+    });
+  }
 
-  const otherCategory = await prisma.category.upsert({
+  let otherCategory = await prisma.category.findFirst({
     where: { name: 'OTHER' },
-    update: {},
-    create: {
-      name: 'OTHER',
-      description: 'Other issues',
-      isActive: true,
-      creator: {
-        connect: { id: admin.id },
-      },
-    },
   });
+  
+  if (!otherCategory) {
+    otherCategory = await prisma.category.create({
+      data: {
+        name: 'OTHER',
+        description: 'Other issues',
+        isActive: true,
+        createdBy: admin.id,
+      },
+    });
+  }
 
   // Create subcategories for OTHER category
   const otherSubcategories = [

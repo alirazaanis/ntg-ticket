@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Request,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,22 +30,44 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @ApiOperation({ summary: 'Create a new category' })
   @ApiResponse({ status: 201, description: 'Category created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() createCategoryDto: CreateCategoryDto, @Request() req) {
-    const category = await this.categoriesService.create({
-      ...createCategoryDto,
-      createdBy: req.user.id,
-    });
-    return {
-      data: category,
-      message: 'Category created successfully',
-    };
+    console.log('=== CATEGORY CREATE REQUEST ===');
+    console.log('Request body:', JSON.stringify(createCategoryDto, null, 2));
+    console.log('Request user:', JSON.stringify(req.user, null, 2));
+    console.log('User ID:', req.user?.id);
+    
+    try {
+      const category = await this.categoriesService.create({
+        ...createCategoryDto,
+        createdBy: req.user.id,
+      });
+      
+      console.log('Category created successfully:', category.id);
+      return {
+        data: category,
+        message: 'Category created successfully',
+      };
+    } catch (error) {
+      console.error('Error in categories controller:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      // If it's a validation error, provide more details
+      if (error.name === 'ValidationError' || error.message?.includes('validation')) {
+        console.error('Validation error details:', error);
+      }
+      
+      throw error;
+    }
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all categories' })
+  @ApiOperation({ summary: 'Get all categories (including inactive for admin)' })
   @ApiResponse({
     status: 200,
     description: 'Categories retrieved successfully',
@@ -53,6 +77,20 @@ export class CategoriesController {
     return {
       data: categories,
       message: 'Categories retrieved successfully',
+    };
+  }
+
+  @Get('active')
+  @ApiOperation({ summary: 'Get only active categories' })
+  @ApiResponse({
+    status: 200,
+    description: 'Active categories retrieved successfully',
+  })
+  async findActive() {
+    const categories = await this.categoriesService.findActive();
+    return {
+      data: categories,
+      message: 'Active categories retrieved successfully',
     };
   }
 

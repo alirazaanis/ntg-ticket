@@ -11,22 +11,52 @@ export class CategoriesService {
 
   async create(createCategoryDto: CreateCategoryDto) {
     try {
+      this.logger.log('Creating category with data:', JSON.stringify(createCategoryDto, null, 2));
+      
       const category = await this.prisma.category.create({
-        data: createCategoryDto,
+        data: {
+          name: createCategoryDto.name,
+          customName: createCategoryDto.customName,
+          description: createCategoryDto.description,
+          isActive: createCategoryDto.isActive ?? true,
+          createdBy: createCategoryDto.createdBy!,
+        },
         include: {
           subcategories: true,
         },
       });
 
-      this.logger.log(`Category created: ${category.name}`);
+      this.logger.log(`Category created successfully: ${category.name}`);
       return category;
     } catch (error) {
       this.logger.error('Error creating category:', error);
+      this.logger.error('Error details:', JSON.stringify(error, null, 2));
       throw error;
     }
   }
 
   async findAll() {
+    try {
+      const categories = await this.prisma.category.findMany({
+        include: {
+          subcategories: {
+            orderBy: { name: 'asc' },
+          },
+        },
+        orderBy: [
+          { isActive: 'desc' }, // Active categories first
+          { name: 'asc' }
+        ],
+      });
+
+      return categories;
+    } catch (error) {
+      this.logger.error('Error finding categories:', error);
+      throw error;
+    }
+  }
+
+  async findActive() {
     try {
       const categories = await this.prisma.category.findMany({
         where: { isActive: true },
@@ -41,7 +71,7 @@ export class CategoriesService {
 
       return categories;
     } catch (error) {
-      this.logger.error('Error finding categories:', error);
+      this.logger.error('Error finding active categories:', error);
       throw error;
     }
   }

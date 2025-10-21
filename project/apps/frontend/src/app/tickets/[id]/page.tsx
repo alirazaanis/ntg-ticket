@@ -129,9 +129,9 @@ export default function TicketDetailPage() {
   const [newStatus, setNewStatus] = useState<TicketStatus>(TicketStatus.NEW);
   const [resolution, setResolution] = useState('');
   const [newComment, setNewComment] = useState('');
-  const [isInternalComment, setIsInternalComment] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [activeTab, setActiveTab] = useState<string | null>('details');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const { data: ticket, isLoading, error } = useTicket(ticketId);
   const { data: users, isLoading: usersLoading } = useUsers({
@@ -273,26 +273,36 @@ export default function TicketDetailPage() {
   };
 
   const handleAddComment = async () => {
+    if (!newComment.trim()) {
+      notifications.show({
+        title: 'Error',
+        message: 'Please enter a comment',
+        color: 'red',
+      });
+      return;
+    }
+
+    setIsSubmittingComment(true);
     try {
       await addCommentMutation.mutateAsync({
         ticketId,
         content: newComment,
-        isInternal: isInternalComment,
+        isInternal: false,
       });
       notifications.show({
         title: 'Success',
         message: 'Comment added successfully',
         color: 'green',
       });
-      setCommentModalOpen(false);
       setNewComment('');
-      setIsInternalComment(false);
     } catch (error) {
       notifications.show({
         title: 'Error',
         message: 'Failed to add comment',
         color: 'red',
       });
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -473,12 +483,7 @@ export default function TicketDetailPage() {
                 <Paper withBorder p='md'>
                   <Group justify='space-between' mb='md'>
                     <Title order={3}>Comments</Title>
-                    <Button
-                      leftSection={<IconMessage size={16} />}
-                      onClick={() => setCommentModalOpen(true)}
-                    >
-                      Add Comment
-                    </Button>
+                    
                   </Group>
                   <Stack gap='md'>
                     {ticket.comments?.map((comment: Comment) => (
@@ -517,6 +522,41 @@ export default function TicketDetailPage() {
                       </Text>
                     )}
                   </Stack>
+                  
+                  {/* Add Comment Form */}
+                  <Card withBorder p='md' mt='md'>
+                    <Title order={4} mb='md'>
+                      Add Comment
+                    </Title>
+                    <Stack gap='md'>
+                      <Textarea
+                        placeholder='Write your comment here...'
+                        minRows={3}
+                        maxRows={6}
+                        autosize
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                      />
+                      <Group justify='flex-end'>
+                        <Button
+                          variant='outline'
+                          onClick={() => {
+                            setNewComment('');
+                          }}
+                          disabled={!newComment.trim()}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleAddComment}
+                          disabled={!newComment.trim() || isSubmittingComment}
+                          loading={isSubmittingComment}
+                        >
+                          Add Comment
+                        </Button>
+                      </Group>
+                    </Stack>
+                  </Card>
                 </Paper>
               </Stack>
             </Tabs.Panel>
@@ -823,7 +863,7 @@ export default function TicketDetailPage() {
                       Category
                     </Text>
                     <Text size='sm' c='dimmed'>
-                      {ticket.category?.name || 'Unknown'} -{' '}
+                      {ticket.category?.customName || ticket.category?.name || 'Unknown'} -{' '}
                       {ticket.subcategory?.name || 'Unknown'}
                     </Text>
                   </div>
@@ -981,21 +1021,6 @@ export default function TicketDetailPage() {
             minRows={4}
             required
           />
-          {user?.roles?.some(role =>
-            ['SUPPORT_STAFF', 'SUPPORT_MANAGER', 'ADMIN'].includes(role)
-          ) && (
-            <Group>
-              <input
-                type='checkbox'
-                id='internal-comment'
-                checked={isInternalComment}
-                onChange={e => setIsInternalComment(e.target.checked)}
-              />
-              <label htmlFor='internal-comment'>
-                Internal comment (staff only)
-              </label>
-            </Group>
-          )}
           <Group justify='flex-end'>
             <Button
               variant='outline'

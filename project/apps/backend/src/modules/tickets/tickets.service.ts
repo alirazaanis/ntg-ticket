@@ -161,28 +161,33 @@ export class TicketsService {
     }
     this.logger.log(`Found category: ${category.name}`, 'TicketsService');
 
-    // Validate subcategory exists and belongs to category
-    this.logger.log(
-      `Looking up subcategory with ID: ${createTicketDto.subcategory} for category: ${createTicketDto.category}`,
-      'TicketsService'
-    );
-    const subcategory = await this.prisma.subcategory.findUnique({
-      where: {
-        id: createTicketDto.subcategory,
-        categoryId: createTicketDto.category,
-      },
-    });
-
-    if (!subcategory) {
-      this.logger.error(
-        `Subcategory not found with ID: ${createTicketDto.subcategory} for category: ${createTicketDto.category}`,
+    // Validate subcategory exists and belongs to category (if provided)
+    let subcategory = null;
+    if (createTicketDto.subcategory) {
+      this.logger.log(
+        `Looking up subcategory with ID: ${createTicketDto.subcategory} for category: ${createTicketDto.category}`,
         'TicketsService'
       );
-      throw new NotFoundException(
-        'Subcategory not found or does not belong to category'
-      );
+      subcategory = await this.prisma.subcategory.findUnique({
+        where: {
+          id: createTicketDto.subcategory,
+          categoryId: createTicketDto.category,
+        },
+      });
+
+      if (!subcategory) {
+        this.logger.error(
+          `Subcategory not found with ID: ${createTicketDto.subcategory} for category: ${createTicketDto.category}`,
+          'TicketsService'
+        );
+        throw new NotFoundException(
+          'Subcategory not found or does not belong to category'
+        );
+      }
+      this.logger.log(`Found subcategory: ${subcategory.name}`, 'TicketsService');
+    } else {
+      this.logger.log('No subcategory provided, creating ticket without subcategory', 'TicketsService');
     }
-    this.logger.log(`Found subcategory: ${subcategory.name}`, 'TicketsService');
 
     // Generate ticket number
     const ticketNumber = await this.generateTicketNumber();
@@ -193,17 +198,13 @@ export class TicketsService {
       createTicketDto.priority
     );
 
-    // Find category and subcategory by ID
+    // Find category by ID (already validated above, but need for ticket creation)
     const ticketCategory = await this.prisma.category.findUnique({
       where: { id: createTicketDto.category },
     });
 
-    const ticketSubcategory = await this.prisma.subcategory.findUnique({
-      where: { id: createTicketDto.subcategory },
-    });
-
-    if (!ticketCategory || !ticketSubcategory) {
-      throw new BadRequestException('Invalid category or subcategory');
+    if (!ticketCategory) {
+      throw new BadRequestException('Invalid category');
     }
 
     // Auto-assign ticket if enabled and no specific assignee provided
@@ -223,7 +224,7 @@ export class TicketsService {
         title: createTicketDto.title,
         description: createTicketDto.description,
         categoryId: ticketCategory.id,
-        subcategoryId: ticketSubcategory.id,
+        subcategoryId: subcategory?.id || null,
         priority: createTicketDto.priority,
         impact: createTicketDto.impact,
         urgency: createTicketDto.urgency,

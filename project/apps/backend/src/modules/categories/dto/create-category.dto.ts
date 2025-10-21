@@ -1,9 +1,13 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum } from 'class-validator';
 import { TicketCategory } from '@prisma/client';
 
 export class CreateCategoryDto {
-  @IsString()
+  @IsEnum(TicketCategory)
   name: TicketCategory;
+
+  @IsOptional()
+  @IsString()
+  customName?: string;
 
   @IsOptional()
   @IsString()
@@ -13,6 +17,7 @@ export class CreateCategoryDto {
   @IsBoolean()
   isActive?: boolean;
 
+  @IsOptional()
   @IsString()
-  createdBy: string;
+  createdBy?: string;
 }
