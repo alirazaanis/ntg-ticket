@@ -89,9 +89,7 @@ export function RoleSelectionModal({
   const t = useTranslations('auth');
 
   const handleRoleClick = (role: UserRole) => {
-    if (role !== activeRole) {
-      onRoleSelect(role);
-    }
+    onRoleSelect(role);
   };
 
   const availableRoles = roles.map(role => ({
@@ -147,13 +145,13 @@ export function RoleSelectionModal({
                 radius='md'
                 withBorder
                 style={{
-                  cursor: role !== activeRole ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   borderColor:
                     activeRole === role
                       ? `var(--mantine-color-${color}-5)`
                       : undefined,
                   borderWidth: activeRole === role ? 2 : 1,
-                  opacity: role === activeRole ? 0.7 : 1,
+                  opacity: 1,
                 }}
                 onClick={() => handleRoleClick(role)}
               >

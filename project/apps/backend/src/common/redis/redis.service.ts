@@ -22,7 +22,8 @@ export class RedisService {
 
   async get(key: string): Promise<string | null> {
     try {
-      return await this.client.get(key);
+      const result = await this.client.get(key);
+      return result as string | null;
     } catch (error) {
       this.logger.error('Error getting from Redis:', error);
       return null;

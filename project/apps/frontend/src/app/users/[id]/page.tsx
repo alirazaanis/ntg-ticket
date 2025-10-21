@@ -15,7 +15,6 @@ import {
   Alert,
   Loader,
   Tabs,
-  Table,
   ActionIcon,
   Menu,
 } from '@mantine/core';
@@ -23,7 +22,6 @@ import {
   IconEdit,
   IconTrash,
   IconDots,
-  IconTicket,
   IconCalendar,
   IconAlertCircle,
   IconUser,
@@ -33,8 +31,7 @@ import {
 import { RTLArrowLeft } from '../../../components/ui/RTLIcon';
 import { notifications } from '@mantine/notifications';
 import { useUser, useDeleteUser } from '../../../hooks/useUsers';
-import { useTickets } from '../../../hooks/useTickets';
-import { UserRole, Ticket } from '../../../types/unified';
+import { UserRole } from '../../../types/unified';
 import { formatDistanceToNow } from 'date-fns';
 
 import { getRoleColor } from '../../../lib/roleConfig';
@@ -50,21 +47,7 @@ export default function UserDetailPage() {
     isLoading: userLoading,
     error: userError,
   } = useUser(userId);
-  const { data: tickets, isLoading: ticketsLoading } = useTickets();
   const deleteUserMutation = useDeleteUser();
-
-  const userTickets =
-    tickets?.filter(
-      (ticket: Ticket) =>
-        ticket.requester.id === userId || ticket.assignedTo?.id === userId
-    ) || [];
-
-  const createdTickets = userTickets.filter(
-    (ticket: Ticket) => ticket.requester.id === userId
-  );
-  const assignedTickets = userTickets.filter(
-    (ticket: Ticket) => ticket.assignedTo?.id === userId
-  );
 
   const handleEdit = () => {
     router.push(`/users/${userId}/edit`);
@@ -170,9 +153,6 @@ export default function UserDetailPage() {
           <Tabs value={activeTab} onChange={setActiveTab}>
             <Tabs.List>
               <Tabs.Tab value='overview'>Overview</Tabs.Tab>
-              <Tabs.Tab value='tickets'>
-                Tickets ({userTickets.length})
-              </Tabs.Tab>
               <Tabs.Tab value='activity'>Activity</Tabs.Tab>
             </Tabs.List>
 
@@ -209,16 +189,26 @@ export default function UserDetailPage() {
                       <IconShield size={16} />
                       <div>
                         <Text size='sm' fw={500}>
-                          Role
+                          {user.roles && user.roles.length > 1 ? 'Roles' : 'Role'}
                         </Text>
-                        <Badge
-                          color={getRoleColor(
-                            user.roles?.[0] || UserRole.END_USER
+                        <Group gap='xs' mt='xs'>
+                          {user.roles && user.roles.length > 0 ? (
+                            user.roles.map((role: UserRole) => (
+                              <Badge
+                                key={role}
+                                color={getRoleColor(role)}
+                                variant='light'
+                                size='sm'
+                              >
+                                {role.replace('_', ' ')}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge color='gray' variant='light' size='sm'>
+                              Unknown
+                            </Badge>
                           )}
-                          variant='light'
-                        >
-                          {user.roles?.[0]?.replace('_', ' ') || 'Unknown'}
-                        </Badge>
+                        </Group>
                       </div>
                     </Group>
                     <Group gap='sm'>
@@ -235,151 +225,9 @@ export default function UserDetailPage() {
                   </Stack>
                 </Card>
 
-                <Card withBorder p='md'>
-                  <Title order={3} mb='md'>
-                    Statistics
-                  </Title>
-                  <Grid>
-                    <Grid.Col span={4}>
-                      <Stack align='center' gap='xs'>
-                        <Text size='xl' fw={700} c='blue'>
-                          {createdTickets.length}
-                        </Text>
-                        <Text size='sm' c='dimmed' ta='center'>
-                          Tickets Created
-                        </Text>
-                      </Stack>
-                    </Grid.Col>
-                    <Grid.Col span={4}>
-                      <Stack align='center' gap='xs'>
-                        <Text size='xl' fw={700} c='green'>
-                          {assignedTickets.length}
-                        </Text>
-                        <Text size='sm' c='dimmed' ta='center'>
-                          Tickets Assigned
-                        </Text>
-                      </Stack>
-                    </Grid.Col>
-                    <Grid.Col span={4}>
-                      <Stack align='center' gap='xs'>
-                        <Text size='xl' fw={700} c='orange'>
-                          {
-                            assignedTickets.filter(
-                              (t: Ticket) => t.status === 'RESOLVED'
-                            ).length
-                          }
-                        </Text>
-                        <Text size='sm' c='dimmed' ta='center'>
-                          Tickets Resolved
-                        </Text>
-                      </Stack>
-                    </Grid.Col>
-                  </Grid>
-                </Card>
               </Stack>
             </Tabs.Panel>
 
-            <Tabs.Panel value='tickets' pt='md'>
-              <Card withBorder p='md'>
-                <Title order={3} mb='md'>
-                  User Tickets
-                </Title>
-                {ticketsLoading ? (
-                  <Group justify='center' py='xl'>
-                    <Loader size='sm' />
-                    <Text>Loading tickets...</Text>
-                  </Group>
-                ) : userTickets.length === 0 ? (
-                  <Text c='dimmed' ta='center' py='xl'>
-                    No tickets found for this user.
-                  </Text>
-                ) : (
-                  <Table>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Ticket</Table.Th>
-                        <Table.Th>Status</Table.Th>
-                        <Table.Th>Priority</Table.Th>
-                        <Table.Th>Created</Table.Th>
-                        <Table.Th>Role</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {userTickets.map((ticket: Ticket) => (
-                        <Table.Tr key={ticket.id}>
-                          <Table.Td>
-                            <div>
-                              <Text fw={500} size='sm'>
-                                #{ticket.ticketNumber}
-                              </Text>
-                              <Text size='xs' c='dimmed'>
-                                {ticket.title}
-                              </Text>
-                            </div>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge
-                              color={
-                                ticket.status === 'RESOLVED'
-                                  ? 'green'
-                                  : ticket.status === 'CLOSED'
-                                    ? 'gray'
-                                    : ticket.status === 'IN_PROGRESS'
-                                      ? 'blue'
-                                      : 'orange'
-                              }
-                              variant='light'
-                              size='sm'
-                            >
-                              {ticket.status.replace('_', ' ')}
-                            </Badge>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge
-                              color={
-                                ticket.priority === 'CRITICAL'
-                                  ? 'red'
-                                  : ticket.priority === 'HIGH'
-                                    ? 'orange'
-                                    : ticket.priority === 'MEDIUM'
-                                      ? 'yellow'
-                                      : 'green'
-                              }
-                              variant='outline'
-                              size='sm'
-                            >
-                              {ticket.priority}
-                            </Badge>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text size='sm'>
-                              {formatDistanceToNow(new Date(ticket.createdAt), {
-                                addSuffix: true,
-                              })}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge
-                              color={
-                                ticket.requester.id === userId
-                                  ? 'blue'
-                                  : 'green'
-                              }
-                              variant='light'
-                              size='sm'
-                            >
-                              {ticket.requester.id === userId
-                                ? 'Requester'
-                                : 'Assignee'}
-                            </Badge>
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                )}
-              </Card>
-            </Tabs.Panel>
 
             <Tabs.Panel value='activity' pt='md'>
               <Card withBorder p='md'>
@@ -437,14 +285,6 @@ export default function UserDetailPage() {
                   fullWidth
                 >
                   Edit User
-                </Button>
-                <Button
-                  variant='outline'
-                  leftSection={<IconTicket size={16} />}
-                  onClick={() => setActiveTab('tickets')}
-                  fullWidth
-                >
-                  View Tickets
                 </Button>
               </Stack>
             </Card>

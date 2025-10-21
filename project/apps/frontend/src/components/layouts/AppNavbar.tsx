@@ -23,13 +23,8 @@ import {
   IconClipboardList,
   IconUserCheck,
   IconMail,
-  IconShield,
-  IconDatabase,
-  IconHistory,
-  IconSearch,
   IconClock,
   IconExclamationMark,
-  IconPlug,
 } from '@tabler/icons-react';
 import { RTLChevronDown, RTLChevronRight } from '../ui/RTLIcon';
 import { useAuthStore } from '../../stores/useAuthStore';
@@ -202,18 +197,6 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       href: '/admin/users',
       show: hasRole('ADMIN'), // Only show for ADMIN, not SUPPORT_MANAGER
     },
-    {
-      label: tAdmin('title'),
-      icon: IconShield,
-      href: '/admin/panel',
-      show: hasRole('ADMIN'),
-    },
-    {
-      label: tAdmin('auditTrail'),
-      icon: IconHistory,
-      href: '/admin/audit-logs',
-      show: hasRole('ADMIN'),
-    },
   ];
 
   // Additional admin items (only show on desktop or when expanded) - sorted by logical grouping
@@ -250,44 +233,8 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
       href: '/admin/sla',
       show: hasRole('ADMIN'),
     },
-    {
-      label: t('search'),
-      icon: IconSearch,
-      href: '/admin/saved-searches',
-      show: hasRole('ADMIN'),
-    },
     // System Management
-    {
-      label: t('backups'),
-      icon: IconDatabase,
-      href: '/admin/backups',
-      show: hasRole('ADMIN'),
-    },
-    {
-      label: t('elasticsearch'),
-      icon: IconDatabase,
-      href: '/admin/elasticsearch',
-      show: hasRole('ADMIN'),
-    },
     // Administration Features
-    {
-      label: 'Integrations',
-      icon: IconPlug,
-      href: '/admin/integrations',
-      show: hasRole('ADMIN'),
-    },
-    {
-      label: 'Permissions',
-      icon: IconShield,
-      href: '/admin/permissions',
-      show: hasRole('ADMIN'),
-    },
-    {
-      label: 'Audit Logs',
-      icon: IconFileText,
-      href: '/admin/audit-logs',
-      show: hasRole('ADMIN'),
-    },
   ];
 
   const isActive = (href: string) => {
