@@ -199,8 +199,17 @@ export default function UsersPage() {
                           {(() => {
                             const nameParts = user.name.split(' ').filter((n: string) => n.length > 0);
                             if (nameParts.length === 0) return '';
-                            if (nameParts.length === 1) return nameParts[0][0].toUpperCase();
-                            return nameParts[0][0].toUpperCase() + nameParts[nameParts.length - 1][0].toUpperCase();
+                            
+                            const getInitial = (name: string) => {
+                              if (name.includes('-')) {
+                                const hyphenIndex = name.indexOf('-');
+                                return name[hyphenIndex + 1] || name[0];
+                              }
+                              return name[0];
+                            };
+                            
+                            if (nameParts.length === 1) return getInitial(nameParts[0]).toUpperCase();
+                            return getInitial(nameParts[0]).toUpperCase() + getInitial(nameParts[nameParts.length - 1]).toUpperCase();
                           })()}
                         </Avatar>
                         <div>
