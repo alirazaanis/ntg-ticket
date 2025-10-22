@@ -121,10 +121,18 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   async config => {
-    const session = await getSession();
+    // First try to get token from localStorage (for role switches)
+    const localAccessToken = localStorage.getItem('access_token');
     
-    if (session?.accessToken) {
-      config.headers.Authorization = `Bearer ${session.accessToken}`;
+    if (localAccessToken) {
+      config.headers.Authorization = `Bearer ${localAccessToken}`;
+    } else {
+      // Fallback to NextAuth session
+      const session = await getSession();
+      
+      if (session?.accessToken) {
+        config.headers.Authorization = `Bearer ${session.accessToken}`;
+      }
     }
     
     return config;
@@ -146,22 +154,50 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const session = await getSession();
-        if (session?.refreshToken) {
-          // Try to refresh the token
+        // First try to get refresh token from localStorage
+        const localRefreshToken = localStorage.getItem('refresh_token');
+        
+        if (localRefreshToken) {
+          // Try to refresh the token using localStorage token
           const refreshResponse = await axios.post(
             `${API_BASE_URL}/api/v1/auth/refresh`,
-            { refresh_token: session.refreshToken }
+            { refresh_token: localRefreshToken }
           );
 
           if (refreshResponse.data?.data) {
-            const { access_token } = refreshResponse.data.data;
+            const { access_token, refresh_token } = refreshResponse.data.data;
+
+            // Update localStorage with new tokens
+            localStorage.setItem('access_token', access_token);
+            if (refresh_token) {
+              localStorage.setItem('refresh_token', refresh_token);
+            }
 
             // Update the authorization header and retry the request
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
 
             // Retry the original request
             return apiClient(originalRequest);
+          }
+        } else {
+          // Fallback to NextAuth session
+          const session = await getSession();
+          if (session?.refreshToken) {
+            // Try to refresh the token
+            const refreshResponse = await axios.post(
+              `${API_BASE_URL}/api/v1/auth/refresh`,
+              { refresh_token: session.refreshToken }
+            );
+
+            if (refreshResponse.data?.data) {
+              const { access_token } = refreshResponse.data.data;
+
+              // Update the authorization header and retry the request
+              originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+              // Retry the original request
+              return apiClient(originalRequest);
+            }
           }
         }
       } catch (refreshError) {

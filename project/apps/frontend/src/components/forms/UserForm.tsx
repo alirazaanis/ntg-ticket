@@ -16,6 +16,7 @@ import {
 import { useForm } from '@mantine/form';
 import { showErrorNotification } from '@/lib/notifications';
 import { usePasswordValidation } from '../../hooks/usePasswordValidation';
+import { VALIDATION_RULES } from '../../lib/constants';
 
 import { UserFormData, User } from '../../types/unified';
 
@@ -76,13 +77,16 @@ export function UserForm({
     setIsSubmitting(true);
     try {
       const formData = { ...values };
+      // Always remove confirmPassword as it's only for frontend validation
+      delete formData.confirmPassword;
+      
       if (isEditing) {
         delete formData.password;
-        delete formData.confirmPassword;
       }
       await onSubmit(formData);
-    } catch (error) {
-      showErrorNotification('Error', 'Failed to save user');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save user. Please check the form and try again.';
+      showErrorNotification('Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -131,24 +135,36 @@ export function UserForm({
         </Grid>
 
         {!isEditing && (
-          <Grid>
-            <Grid.Col span={6}>
-              <PasswordInput
-                label='Password'
-                placeholder='Enter password'
-                required
-                {...form.getInputProps('password')}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <PasswordInput
-                label='Confirm Password'
-                placeholder='Confirm password'
-                required
-                {...form.getInputProps('confirmPassword')}
-              />
-            </Grid.Col>
-          </Grid>
+          <>
+            <Grid>
+              <Grid.Col span={6}>
+                <PasswordInput
+                  label='Password'
+                  placeholder='Enter password'
+                  required
+                  description='Must contain uppercase, lowercase, number, and special character'
+                  {...form.getInputProps('password')}
+                />
+              </Grid.Col>
+              <Grid.Col span={6}>
+                <PasswordInput
+                  label='Confirm Password'
+                  placeholder='Confirm password'
+                  required
+                  {...form.getInputProps('confirmPassword')}
+                />
+              </Grid.Col>
+            </Grid>
+            <Alert color='blue' title='Password Requirements'>
+              <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <li>At least {VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters long</li>
+                <li>At least one uppercase letter (A-Z)</li>
+                <li>At least one lowercase letter (a-z)</li>
+                <li>At least one number (0-9)</li>
+                <li>At least one special character (!@#$%^&*(),.?":{}|&lt;&gt;)</li>
+              </ul>
+            </Alert>
+          </>
         )}
 
         {isEditing && (

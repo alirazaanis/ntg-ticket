@@ -314,6 +314,13 @@ export class AuthController {
     data: {
       access_token: string;
       refresh_token: string;
+      user: {
+        id: string;
+        email: string;
+        name: string;
+        roles: string[];
+        activeRole: string;
+      };
     };
     message: string;
   }> {
@@ -335,6 +342,7 @@ export class AuthController {
         data: {
           access_token: result.access_token,
           refresh_token: result.refresh_token,
+          user: result.user,
         },
         message: 'Role switched successfully',
       };

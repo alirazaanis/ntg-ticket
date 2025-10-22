@@ -597,15 +597,6 @@ export interface EmailTemplateFormData {
   isActive: boolean;
 }
 
-export interface UserFormData {
-  name: string;
-  email: string;
-  roles: string[];
-  isActive: boolean;
-  password?: string;
-  confirmPassword?: string;
-}
-
 // ===== API CLIENT TYPES =====
 export interface CreateCommentInput {
   ticketId: string;

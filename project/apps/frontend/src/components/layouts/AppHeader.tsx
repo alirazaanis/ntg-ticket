@@ -29,6 +29,7 @@ import { useSiteBranding } from '../../hooks/useSiteBranding';
 import { useMarkNotificationAsRead } from '../../hooks/useNotifications';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { LanguageSwitcher } from '../language/LanguageSwitcher';
 import { authApi } from '../../lib/apiClient';
@@ -61,6 +62,7 @@ export function AppHeader({
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   const markAsReadMutation = useMarkNotificationAsRead();
+  const queryClient = useQueryClient();
   const [showRoleModal, setShowRoleModal] = useState(false);
 
   // Debug log
@@ -123,6 +125,19 @@ export function AppHeader({
         ...user,
         activeRole: selectedRole,
       });
+
+      // Invalidate role-specific queries to ensure fresh data with new role
+      await queryClient.invalidateQueries({ queryKey: ['assigned-tickets'] });
+      await queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
+      await queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      await queryClient.invalidateQueries({ queryKey: ['tickets-with-pagination'] });
+      await queryClient.invalidateQueries({ queryKey: ['all-tickets-counting'] });
+      await queryClient.invalidateQueries({ queryKey: ['total-tickets-count'] });
+      await queryClient.invalidateQueries({ queryKey: ['overdue-tickets'] });
+      await queryClient.invalidateQueries({ queryKey: ['tickets-approaching-sla'] });
+      await queryClient.invalidateQueries({ queryKey: ['breached-sla-tickets'] });
+      await queryClient.invalidateQueries({ queryKey: ['support-staff'] });
+      await queryClient.invalidateQueries({ queryKey: ['users'] });
 
       notifications.show({
         title: tAuth('roleSwitched'),

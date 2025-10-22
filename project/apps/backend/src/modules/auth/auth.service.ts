@@ -81,7 +81,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(
-      { sub: user.id, type: 'refresh' },
+      { sub: user.id, type: 'refresh', activeRole: activeRole },
       { expiresIn: '7d' }
     );
 
@@ -463,6 +463,13 @@ export class AuthService {
   ): Promise<{
     access_token: string;
     refresh_token: string;
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      roles: string[];
+      activeRole: string;
+    };
   }> {
     try {
       const user = await this.prisma.user.findUnique({
@@ -496,7 +503,7 @@ export class AuthService {
 
       const newAccessToken = this.jwtService.sign(payload);
       const newRefreshToken = this.jwtService.sign(
-        { sub: user.id, type: 'refresh' },
+        { sub: user.id, type: 'refresh', activeRole: newActiveRole },
         { expiresIn: '7d' }
       );
 
@@ -526,6 +533,13 @@ export class AuthService {
       return {
         access_token: newAccessToken,
         refresh_token: newRefreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          roles: user.roles,
+          activeRole: newActiveRole,
+        },
       };
     } catch (error) {
       this.logger.error('Error switching active role:', error);
@@ -562,16 +576,20 @@ export class AuthService {
         throw new UnauthorizedException('User not found or inactive');
       }
 
+      // Preserve the activeRole from the original token if available
+      // Otherwise fall back to the first role
+      const activeRole = decoded.activeRole || user.roles[0];
+
       const payload = {
         sub: user.id,
         email: user.email,
         roles: user.roles,
-        activeRole: user.roles[0], // Use first role as default
+        activeRole: activeRole,
       };
 
       const newAccessToken = this.jwtService.sign(payload);
       const newRefreshToken = this.jwtService.sign(
-        { sub: user.id, type: 'refresh' },
+        { sub: user.id, type: 'refresh', activeRole: activeRole },
         { expiresIn: '7d' }
       );
 

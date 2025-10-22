@@ -36,10 +36,12 @@ export default function CreateUserPage() {
         color: 'green',
       });
       router.push('/admin/users');
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create user. Please check the form and try again.';
+      
       notifications.show({
         title: 'Error',
-        message: 'Failed to create user',
+        message: errorMessage,
         color: 'red',
       });
     }

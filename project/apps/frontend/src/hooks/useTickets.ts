@@ -9,10 +9,13 @@ import {
 import { validateStatusUpdate } from '../lib/statusValidation';
 import { TicketStatus } from '../types/unified';
 import { QUERY_CONFIG, PAGINATION_CONFIG } from '../lib/constants';
+import { useAuthStore } from '../stores/useAuthStore';
 
 export function useTickets(filters?: TicketFilters) {
+  const { user } = useAuthStore();
+  
   return useQuery<Ticket[]>({
-    queryKey: ['tickets', filters],
+    queryKey: ['tickets', filters, user?.activeRole],
     queryFn: async (): Promise<Ticket[]> => {
       try {
         const response = await ticketApi.getTickets(filters);
@@ -98,6 +101,8 @@ export function useTotalTicketsCount() {
 
 // New hook for backend pagination
 export function useTicketsWithPagination(filters?: TicketFilters) {
+  const { user } = useAuthStore();
+  
   return useQuery<{
     tickets: Ticket[];
     pagination: {
@@ -107,7 +112,7 @@ export function useTicketsWithPagination(filters?: TicketFilters) {
       totalPages: number;
     };
   }>({
-    queryKey: ['tickets-with-pagination', filters],
+    queryKey: ['tickets-with-pagination', filters, user?.activeRole],
     queryFn: async () => {
       try {
         const response = await ticketApi.getTickets(filters);
@@ -297,24 +302,30 @@ export function useUpdateTicketStatus() {
 }
 
 export function useMyTickets(filters?: TicketFilters) {
+  const { user } = useAuthStore();
+  
   return useQuery<Ticket[]>({
-    queryKey: ['my-tickets', filters],
+    queryKey: ['my-tickets', filters, user?.activeRole],
     queryFn: async () => {
       const response = await ticketApi.getMyTickets(filters);
       return response.data.data.data;
     },
     staleTime: QUERY_CONFIG.STALE_TIME.MEDIUM,
+    enabled: !!user?.activeRole, // Only run query when user has an active role
   });
 }
 
 export function useAssignedTickets(filters?: TicketFilters) {
+  const { user } = useAuthStore();
+  
   return useQuery<Ticket[]>({
-    queryKey: ['assigned-tickets', filters],
+    queryKey: ['assigned-tickets', filters, user?.activeRole],
     queryFn: async () => {
       const response = await ticketApi.getAssignedTickets(filters);
       return response.data.data.data;
     },
     staleTime: QUERY_CONFIG.STALE_TIME.MEDIUM,
+    enabled: !!user?.activeRole, // Only run query when user has an active role
   });
 }
 
