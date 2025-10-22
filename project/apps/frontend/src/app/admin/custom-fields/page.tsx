@@ -27,7 +27,6 @@ import {
   IconTrash,
   IconDots,
   IconSearch,
-  IconFilter,
   IconRefresh,
   IconEye,
   IconCopy,
@@ -35,6 +34,8 @@ import {
 import {
   useCustomFields,
   useDeleteCustomField,
+  useCreateCustomField,
+  useUpdateCustomField,
 } from '../../../hooks/useCustomFields';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
@@ -57,6 +58,8 @@ export default function CustomFieldsPage() {
 
   const { data: customFields, isLoading, refetch } = useCustomFields();
   const deleteCustomField = useDeleteCustomField();
+  const createCustomField = useCreateCustomField();
+  const updateCustomField = useUpdateCustomField();
 
   const createForm = useForm<CreateCustomFieldInput>({
     initialValues: {
@@ -65,6 +68,7 @@ export default function CustomFieldsPage() {
       isRequired: false,
       options: [],
       isActive: true,
+      description: '',
     },
     validate: {
       name: (value: string) => (!value ? 'Name is required' : null),
@@ -79,13 +83,16 @@ export default function CustomFieldsPage() {
       isRequired: false,
       options: [],
       isActive: true,
+      description: '',
     },
   });
 
   const filteredFields =
-    customFields?.filter(field =>
-      field.name.toLowerCase().includes(search.toLowerCase())
-    ) || [];
+    customFields?.filter(field => {
+      const matchesSearch = field.name.toLowerCase().includes(search.toLowerCase()) ||
+        (field.description && field.description.toLowerCase().includes(search.toLowerCase()));
+      return matchesSearch;
+    }) || [];
 
   const totalPages = Math.ceil(filteredFields.length / pageSize);
   const paginatedFields = filteredFields.slice(
@@ -93,28 +100,47 @@ export default function CustomFieldsPage() {
     currentPage * pageSize
   );
 
-  const handleCreateField = () => {
-    // This would be implemented with the actual create mutation
-    notifications.show({
-      title: 'Custom Field Created',
-      message: 'Custom field has been created successfully',
-      color: 'green',
-    });
-    setCreateModalOpen(false);
-    createForm.reset();
-    refetch();
+  const handleCreateField = async (values: CreateCustomFieldInput) => {
+    try {
+      await createCustomField.mutateAsync(values);
+      notifications.show({
+        title: 'Field Added to Ticket Form',
+        message: 'Custom field has been added to the ticket creation form',
+        color: 'green',
+      });
+      setCreateModalOpen(false);
+      createForm.reset();
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to create custom field',
+        color: 'red',
+      });
+    }
   };
 
-  const handleEditField = () => {
-    // This would be implemented with the actual update mutation
-    notifications.show({
-      title: 'Custom Field Updated',
-      message: 'Custom field has been updated successfully',
-      color: 'green',
-    });
-    setEditModalOpen(false);
-    setSelectedField(null);
-    refetch();
+  const handleEditField = async (values: CreateCustomFieldInput) => {
+    if (!selectedField) return;
+    
+    try {
+      await updateCustomField.mutateAsync({
+        id: selectedField.id,
+        data: values,
+      });
+      notifications.show({
+        title: 'Ticket Form Field Updated',
+        message: 'Custom field has been updated in the ticket creation form',
+        color: 'green',
+      });
+      setEditModalOpen(false);
+      setSelectedField(null);
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to update custom field',
+        color: 'red',
+      });
+    }
   };
 
   const handleDeleteField = async () => {
@@ -123,8 +149,8 @@ export default function CustomFieldsPage() {
     try {
       await deleteCustomField.mutateAsync(selectedField.id);
       notifications.show({
-        title: 'Custom Field Deleted',
-        message: 'Custom field has been deleted successfully',
+        title: 'Field Removed from Ticket Form',
+        message: 'Custom field has been removed from the ticket creation form',
         color: 'green',
       });
       setDeleteModalOpen(false);
@@ -146,6 +172,7 @@ export default function CustomFieldsPage() {
       isRequired: field.isRequired,
       options: field.options || [],
       isActive: field.isActive,
+      description: field.description || '',
     });
     setEditModalOpen(true);
   };
@@ -179,20 +206,27 @@ export default function CustomFieldsPage() {
 
   return (
     <Container size='xl' py='md'>
-      <Group justify='space-between' mb='xl'>
-        <div>
-          <Title order={2}>Custom Fields Management</Title>
-          <Text c='dimmed' size='sm'>
-            Manage custom fields for tickets
+        <Group justify='space-between' mb='xl'>
+          <div>
+            <Title order={2}>Ticket Creation Fields</Title>
+            <Text c='dimmed' size='sm'>
+              Manage custom fields that appear in the ticket creation form
+            </Text>
+          </div>
+          <Button
+            leftSection={<IconPlus size={16} />}
+            onClick={() => setCreateModalOpen(true)}
+          >
+            Add Field to Ticket Form
+          </Button>
+        </Group>
+
+        <Alert color='blue' mb='md'>
+          <Text size='sm'>
+            <strong>How it works:</strong> All custom fields you create will appear in the ticket creation form for all users. 
+            Changes here are immediately reflected in the ticket creation form - no refresh needed!
           </Text>
-        </div>
-        <Button
-          leftSection={<IconPlus size={16} />}
-          onClick={() => setCreateModalOpen(true)}
-        >
-          Create Custom Field
-        </Button>
-      </Group>
+        </Alert>
 
       <Card>
         <Group justify='space-between' mb='md'>
@@ -204,9 +238,6 @@ export default function CustomFieldsPage() {
               onChange={e => setSearch(e.target.value)}
               style={{ width: 300 }}
             />
-            <Button variant='light' leftSection={<IconFilter size={16} />}>
-              Filters
-            </Button>
           </Group>
           <Group>
             <ActionIcon
@@ -222,8 +253,8 @@ export default function CustomFieldsPage() {
         <Table>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Type</Table.Th>
+              <Table.Th>Field Name</Table.Th>
+              <Table.Th>Field Type</Table.Th>
               <Table.Th>Required</Table.Th>
               <Table.Th>Status</Table.Th>
               <Table.Th>Created</Table.Th>
@@ -234,7 +265,14 @@ export default function CustomFieldsPage() {
             {paginatedFields.map(field => (
               <Table.Tr key={field.id}>
                 <Table.Td>
-                  <Text fw={500}>{field.name}</Text>
+                  <div>
+                    <Text fw={500}>{field.name}</Text>
+                    {field.description && (
+                      <Text size='xs' c='dimmed' mt={2}>
+                        {field.description}
+                      </Text>
+                    )}
+                  </div>
                 </Table.Td>
                 <Table.Td>
                   <Badge
@@ -257,7 +295,7 @@ export default function CustomFieldsPage() {
                     color={field.isActive ? 'green' : 'red'}
                     variant='light'
                   >
-                    {field.isActive ? 'Active' : 'Inactive'}
+                    {field.isActive ? 'Shown in Form' : 'Hidden from Form'}
                   </Badge>
                 </Table.Td>
                 <Table.Td>
@@ -295,6 +333,30 @@ export default function CustomFieldsPage() {
                       >
                         Duplicate
                       </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconEye size={14} />}
+                        onClick={async () => {
+                          try {
+                            await updateCustomField.mutateAsync({
+                              id: field.id,
+                              data: { isActive: !field.isActive },
+                            });
+                            notifications.show({
+                              title: 'Ticket Form Field Updated',
+                              message: `Field ${field.isActive ? 'hidden from' : 'shown in'} ticket creation form`,
+                              color: 'green',
+                            });
+                          } catch (error) {
+                            notifications.show({
+                              title: 'Error',
+                              message: 'Failed to update field status',
+                              color: 'red',
+                            });
+                          }
+                        }}
+                      >
+                        {field.isActive ? 'Hide from Ticket Form' : 'Show in Ticket Form'}
+                      </Menu.Item>
                       <Menu.Divider />
                       <Menu.Item
                         leftSection={<IconTrash size={14} />}
@@ -329,7 +391,7 @@ export default function CustomFieldsPage() {
       <Modal
         opened={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title='Create Custom Field'
+        title='Add Field to Ticket Form'
         size='lg'
       >
         <form onSubmit={createForm.onSubmit(handleCreateField)}>
@@ -354,6 +416,12 @@ export default function CustomFieldsPage() {
               </Grid.Col>
             </Grid>
 
+            <TextInput
+              label='Field Description'
+              placeholder='Help text shown to users when creating tickets (optional)'
+              {...createForm.getInputProps('description')}
+            />
+
             <Grid>
               <Grid.Col span={6}>
                 <Switch
@@ -377,7 +445,9 @@ export default function CustomFieldsPage() {
               <Button variant='light' onClick={() => setCreateModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type='submit'>Create Field</Button>
+              <Button type='submit' loading={createCustomField.isPending}>
+                Add to Ticket Form
+              </Button>
             </Group>
           </Stack>
         </form>
@@ -387,7 +457,7 @@ export default function CustomFieldsPage() {
       <Modal
         opened={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        title='Edit Custom Field'
+        title='Edit Ticket Form Field'
         size='lg'
       >
         <form onSubmit={editForm.onSubmit(handleEditField)}>
@@ -412,6 +482,12 @@ export default function CustomFieldsPage() {
               </Grid.Col>
             </Grid>
 
+            <TextInput
+              label='Field Description'
+              placeholder='Help text shown to users when creating tickets (optional)'
+              {...editForm.getInputProps('description')}
+            />
+
             <Grid>
               <Grid.Col span={6}>
                 <Switch
@@ -433,7 +509,9 @@ export default function CustomFieldsPage() {
               <Button variant='light' onClick={() => setEditModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type='submit'>Update Field</Button>
+              <Button type='submit' loading={updateCustomField.isPending}>
+                Update Ticket Form Field
+              </Button>
             </Group>
           </Stack>
         </form>
@@ -443,12 +521,12 @@ export default function CustomFieldsPage() {
       <Modal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title='Delete Custom Field'
+        title='Remove Field from Ticket Form'
       >
         <Stack>
           <Alert color='red' title='Warning'>
-            Are you sure you want to delete this custom field? This action
-            cannot be undone.
+            Are you sure you want to remove this field from the ticket creation form? 
+            This action cannot be undone and the field will no longer appear when users create tickets.
           </Alert>
           <Text size='sm'>
             Field: <strong>{selectedField?.name}</strong>
@@ -462,7 +540,7 @@ export default function CustomFieldsPage() {
               onClick={handleDeleteField}
               loading={deleteCustomField.isPending}
             >
-              Delete
+              Remove from Ticket Form
             </Button>
           </Group>
         </Stack>

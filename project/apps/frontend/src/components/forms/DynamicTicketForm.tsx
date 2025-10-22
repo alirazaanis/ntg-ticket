@@ -40,6 +40,7 @@ import {
 } from '../../hooks/useCategories';
 import { FileUpload } from './FileUpload';
 import { FileWithPath } from '@mantine/dropzone';
+import { CustomFieldsSection } from './CustomFieldsSection';
 
 interface DynamicTicketFormProps {
   onSubmit: (values: DynamicTicketFormValues) => void;
@@ -83,6 +84,7 @@ export function DynamicTicketForm({
       urgency: TicketUrgency.NORMAL,
       slaLevel: SlaLevel.STANDARD,
       attachments: [],
+      customFields: {},
       ...initialValues,
     },
     validate: {
@@ -352,6 +354,12 @@ export function DynamicTicketForm({
                 </Grid>
               </>
             )}
+
+            {/* Custom Fields Section */}
+            <CustomFieldsSection
+              values={(form.values.customFields || {}) as Record<string, string | number | boolean>}
+              onChange={(customFields) => form.setFieldValue('customFields', customFields)}
+            />
 
             {/* File Attachments */}
             <Divider my='md' />

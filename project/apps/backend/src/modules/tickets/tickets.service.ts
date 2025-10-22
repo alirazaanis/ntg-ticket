@@ -255,6 +255,39 @@ export class TicketsService {
       },
     });
 
+    // Handle custom fields if provided
+    if (createTicketDto.customFields && Object.keys(createTicketDto.customFields).length > 0) {
+      this.logger.log(`Processing custom fields: ${JSON.stringify(createTicketDto.customFields)}`, 'TicketsService');
+      
+      // Get all custom fields to map names to IDs
+      const allCustomFields = await this.prisma.customField.findMany({
+        where: { isActive: true },
+      });
+
+      // Create custom field values
+      const customFieldEntries = Object.entries(createTicketDto.customFields)
+        .map(([fieldName, fieldValue]) => {
+          const customField = allCustomFields.find(cf => cf.name === fieldName);
+          if (customField) {
+            return {
+              ticketId: ticket.id,
+              customFieldId: customField.id,
+              value: String(fieldValue),
+            };
+          }
+          return null;
+        })
+        .filter(entry => entry !== null);
+
+      if (customFieldEntries.length > 0) {
+        await this.prisma.ticketCustomField.createMany({
+          data: customFieldEntries,
+        });
+
+        this.logger.log(`Created ${customFieldEntries.length} custom field values`, 'TicketsService');
+      }
+    }
+
     // Index in Elasticsearch
     try {
       await this.elasticsearch.indexTicket(ticket);
@@ -462,6 +495,11 @@ export class TicketsService {
             createdAt: 'desc',
           },
         },
+        customFields: {
+          include: {
+            customField: true,
+          },
+        },
       },
     });
 
@@ -476,7 +514,21 @@ export class TicketsService {
       );
     }
 
-    return ticket;
+    // Transform custom fields to a simple key-value object
+    const customFieldsObject: Record<string, string> = {};
+    if (ticket.customFields) {
+      ticket.customFields.forEach((ticketCustomField) => {
+        if (ticketCustomField.customField) {
+          customFieldsObject[ticketCustomField.customField.name] = ticketCustomField.value;
+        }
+      });
+    }
+
+    // Return ticket with transformed custom fields
+    return {
+      ...ticket,
+      customFields: customFieldsObject,
+    };
   }
 
   /**

@@ -213,6 +213,8 @@ export interface CustomField {
   options?: string[];
   isRequired: boolean;
   isActive: boolean;
+  description?: string;
+  category?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -223,6 +225,8 @@ export interface CreateCustomFieldInput {
   options?: string[];
   isRequired?: boolean;
   isActive?: boolean;
+  description?: string;
+  category?: string;
 }
 
 export interface UpdateCustomFieldInput
@@ -469,6 +473,7 @@ export interface DynamicTicketFormValues {
   urgency: TicketUrgency;
   slaLevel: SlaLevel;
   attachments: FileWithPath[];
+  customFields?: Record<string, string | number | boolean | string[]>;
   [key: string]: unknown; // For dynamic fields
 }
 

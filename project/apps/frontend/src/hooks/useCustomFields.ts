@@ -1,14 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { customFieldsApi } from '../lib/apiClient';
 import {
   CreateCustomFieldInput,
   UpdateCustomFieldInput,
+  CustomField,
 } from '../types/unified';
 
 export function useCustomFields(params?: {
   category?: string;
   isActive?: boolean;
-}) {
+}): UseQueryResult<CustomField[], Error> {
   return useQuery({
     queryKey: ['customFields', params],
     queryFn: async () => {
@@ -18,7 +19,7 @@ export function useCustomFields(params?: {
   });
 }
 
-export function useCustomField(id: string) {
+export function useCustomField(id: string): UseQueryResult<CustomField, Error> {
   return useQuery({
     queryKey: ['customField', id],
     queryFn: async () => {
@@ -29,7 +30,7 @@ export function useCustomField(id: string) {
   });
 }
 
-export function useCreateCustomField() {
+export function useCreateCustomField(): UseMutationResult<CustomField, Error, CreateCustomFieldInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -43,7 +44,7 @@ export function useCreateCustomField() {
   });
 }
 
-export function useUpdateCustomField() {
+export function useUpdateCustomField(): UseMutationResult<CustomField, Error, { id: string; data: UpdateCustomFieldInput }> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -63,7 +64,7 @@ export function useUpdateCustomField() {
   });
 }
 
-export function useDeleteCustomField() {
+export function useDeleteCustomField(): UseMutationResult<unknown, Error, string> {
   const queryClient = useQueryClient();
 
   return useMutation({

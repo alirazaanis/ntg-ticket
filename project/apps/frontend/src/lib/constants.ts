@@ -118,7 +118,7 @@ export const SUBCATEGORY_OPTIONS = {
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:4000',
-  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000',
   TIMEOUT: 10000,
   RETRY_DELAY: 1000,
   MAX_RETRY_DELAY: 30000,

@@ -31,7 +31,6 @@ export class CustomFieldsService {
         where,
         orderBy: { name: 'asc' },
       });
-
       return customFields;
     } catch (error) {
       this.logger.error('Error finding custom fields:', error);
@@ -65,6 +64,8 @@ export class CustomFieldsService {
           options: createCustomFieldDto.options,
           isRequired: createCustomFieldDto.isRequired ?? false,
           isActive: createCustomFieldDto.isActive ?? true,
+          description: createCustomFieldDto.description,
+          category: createCustomFieldDto.category,
         },
       });
 
@@ -85,6 +86,8 @@ export class CustomFieldsService {
         options?: string[] | null;
         isRequired?: boolean;
         isActive?: boolean;
+        description?: string;
+        category?: string;
       } = {};
 
       if (updateCustomFieldDto.name !== undefined) {
@@ -102,6 +105,12 @@ export class CustomFieldsService {
       }
       if (updateCustomFieldDto.isActive !== undefined) {
         updateData.isActive = updateCustomFieldDto.isActive;
+      }
+      if (updateCustomFieldDto.description !== undefined) {
+        updateData.description = updateCustomFieldDto.description;
+      }
+      if (updateCustomFieldDto.category !== undefined) {
+        updateData.category = updateCustomFieldDto.category;
       }
 
       const customField = await this.prisma.customField.update({

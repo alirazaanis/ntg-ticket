@@ -752,6 +752,27 @@ export default function TicketDetailPage() {
                     {ticket.urgency}
                   </Badge>
                 </Group>
+                
+                {/* Custom Fields */}
+                {ticket.customFields && Object.keys(ticket.customFields).length > 0 && (
+                  <>
+                    <div style={{ borderTop: '1px solid var(--mantine-color-gray-3)', margin: '8px 0' }} />
+                    {Object.entries(ticket.customFields).map(([fieldName, fieldValue]) => (
+                      <Group key={fieldName} justify='space-between'>
+                        <Text size='sm' fw={500}>
+                          {fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}
+                        </Text>
+                        <Badge
+                          color='blue'
+                          variant='light'
+                          size='sm'
+                        >
+                          {fieldValue}
+                        </Badge>
+                      </Group>
+                    ))}
+                  </>
+                )}
                 {canEdit && (
                   <>
                     {/* Show "Reopen Ticket" button for End Users with closed tickets */}

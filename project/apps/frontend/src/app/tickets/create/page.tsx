@@ -48,28 +48,7 @@ export default function CreateTicketPage() {
         impact: values.impact as CreateTicketInput['impact'],
         urgency: values.urgency as CreateTicketInput['urgency'],
         slaLevel: values.slaLevel as CreateTicketInput['slaLevel'],
-        customFields: Object.keys(values)
-          .filter(
-            key =>
-              ![
-                'title',
-                'description',
-                'category',
-                'subcategory',
-                'priority',
-                'impact',
-                'urgency',
-                'slaLevel',
-                'attachments',
-              ].includes(key)
-          )
-          .reduce(
-            (acc, key) => {
-              acc[key] = values[key] as string | number | boolean;
-              return acc;
-            },
-            {} as Record<string, string | number | boolean>
-          ),
+        customFields: (values.customFields || {}) as Record<string, string | number | boolean>,
       };
 
       const response = await ticketApi.createTicket(createTicketData);

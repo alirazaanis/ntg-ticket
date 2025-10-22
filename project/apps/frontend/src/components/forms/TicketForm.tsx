@@ -26,6 +26,7 @@ import { useTranslations } from 'next-intl';
 import { useAutoAssignSettings } from '../../hooks/useAutoAssignSettings';
 import { useActiveCategories, useSubcategories } from '../../hooks/useCategories';
 import { useCustomFields } from '../../hooks/useCustomFields';
+import { CustomFieldsSection } from './CustomFieldsSection';
 import {
   URGENCY_OPTIONS,
   IMPACT_OPTIONS,
@@ -284,6 +285,12 @@ export function TicketForm({
           placeholder='Select related tickets'
           data={[]} // This would be populated from API
           {...form.getInputProps('relatedTickets')}
+        />
+
+        {/* Custom Fields Section */}
+        <CustomFieldsSection
+          values={form.values.customFields as Record<string, string | number | boolean>}
+          onChange={(customFields) => form.setFieldValue('customFields', customFields)}
         />
 
         <div>
