@@ -43,6 +43,7 @@ import {
   IconActivity,
 } from '@tabler/icons-react';
 import { useSlaReport, useExportReport } from '../../hooks/useReports';
+import { useMediaQuery } from '@mantine/hooks';
 import { useUsers } from '../../hooks/useUsers';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useTickets, useAllTicketsForCounting } from '../../hooks/useTickets';
@@ -103,6 +104,7 @@ function MetricCard({
 export default function ReportsPage() {
   const t = useTranslations('reports');
   const { user } = useAuthStore();
+  const isSmall = useMediaQuery('(max-width: 48em)');
 
   const [filters, setFilters] = useState<ReportFilters>({});
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -1771,9 +1773,22 @@ export default function ReportsPage() {
             ))}
           </Grid>
 
-          {/* Breakdown Tables */}
-          <Grid>
-            <Grid.Col span={12}>
+          {/* Breakdown Tables - Masonry two-column layout */}
+          <div
+            style={{
+              columnCount: isSmall ? 1 : 2,
+              columnGap: '16px',
+            }}
+          >
+            <div
+              style={{
+                breakInside: 'avoid',
+                marginBottom: '16px',
+                display: 'inline-block',
+                width: '100%',
+                verticalAlign: 'top',
+              }}
+            >
               <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
                   Users by Role
@@ -1817,9 +1832,17 @@ export default function ReportsPage() {
                   ))}
                 </Stack>
               </Paper>
-            </Grid.Col>
+            </div>
 
-            <Grid.Col span={12}>
+            <div
+              style={{
+                breakInside: 'avoid',
+                marginBottom: '16px',
+                display: 'inline-block',
+                width: '100%',
+                verticalAlign: 'top',
+              }}
+            >
               <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
                   Users by Registration Period
@@ -1865,9 +1888,17 @@ export default function ReportsPage() {
                   ))}
                 </Stack>
               </Paper>
-            </Grid.Col>
+            </div>
 
-            <Grid.Col span={12}>
+            <div
+              style={{
+                breakInside: 'avoid',
+                marginBottom: '16px',
+                display: 'inline-block',
+                width: '100%',
+                verticalAlign: 'top',
+              }}
+            >
               <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
                   Users by Status
@@ -1904,9 +1935,17 @@ export default function ReportsPage() {
                   ))}
                 </Stack>
               </Paper>
-            </Grid.Col>
+            </div>
 
-            <Grid.Col span={12}>
+            <div
+              style={{
+                breakInside: 'avoid',
+                marginBottom: '16px',
+                display: 'inline-block',
+                width: '100%',
+                verticalAlign: 'top',
+              }}
+            >
               <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
                   Tickets by Priority
@@ -1950,9 +1989,17 @@ export default function ReportsPage() {
                   ))}
                 </Stack>
               </Paper>
-            </Grid.Col>
+            </div>
 
-            <Grid.Col span={12}>
+            <div
+              style={{
+                breakInside: 'avoid',
+                marginBottom: '16px',
+                display: 'inline-block',
+                width: '100%',
+                verticalAlign: 'top',
+              }}
+            >
               <Paper withBorder p='md'>
                 <Title order={4} mb='md'>
                   Tickets by Category
@@ -1992,8 +2039,8 @@ export default function ReportsPage() {
                   ))}
                 </Stack>
               </Paper>
-            </Grid.Col>
-          </Grid>
+            </div>
+          </div>
 
           {/* Security & Compliance Breakdown Tables */}
           <div>
