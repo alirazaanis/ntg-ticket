@@ -137,9 +137,27 @@ export default function TicketDetailPage() {
   const { data: users, isLoading: usersLoading } = useUsers({
     limit: PAGINATION_CONFIG.BULK_ACTIONS_LIMIT,
   });
+  
+  // Get all users for resolving user IDs in history
+  const { data: allUsers } = useUsers();
   const updateStatusMutation = useUpdateTicketStatus();
   const assignTicketMutation = useAssignTicket();
   const addCommentMutation = useCreateComment();
+
+  // Helper function to resolve user ID to name
+  const getUserName = (userId: string | null): string => {
+    if (!userId) return 'Unassigned';
+    const user = allUsers?.find(u => u.id === userId);
+    return user?.name || userId;
+  };
+
+  // Helper function to format field name for display
+  const formatFieldName = (fieldName: string): string => {
+    if (fieldName === 'assignedToId') {
+      return 'Assignment';
+    }
+    return fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase());
+  };
 
   const canEdit =
     ROLE_GROUPS.ADMIN_ONLY.includes(user?.activeRole as 'ADMIN') ||
@@ -634,7 +652,7 @@ export default function TicketDetailPage() {
                             <Timeline.Item
                               key={historyItem.id}
                               bullet={<IconEdit size={12} />}
-                              title={`${historyItem.fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())} Changed`}
+                              title={`${formatFieldName(historyItem.fieldName)} Changed`}
                             >
                               <Text c='dimmed' size='sm' mb={4}>
                                 Changed by{' '}
@@ -645,13 +663,17 @@ export default function TicketDetailPage() {
                               </Text>
                               <Group gap='xs' mb={4}>
                                 <Badge size='sm' variant='outline' color='red'>
-                                  {historyItem.oldValue || 'Empty'}
+                                  {historyItem.fieldName === 'assignedToId' 
+                                    ? getUserName(historyItem.oldValue) 
+                                    : (historyItem.oldValue || 'Empty')}
                                 </Badge>
                                 <Text size='sm' c='dimmed'>
                                   →
                                 </Text>
                                 <Badge size='sm' variant='filled' color='green'>
-                                  {historyItem.newValue || 'Empty'}
+                                  {historyItem.fieldName === 'assignedToId' 
+                                    ? getUserName(historyItem.newValue) 
+                                    : (historyItem.newValue || 'Empty')}
                                 </Badge>
                               </Group>
                             </Timeline.Item>
