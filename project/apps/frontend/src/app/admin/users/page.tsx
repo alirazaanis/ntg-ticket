@@ -196,10 +196,12 @@ export default function UsersPage() {
                     <Table.Td>
                       <Group gap='sm'>
                         <Avatar size='sm' radius='xl'>
-                          {user.name
-                            .split(' ')
-                            .map((n: string) => n[0])
-                            .join('')}
+                          {(() => {
+                            const nameParts = user.name.split(' ').filter((n: string) => n.length > 0);
+                            if (nameParts.length === 0) return '';
+                            if (nameParts.length === 1) return nameParts[0][0].toUpperCase();
+                            return nameParts[0][0].toUpperCase() + nameParts[nameParts.length - 1][0].toUpperCase();
+                          })()}
                         </Avatar>
                         <div>
                           <Text fw={500}>{user.name}</Text>
