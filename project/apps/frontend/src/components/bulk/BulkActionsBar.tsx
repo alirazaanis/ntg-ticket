@@ -349,8 +349,7 @@ export function BulkActionsBar({
       >
         <Stack gap='md'>
           <Alert icon={<IconAlertCircle size={16} />} color='red'>
-            This will assign {selectedCount} selected tickets to the chosen
-            user.
+            The number in brackets next to each name shows their current active tickets (open, in progress, reopened).
           </Alert>
           <Select
             label='Assign To'
@@ -358,7 +357,7 @@ export function BulkActionsBar({
             data={
               supportStaff?.map((user: User) => ({
                 value: user.id,
-                label: user.name,
+                label: `${user.name} (${user.openTicketCount || 0})`,
               })) || []
             }
             value={selectedAssignee}

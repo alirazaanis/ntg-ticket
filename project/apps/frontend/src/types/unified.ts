@@ -75,6 +75,7 @@ export interface User {
   avatar: string | null;
   createdAt: string;
   updatedAt: string;
+  openTicketCount?: number;
 }
 
 export interface CreateUserInput {

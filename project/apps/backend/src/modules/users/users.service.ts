@@ -325,9 +325,49 @@ export class UsersService {
       name: string;
       roles: string[];
       isActive: boolean;
+      openTicketCount: number;
     }[]
   > {
-    return this.getUsersByRole(UserRole.SUPPORT_STAFF);
+    try {
+      const users = await this.prisma.user.findMany({
+        where: {
+          roles: { has: UserRole.SUPPORT_STAFF },
+          isActive: true,
+        },
+        include: {
+          assignedTickets: {
+            where: {
+              status: {
+                in: ['NEW', 'OPEN', 'IN_PROGRESS', 'REOPENED'],
+              },
+            },
+            select: { id: true },
+          },
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      return users
+        .map(user => ({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          roles: user.roles,
+          isActive: user.isActive,
+          openTicketCount: user.assignedTickets.length,
+        }))
+        .sort((a, b) => {
+          // First sort by ticket count (ascending - least tickets first)
+          if (a.openTicketCount !== b.openTicketCount) {
+            return a.openTicketCount - b.openTicketCount;
+          }
+          // If ticket counts are equal, sort by name alphabetically
+          return a.name.localeCompare(b.name);
+        });
+    } catch (error) {
+      this.logger.error('Error getting support staff with ticket counts:', error);
+      throw error;
+    }
   }
 
   async getSupportManagers(): Promise<
@@ -337,9 +377,49 @@ export class UsersService {
       name: string;
       roles: string[];
       isActive: boolean;
+      openTicketCount: number;
     }[]
   > {
-    return this.getUsersByRole(UserRole.SUPPORT_MANAGER);
+    try {
+      const users = await this.prisma.user.findMany({
+        where: {
+          roles: { has: UserRole.SUPPORT_MANAGER },
+          isActive: true,
+        },
+        include: {
+          assignedTickets: {
+            where: {
+              status: {
+                in: ['NEW', 'OPEN', 'IN_PROGRESS', 'REOPENED'],
+              },
+            },
+            select: { id: true },
+          },
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      return users
+        .map(user => ({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          roles: user.roles,
+          isActive: user.isActive,
+          openTicketCount: user.assignedTickets.length,
+        }))
+        .sort((a, b) => {
+          // First sort by ticket count (ascending - least tickets first)
+          if (a.openTicketCount !== b.openTicketCount) {
+            return a.openTicketCount - b.openTicketCount;
+          }
+          // If ticket counts are equal, sort by name alphabetically
+          return a.name.localeCompare(b.name);
+        });
+    } catch (error) {
+      this.logger.error('Error getting support managers with ticket counts:', error);
+      throw error;
+    }
   }
 
   async getAdmins(): Promise<

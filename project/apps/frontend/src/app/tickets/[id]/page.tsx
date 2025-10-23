@@ -10,7 +10,6 @@ import {
   TicketUrgency,
   Comment,
   Attachment,
-  UserRole,
 } from '../../../types/unified';
 
 // Define types for ticket history
@@ -78,12 +77,12 @@ import {
   useAssignTicket,
 } from '../../../hooks/useTickets';
 import { useCreateComment } from '../../../hooks/useComments';
-import { useUsers } from '../../../hooks/useUsers';
+import { useUsers, useSupportStaff } from '../../../hooks/useUsers';
 import { useAuthStore } from '../../../stores/useAuthStore';
 
 import { notifications } from '@mantine/notifications';
 import { formatDistanceToNow } from 'date-fns';
-import { PAGINATION_CONFIG, ROLE_GROUPS } from '../../../lib/constants';
+import { ROLE_GROUPS } from '../../../lib/constants';
 
 const statusColors: Record<TicketStatus, string> = {
   NEW: 'blue',
@@ -134,9 +133,8 @@ export default function TicketDetailPage() {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const { data: ticket, isLoading, error } = useTicket(ticketId);
-  const { data: users, isLoading: usersLoading } = useUsers({
-    limit: PAGINATION_CONFIG.BULK_ACTIONS_LIMIT,
-  });
+  // Get support staff with ticket counts for assignment
+  const { data: supportStaff, isLoading: supportStaffLoading } = useSupportStaff();
   
   // Get all users for resolving user IDs in history
   const { data: allUsers } = useUsers();
@@ -1017,19 +1015,17 @@ export default function TicketDetailPage() {
         <Stack gap='md'>
           <Select
             label='Assign To'
-            placeholder={usersLoading ? 'Loading users...' : 'Select a user'}
+            placeholder={supportStaffLoading ? 'Loading users...' : 'Select a user'}
             data={
-              users
-                ?.filter(user => user.roles?.includes(UserRole.SUPPORT_STAFF))
-                .map(user => ({
-                  value: user.id,
-                  label: user.name,
-                })) || []
+              supportStaff?.map(user => ({
+                value: user.id,
+                label: `${user.name} (${user.openTicketCount || 0})`,
+              })) || []
             }
             value={selectedAssignee}
             onChange={value => setSelectedAssignee(value || '')}
             searchable
-            disabled={usersLoading}
+            disabled={supportStaffLoading}
           />
           <Group justify='flex-end'>
             <Button variant='outline' onClick={() => setAssignModalOpen(false)}>
