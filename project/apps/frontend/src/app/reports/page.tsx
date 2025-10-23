@@ -55,6 +55,7 @@ import {
   STATUS_OPTIONS,
 } from '@/lib/constants';
 import { useActiveCategories } from '../../hooks/useCategories';
+import { exportReportWithDashboardToPDF } from '../../lib/pdfExport';
 
 interface MetricCardProps {
   title: string;
@@ -482,8 +483,40 @@ export default function ReportsPage() {
     );
   }, [filteredTickets, user]);
 
+  const handlePDFExport = async () => {
+    try {
+      const filename = `${user?.activeRole || 'USER'}-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Use the new function that captures dashboard as second page (if not end user)
+      await exportReportWithDashboardToPDF('reports-page-container', {
+        filename,
+        quality: 0.98,
+      }, user?.activeRole);
+
+      setExportModalOpen(false);
+
+      notifications.show({
+        title: 'Success',
+        message: 'PDF report with dashboard overview exported successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: `Failed to export PDF report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        color: 'red',
+      });
+    }
+  };
+
   const handleExportReport = async (format: string) => {
     try {
+      // Handle PDF export with client-side generation
+      if (format === 'pdf') {
+        await handlePDFExport();
+        return;
+      }
+
       // Special handling for Administrator reports
       if (user?.activeRole === 'ADMIN') {
         await handleAdminExport();
@@ -526,7 +559,7 @@ export default function ReportsPage() {
       // Create role-based filename since we can't access headers with blob response
       // Ensure we get the correct file extension based on format
       const fileExtension =
-        format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+        format === 'excel' ? 'xlsx' : 'pdf';
       const filename = `${user?.activeRole || 'USER'}-report-${new Date().toISOString().split('T')[0]}.${fileExtension}`;
       // Debug logging removed for production
 
@@ -575,6 +608,13 @@ export default function ReportsPage() {
 
   const handleAdminExport = async () => {
     try {
+      // Handle PDF export for admin users
+      if (exportFormat === 'pdf') {
+        await handlePDFExport();
+        return;
+      }
+
+
       // Create structured data for Excel export
       const exportData = {
         summaryCards: [
@@ -920,17 +960,17 @@ export default function ReportsPage() {
           ];
 
     return (
-      <Container size='xl' py='md'>
+      <Container id="reports-page-container" size='xl' py='md'>
         <Stack gap='md'>
           {/* Header */}
-          <Group justify='space-between'>
+          <Group justify='space-between' data-section="reports-header">
             <div>
               <Title order={2}>
                 {user?.activeRole === 'END_USER'
-                  ? 'My Ticket Reports'
+                  ? 'End User Reports'
                   : user?.activeRole === 'SUPPORT_STAFF'
-                    ? 'Assigned Ticket Reports'
-                    : 'Team Ticket Reports'}
+                    ? 'Support Staff Reports'
+                    : 'Manager Reports'}
               </Title>
               <Text c='dimmed' size='sm'>
                 {user?.activeRole === 'END_USER'
@@ -940,7 +980,7 @@ export default function ReportsPage() {
                     : 'View and filter team ticket statistics'}
               </Text>
             </div>
-            <Group>
+            <Group className="pdf-hide-elements">
               <Button
                 variant='light'
                 leftSection={<IconRefresh size={16} />}
@@ -958,7 +998,7 @@ export default function ReportsPage() {
           </Group>
 
           {/* Filters */}
-          <Card>
+          <Card className="pdf-hide-elements">
             <Stack>
               <Group justify='space-between'>
                 <Title order={4}>Filter Options</Title>
@@ -1057,32 +1097,34 @@ export default function ReportsPage() {
           </Card>
 
           {/* Summary Count Boxes */}
-          <Grid>
-            {stats.map(stat => (
-              <Grid.Col
-                key={stat.title}
-                span={{
-                  base: 12,
-                  sm: user?.activeRole === 'END_USER' ? 6 : 6,
-                  md: user?.activeRole === 'END_USER' ? 3 : 2.4,
-                }}
-              >
-                <MetricCard
-                  title={stat.title}
-                  value={stat.value}
-                  icon={stat.icon}
-                  color={stat.color}
-                  tooltip={stat.tooltip}
-                />
-              </Grid.Col>
-            ))}
-          </Grid>
+          <div id="report-overview-section" style={{ marginBottom: '2rem' }}>
+            <Grid>
+              {stats.map(stat => (
+                <Grid.Col
+                  key={stat.title}
+                  span={{
+                    base: 12,
+                    sm: user?.activeRole === 'END_USER' ? 6 : 6,
+                    md: user?.activeRole === 'END_USER' ? 3 : 2.4,
+                  }}
+                >
+                  <MetricCard
+                    title={stat.title}
+                    value={stat.value}
+                    icon={stat.icon}
+                    color={stat.color}
+                    tooltip={stat.tooltip}
+                  />
+                </Grid.Col>
+              ))}
+            </Grid>
+          </div>
 
           {/* SLA Performance Section - Support Staff and Manager */}
           {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(
             user?.activeRole || ''
           ) && (
-            <Paper withBorder p='md'>
+            <Paper withBorder p='md' data-section="sla-performance">
               <Title order={3} mb='md'>
                 SLA Performance
               </Title>
@@ -1149,7 +1191,8 @@ export default function ReportsPage() {
           {['SUPPORT_STAFF', 'SUPPORT_MANAGER'].includes(
             user?.activeRole || ''
           ) && (
-            <Grid>
+            <div id="report-content-section" style={{ marginTop: '2rem' }}>
+              <Grid>
               {/* Left Column - Category, Impact, and Priority stacked with spacing */}
               <Grid.Col span={{ base: 12, md: 6 }}>
                 <Stack gap='sm'>
@@ -1327,12 +1370,13 @@ export default function ReportsPage() {
                 </Stack>
               </Grid.Col>
             </Grid>
+            </div>
           )}
 
           {/* Staff Performance Section - Support Manager Only */}
           {user?.activeRole === 'SUPPORT_MANAGER' &&
             staffPerformance.length > 0 && (
-              <Paper withBorder p='md'>
+              <Paper withBorder p='md' data-section="staff-performance">
                 <Title order={3} mb='md'>
                   Staff Performance
                 </Title>
@@ -1521,7 +1565,6 @@ export default function ReportsPage() {
               data={[
                 { value: 'pdf', label: 'PDF' },
                 { value: 'excel', label: 'Excel' },
-                { value: 'csv', label: 'CSV' },
               ]}
               value={exportFormat}
               onChange={value => setExportFormat(value || 'pdf')}
@@ -1545,15 +1588,15 @@ export default function ReportsPage() {
 
   // For other roles, show the full administrative reports (existing functionality)
   return (
-    <Container size='xl' py='md'>
-      <Group justify='space-between' mb='xl'>
+    <Container id="reports-page-container" size='xl' py='md'>
+      <Group justify='space-between' mb='xl' data-section="reports-header">
         <div>
           <Title order={2}>Administrative Reports</Title>
           <Text c='dimmed' size='sm'>
             User management, ticket analytics, and SLA compliance reports
           </Text>
         </div>
-        <Group>
+        <Group className="pdf-hide-elements">
           <Button
             variant='light'
             leftSection={<IconRefresh size={16} />}
@@ -1574,7 +1617,7 @@ export default function ReportsPage() {
       {user?.activeRole === 'ADMIN' && (
         <Stack gap='md'>
           {/* Filters */}
-          <Card>
+          <Card className="pdf-hide-elements">
             <Stack>
               <Group justify='space-between'>
                 <Title order={4}>Filter Options</Title>
@@ -1647,8 +1690,9 @@ export default function ReportsPage() {
           </Card>
 
           {/* Summary Cards */}
-          <Grid>
-            {[
+          <div id="report-overview-section" style={{ marginBottom: '2rem' }}>
+            <Grid>
+              {[
               {
                 title: 'Total Users',
                 value: filteredUsers.length,
@@ -1771,9 +1815,11 @@ export default function ReportsPage() {
                 />
               </Grid.Col>
             ))}
-          </Grid>
+            </Grid>
+          </div>
 
           {/* Breakdown Tables - Masonry two-column layout */}
+          <div id="report-content-section" style={{ marginTop: '2rem' }}>
           <div
             style={{
               columnCount: isSmall ? 1 : 2,
@@ -2208,6 +2254,7 @@ export default function ReportsPage() {
               </Grid.Col>
             </Grid>
           </div>
+          </div>
         </Stack>
       )}
 
@@ -2221,9 +2268,12 @@ export default function ReportsPage() {
           <Select
             label='Export Format'
             placeholder='Select format'
-            data={[{ value: 'excel', label: 'Excel' }]}
+            data={[
+              { value: 'pdf', label: 'PDF' },
+              { value: 'excel', label: 'Excel' },
+            ]}
             value={exportFormat}
-            onChange={value => setExportFormat(value || 'excel')}
+            onChange={value => setExportFormat(value || 'pdf')}
           />
           <Group justify='flex-end'>
             <Button variant='light' onClick={() => setExportModalOpen(false)}>

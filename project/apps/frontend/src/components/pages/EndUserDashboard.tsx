@@ -93,6 +93,7 @@ export function EndUserDashboard() {
           </div>
           <Group>
             <Button
+              className="pdf-hide-elements"
               variant='outline'
               leftSection={<IconSearch size={16} />}
               onClick={() => router.push('/tickets')}

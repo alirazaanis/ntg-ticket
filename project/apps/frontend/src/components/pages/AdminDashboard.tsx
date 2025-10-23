@@ -162,6 +162,7 @@ export function AdminDashboard() {
             </Text>
           </div>
           <Button
+            className="pdf-hide-elements"
             leftSection={<IconRefresh size={16} />}
             onClick={handleRefresh}
             loading={refreshing}

@@ -6,7 +6,6 @@ import {
   Paper,
   Title,
   Text,
-  Button,
   Group,
   Stack,
   Badge,
@@ -18,7 +17,6 @@ import {
 } from '@mantine/core';
 import { AreaChart } from '@mantine/charts';
 import {
-  IconSearch,
   IconClock,
   IconCheck,
   IconAlertCircle,
@@ -33,11 +31,9 @@ import {
 import { useTicketReport } from '../../hooks/useReports';
 import { Ticket } from '../../types/unified';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 
 export function ManagerDashboard() {
   const t = useTranslations('dashboard');
-  const router = useRouter();
 
   const { data: totalTicketsCount } = useTotalTicketsCount();
   const { data: allTicketsForStats, isLoading: ticketsLoading } =
@@ -115,18 +111,10 @@ export function ManagerDashboard() {
         {/* Header */}
         <Group justify='space-between'>
           <div>
-            <Title order={2}>Management Dashboard</Title>
+            <Title order={2}>Manager Overview</Title>
             <Text c='dimmed'>Monitor team performance and ticket metrics</Text>
           </div>
-          <Group>
-            <Button
-              variant='outline'
-              leftSection={<IconSearch size={16} />}
-              onClick={() => router.push('/tickets')}
-            >
-              Search Tickets
-            </Button>
-          </Group>
+         
         </Group>
 
         {/* Stats Cards */}

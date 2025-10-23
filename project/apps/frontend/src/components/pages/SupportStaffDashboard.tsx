@@ -114,13 +114,14 @@ export function SupportStaffDashboard() {
         {/* Header */}
         <Group justify='space-between'>
           <div>
-            <Title order={2}>Support Dashboard</Title>
+            <Title order={2}>Support Staff Overview</Title>
             <Text c='dimmed'>
               Manage your assigned tickets and track performance
             </Text>
           </div>
           <Group>
             <Button
+              className="pdf-hide-elements"
               variant='outline'
               leftSection={<IconSearch size={16} />}
               onClick={() => router.push('/tickets')}
