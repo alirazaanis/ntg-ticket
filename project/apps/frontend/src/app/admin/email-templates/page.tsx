@@ -46,6 +46,7 @@ import {
   EMAIL_TEMPLATE_TYPES,
   EMAIL_TEMPLATE_VARIABLES,
 } from '@/lib/constants';
+import { getEarthyColor } from '../../../lib/colorConfig';
 
 interface EmailTemplateFormData {
   name: string;
@@ -373,7 +374,7 @@ export default function EmailTemplatesPage() {
                         <Group>
                           <Text fw={500}>{template.name}</Text>
                           {template.isDefault && (
-                            <Badge color='red' variant='light' size='xs'>
+                            <Badge color={getEarthyColor('dark')} variant='light' size='xs'>
                               Default
                             </Badge>
                           )}
@@ -391,7 +392,7 @@ export default function EmailTemplatesPage() {
                       </Table.Td>
                       <Table.Td>
                         <Badge
-                          color={template.isActive ? 'green' : 'gray'}
+                          color={template.isActive ? getEarthyColor('saturated') : getEarthyColor('muted')}
                           variant='light'
                           size='sm'
                         >

@@ -1,22 +1,15 @@
 import { createTheme, MantineColorsTuple } from '@mantine/core';
+import { generateColorPalette, PRIMARY_COLOR } from './colorConfig';
 
-const red: MantineColorsTuple = [
-  '#fef2f2', // Lightest - based on #C52720
-  '#fee2e2', // Very light
-  '#fecaca', // Light
-  '#fca5a5', // Lighter
-  '#f87171', // Light-medium
-  '#C52720', // Primary color
-  '#b91c1c', // Medium
-  '#991b1b', // Medium-dark
-  '#7f1d1d', // Dark
-  '#450a0a', // Darkest
-];
+// Generate dynamic color palette from the primary color
+const dynamicColors: MantineColorsTuple = generateColorPalette(PRIMARY_COLOR) as unknown as MantineColorsTuple;
 
 export const theme = createTheme({
-  primaryColor: 'red',
+  primaryColor: 'dynamic',
   colors: {
-    red,
+    dynamic: dynamicColors,
+    // Keep the old 'red' for backward compatibility if needed
+    red: dynamicColors,
   },
   fontFamily:
     'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',

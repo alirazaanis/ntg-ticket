@@ -24,12 +24,14 @@ import { useTickets } from '../../hooks/useTickets';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { Ticket } from '../../types/unified';
 import { useRouter } from 'next/navigation';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 export function EndUserDashboard() {
   const t = useTranslations('dashboard');
   const { user } = useAuthStore();
   const router = useRouter();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
+  const { primary } = useDynamicTheme();
 
   const myTickets =
     tickets?.filter((ticket: Ticket) => ticket.requester.id === user?.id) || [];
@@ -60,7 +62,7 @@ export function EndUserDashboard() {
       title: t('resolvedTickets'),
       value: resolvedTickets.length,
       icon: IconCheck,
-      color: 'green',
+      color: primary,
     },
     {
       title: t('closedTickets'),

@@ -47,6 +47,8 @@ import {
   showErrorNotification,
 } from '@/lib/notifications';
 import { useTranslations } from 'next-intl';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
+import { getEarthyColor } from '../../lib/colorConfig';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -74,42 +76,43 @@ export function TicketCard({
   const [statusModalOpened, setStatusModalOpened] = useState(false);
   const [newStatus, setNewStatus] = useState(ticket.status);
   const [resolution, setResolution] = useState('');
+  const { primary } = useDynamicTheme();
 
   const updateStatusMutation = useUpdateTicketStatus();
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'NEW':
-        return 'blue';
+        return getEarthyColor('light');
       case 'OPEN':
-        return 'orange';
+        return getEarthyColor('warm');
       case 'IN_PROGRESS':
-        return 'yellow';
+        return getEarthyColor('saturated');
       case 'ON_HOLD':
-        return 'gray';
+        return getEarthyColor('neutral');
       case 'RESOLVED':
-        return 'green';
+        return getEarthyColor('cool');
       case 'CLOSED':
-        return 'dark';
+        return getEarthyColor('darkest');
       case 'REOPENED':
-        return 'red';
+        return getEarthyColor('darker');
       default:
-        return 'blue';
+        return getEarthyColor('light');
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'LOW':
-        return 'green';
+        return getEarthyColor('light');
       case 'MEDIUM':
-        return 'blue';
+        return getEarthyColor('neutral');
       case 'HIGH':
-        return 'orange';
+        return getEarthyColor('warm');
       case 'CRITICAL':
-        return 'red';
+        return getEarthyColor('darker');
       default:
-        return 'blue';
+        return getEarthyColor('neutral');
     }
   };
 
@@ -169,7 +172,7 @@ export function TicketCard({
         p='md'
         radius='md'
         style={{
-          borderColor: urgent ? 'var(--mantine-color-red-6)' : undefined,
+          borderColor: urgent ? primary : undefined,
           borderWidth: urgent ? 2 : undefined,
         }}
       >
@@ -219,7 +222,7 @@ export function TicketCard({
                   <Menu.Divider />
                   <Menu.Item
                     leftSection={<IconTrash size={14} />}
-                    color='red'
+                    style={{ color: getEarthyColor('darker') }}
                     onClick={onDelete}
                   >
                     Delete Ticket
@@ -252,7 +255,7 @@ export function TicketCard({
             </Badge>
             {isOverdue && (
               <Badge
-                color='red'
+                style={{ backgroundColor: getEarthyColor('darker'), color: 'white' }}
                 size='sm'
                 leftSection={<IconAlertCircle size={12} />}
               >
@@ -298,7 +301,7 @@ export function TicketCard({
             {ticket.dueDate && (
               <Group gap={4}>
                 <IconClock size={12} />
-                <Text size='xs' c={isOverdue ? 'red' : 'dimmed'}>
+                <Text size='xs' style={{ color: isOverdue ? getEarthyColor('darker') : undefined }} c={isOverdue ? undefined : 'dimmed'}>
                   Due {format(new Date(ticket.dueDate), 'MMM dd, yyyy')}
                 </Text>
               </Group>

@@ -83,36 +83,37 @@ import { useAuthStore } from '../../../stores/useAuthStore';
 import { notifications } from '@mantine/notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { ROLE_GROUPS } from '../../../lib/constants';
+import { getEarthyColor } from '../../../lib/colorConfig';
 
 const statusColors: Record<TicketStatus, string> = {
-  NEW: 'blue',
-  OPEN: 'green',
-  IN_PROGRESS: 'yellow',
-  ON_HOLD: 'orange',
-  RESOLVED: 'gray',
-  CLOSED: 'dark',
-  REOPENED: 'red',
+  NEW: getEarthyColor('light'),
+  OPEN: getEarthyColor('lighter'),
+  IN_PROGRESS: getEarthyColor('saturated'),
+  ON_HOLD: getEarthyColor('warm'),
+  RESOLVED: getEarthyColor('cool'),
+  CLOSED: getEarthyColor('dark'),
+  REOPENED: getEarthyColor('darker'),
 };
 
 const priorityColors: Record<TicketPriority, string> = {
-  LOW: 'green',
-  MEDIUM: 'yellow',
-  HIGH: 'orange',
-  CRITICAL: 'red',
+  LOW: getEarthyColor('lightest'),
+  MEDIUM: getEarthyColor('light'),
+  HIGH: getEarthyColor('dark'),
+  CRITICAL: getEarthyColor('darkest'),
 };
 
 const impactColors: Record<TicketImpact, string> = {
-  MINOR: 'green',
-  MODERATE: 'yellow',
-  MAJOR: 'orange',
-  CRITICAL: 'red',
+  MINOR: getEarthyColor('lightest'),
+  MODERATE: getEarthyColor('light'),
+  MAJOR: getEarthyColor('dark'),
+  CRITICAL: getEarthyColor('darkest'),
 };
 
 const urgencyColors: Record<TicketUrgency, string> = {
-  LOW: 'green',
-  NORMAL: 'blue',
-  HIGH: 'orange',
-  IMMEDIATE: 'red',
+  LOW: getEarthyColor('lightest'),
+  NORMAL: getEarthyColor('light'),
+  HIGH: getEarthyColor('dark'),
+  IMMEDIATE: getEarthyColor('darkest'),
 };
 
 export default function TicketDetailPage() {
@@ -474,7 +475,7 @@ export default function TicketDetailPage() {
                             </div>
                           </Group>
                           {comment.isInternal && (
-                            <Badge size='xs' color='orange'>
+                            <Badge size='xs' style={{ backgroundColor: getEarthyColor('warm'), color: 'white' }}>
                               Internal
                             </Badge>
                           )}
@@ -522,7 +523,7 @@ export default function TicketDetailPage() {
                             </div>
                           </Group>
                           {comment.isInternal && (
-                            <Badge size='xs' color='orange'>
+                            <Badge size='xs' style={{ backgroundColor: getEarthyColor('warm'), color: 'white' }}>
                               Internal
                             </Badge>
                           )}
@@ -660,7 +661,7 @@ export default function TicketDetailPage() {
                                 ).toLocaleString()}
                               </Text>
                               <Group gap='xs' mb={4}>
-                                <Badge size='sm' variant='outline' color='red'>
+                                <Badge size='sm' variant='outline' style={{ borderColor: getEarthyColor('darker'), color: getEarthyColor('darker') }}>
                                   {historyItem.fieldName === 'assignedToId' 
                                     ? getUserName(historyItem.oldValue) 
                                     : (historyItem.oldValue || 'Empty')}
@@ -668,7 +669,7 @@ export default function TicketDetailPage() {
                                 <Text size='sm' c='dimmed'>
                                   →
                                 </Text>
-                                <Badge size='sm' variant='filled' color='green'>
+                                <Badge size='sm' variant='filled' style={{ backgroundColor: getEarthyColor('lighter'), color: 'white' }}>
                                   {historyItem.fieldName === 'assignedToId' 
                                     ? getUserName(historyItem.newValue) 
                                     : (historyItem.newValue || 'Empty')}

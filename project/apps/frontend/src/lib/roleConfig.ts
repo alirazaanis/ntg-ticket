@@ -1,23 +1,24 @@
 import { UserRole } from '../types/unified';
+import { getEarthyColor } from './colorConfig';
 
 export const roleConfig = {
   [UserRole.END_USER]: {
-    color: 'blue',
+    color: getEarthyColor('light'),
     label: 'End User',
     icon: 'IconUser',
   },
   [UserRole.SUPPORT_STAFF]: {
-    color: 'green',
+    color: getEarthyColor('neutral'),
     label: 'Support Staff',
     icon: 'IconUsers',
   },
   [UserRole.SUPPORT_MANAGER]: {
-    color: 'orange',
+    color: getEarthyColor('warm'),
     label: 'Support Manager',
     icon: 'IconShield',
   },
   [UserRole.ADMIN]: {
-    color: 'red',
+    color: getEarthyColor('darkest'),
     label: 'Administrator',
     icon: 'IconSettings',
   },

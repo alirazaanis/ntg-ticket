@@ -30,10 +30,12 @@ import { useLoginAttempts } from '../../../hooks/useLoginAttempts';
 import { AuthLayout } from '../../../components/layouts/AuthLayout';
 import { RoleSelectionModal } from '../../../components/modals/RoleSelectionModal';
 import { UserRole } from '../../../types/unified';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function SignInPage() {
   const t = useTranslations('auth');
   const tCommon = useTranslations('common');
+  const { primary, primaryDark } = useDynamicTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -249,13 +251,9 @@ export default function SignInPage() {
               error={email && !emailValid ? t('emailInvalid') : ''}
               styles={theme => ({
                 input: {
-                  border: emailValid
-                    ? `2px solid ${theme.colors.green[5]}`
-                    : `2px solid ${theme.colors.gray[3]}`,
+                  border: `2px solid ${theme.colors.gray[3]}`,
                   '&:focus': {
-                    borderColor: emailValid
-                      ? theme.colors.green[5]
-                      : theme.colors.red[5],
+                    borderColor: primary,
                   },
                 },
               })}
@@ -270,7 +268,7 @@ export default function SignInPage() {
               rightSection={<RTLArrowRight size={18} />}
               style={theme => ({
                 background: emailValid
-                  ? 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)'
+                  ? `linear-gradient(135deg, ${primary} 0%, ${primaryDark} 100%)`
                   : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
@@ -287,10 +285,10 @@ export default function SignInPage() {
                   component={Link}
                   href='/auth/signup'
                   fw={600}
-                  style={theme => ({
-                    color: theme.colors.red[5],
+                  style={{
+                    color: primary,
                     textDecoration: 'none',
-                  })}
+                  }}
                 >
                   {t('signUp')}
                 </Anchor>
@@ -375,7 +373,7 @@ export default function SignInPage() {
                   input: {
                     border: `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: theme.colors.red[5],
+                      borderColor: primary,
                     },
                   },
                 })}
@@ -389,7 +387,7 @@ export default function SignInPage() {
                 radius='md'
                 style={{
                   background:
-                    'linear-gradient(135deg, #C52720 0%, #991b1b 100%)',
+                    `linear-gradient(135deg, ${primary} 0%, ${primaryDark} 100%)`,
                   border: 'none',
                   fontWeight: 600,
                 }}
@@ -403,10 +401,10 @@ export default function SignInPage() {
                   <Anchor
                     href='#'
                     fw={600}
-                    style={theme => ({
-                      color: theme.colors.red[5],
+                    style={{
+                      color: primary,
                       textDecoration: 'none',
-                    })}
+                    }}
                   >
                     {t('resetPassword')}
                   </Anchor>
@@ -424,7 +422,7 @@ export default function SignInPage() {
                 size={60}
                 radius='xl'
                 variant='gradient'
-                gradient={{ from: 'green', to: 'teal' }}
+                gradient={{ from: primary, to: primaryDark }}
                 mb='md'
               >
                 <IconCheck size={30} />

@@ -30,6 +30,7 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { Ticket } from '../../types/unified';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { getEarthyColor } from '../../lib/colorConfig';
 
 export function SupportStaffDashboard() {
   const t = useTranslations('dashboard');
@@ -69,31 +70,31 @@ export function SupportStaffDashboard() {
       title: 'Total',
       value: assignedTickets.length,
       icon: IconTicket,
-      color: 'red',
+      color: getEarthyColor('light'),
     },
     {
       title: 'Open',
       value: openTickets.length,
       icon: IconClock,
-      color: 'orange',
+      color: getEarthyColor('light'),
     },
     {
       title: 'Resolved',
       value: resolvedTickets.length,
       icon: IconCheck,
-      color: 'green',
+      color: getEarthyColor('light'),
     },
     {
       title: 'Overdue',
       value: overdueTickets.length,
       icon: IconAlertCircle,
-      color: 'red',
+      color: getEarthyColor('light'),
     },
     {
       title: 'SLA Breached',
       value: slaBreachedTickets.length,
       icon: IconAlertCircle,
-      color: 'red',
+      color: getEarthyColor('light'),
     },
   ];
 
@@ -172,8 +173,8 @@ export function SupportStaffDashboard() {
                 </Text>
                 <Progress
                   value={reportData?.slaMetrics?.responseTime || 0}
-                  color='green'
                   size='lg'
+                      style={{ '--progress-color': getEarthyColor('light') }}
                 />
                 <Text size='sm' mt={4}>
                   {reportData?.slaMetrics?.responseTime !== undefined
@@ -190,8 +191,8 @@ export function SupportStaffDashboard() {
                 </Text>
                 <Progress
                   value={reportData?.slaMetrics?.resolutionTime || 0}
-                  color='orange'
                   size='lg'
+                      style={{ '--progress-color': getEarthyColor('dark') }}
                 />
                 <Text size='sm' mt={4}>
                   {reportData?.slaMetrics?.resolutionTime !== undefined
@@ -208,8 +209,8 @@ export function SupportStaffDashboard() {
                 </Text>
                 <Progress
                   value={reportData?.slaMetrics?.customerSatisfaction || 92}
-                  color='red'
                   size='lg'
+                      style={{ '--progress-color': getEarthyColor('saturated') }}
                 />
                 <Text size='sm' mt={4}>
                   {(
@@ -239,7 +240,7 @@ export function SupportStaffDashboard() {
                   {ticket.status} •{' '}
                   {new Date(ticket.updatedAt).toLocaleDateString()}
                 </Text>
-                <Badge color='red' size='sm' mt={4}>
+                <Badge size='sm' mt={4} style={{ backgroundColor: getEarthyColor('muted'), color: 'white' }}>
                   {ticket.ticketNumber}
                 </Badge>
               </Timeline.Item>

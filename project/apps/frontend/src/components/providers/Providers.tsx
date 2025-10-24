@@ -7,6 +7,7 @@ import { Notifications } from '@mantine/notifications';
 import { theme } from '../../lib/theme';
 import { AuthProvider } from './AuthProvider';
 import { WebSocketProvider } from './WebSocketProvider';
+import { DynamicThemeProvider } from './DynamicThemeProvider';
 import { useEffect, useState } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { SkipLink } from '../accessibility/SkipLink';
@@ -64,9 +65,11 @@ export function Providers({ children }: ProvidersProps) {
             <GlobalErrorHandler />
             <main id='main-content' role='main'>
               <Notifications position='top-right' />
-              <AuthProvider>
-                <WebSocketProvider>{children}</WebSocketProvider>
-              </AuthProvider>
+              <DynamicThemeProvider>
+                <AuthProvider>
+                  <WebSocketProvider>{children}</WebSocketProvider>
+                </AuthProvider>
+              </DynamicThemeProvider>
             </main>
           </ErrorBoundary>
         </ThemeProvider>

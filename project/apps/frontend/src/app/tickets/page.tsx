@@ -62,22 +62,23 @@ import { BulkActionsBar } from '../../components/bulk/BulkActionsBar';
 import { BulkSelectCheckbox } from '../../components/bulk/BulkSelectCheckbox';
 import { useBulkOperations } from '../../hooks/useBulkOperations';
 import { PAGINATION_CONFIG } from '../../lib/constants';
+import { getEarthyColor } from '../../lib/colorConfig';
 
 const statusColors: Record<TicketStatus, string> = {
-  NEW: 'blue',
-  OPEN: 'green',
-  IN_PROGRESS: 'yellow',
-  ON_HOLD: 'orange',
-  RESOLVED: 'gray',
-  CLOSED: 'dark',
-  REOPENED: 'purple',
+  NEW: getEarthyColor('light'),
+  OPEN: getEarthyColor('lighter'),
+  IN_PROGRESS: getEarthyColor('saturated'),
+  ON_HOLD: getEarthyColor('warm'),
+  RESOLVED: getEarthyColor('cool'),
+  CLOSED: getEarthyColor('dark'),
+  REOPENED: getEarthyColor('darker'),
 };
 
 const priorityColors: Record<TicketPriority, string> = {
-  LOW: 'green',
-  MEDIUM: 'yellow',
-  HIGH: 'orange',
-  CRITICAL: 'red',
+  LOW: getEarthyColor('lightest'),
+  MEDIUM: getEarthyColor('light'),
+  HIGH: getEarthyColor('dark'),
+  CRITICAL: getEarthyColor('darkest'),
 };
 
 export default function TicketsPage() {

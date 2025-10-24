@@ -45,6 +45,7 @@ import {
   CreateCustomFieldInput,
   CustomFieldType,
 } from '../../../types/unified';
+import { getEarthyColor } from '../../../lib/colorConfig';
 
 export default function CustomFieldsPage() {
   const router = useRouter();
@@ -180,19 +181,19 @@ export default function CustomFieldsPage() {
   const getFieldTypeColor = (type: string) => {
     switch (type) {
       case 'TEXT':
-        return 'blue';
+        return getEarthyColor('light');
       case 'NUMBER':
-        return 'green';
+        return getEarthyColor('saturated');
       case 'SELECT':
-        return 'orange';
+        return getEarthyColor('warm');
       case 'MULTI_SELECT':
-        return 'purple';
+        return getEarthyColor('cool');
       case 'DATE':
-        return 'cyan';
+        return getEarthyColor('muted');
       case 'BOOLEAN':
-        return 'pink';
+        return getEarthyColor('darker');
       default:
-        return 'gray';
+        return getEarthyColor('dark');
     }
   };
 
@@ -221,7 +222,7 @@ export default function CustomFieldsPage() {
           </Button>
         </Group>
 
-        <Alert color='blue' mb='md'>
+        <Alert color={getEarthyColor('light')} mb='md'>
           <Text size='sm'>
             <strong>How it works:</strong> All custom fields you create will appear in the ticket creation form for all users. 
             Changes here are immediately reflected in the ticket creation form - no refresh needed!
@@ -284,7 +285,7 @@ export default function CustomFieldsPage() {
                 </Table.Td>
                 <Table.Td>
                   <Badge
-                    color={field.isRequired ? 'red' : 'gray'}
+                    color={field.isRequired ? getEarthyColor('dark') : getEarthyColor('muted')}
                     variant='light'
                   >
                     {field.isRequired ? 'Required' : 'Optional'}
@@ -292,7 +293,7 @@ export default function CustomFieldsPage() {
                 </Table.Td>
                 <Table.Td>
                   <Badge
-                    color={field.isActive ? 'green' : 'red'}
+                    color={field.isActive ? getEarthyColor('saturated') : getEarthyColor('dark')}
                     variant='light'
                   >
                     {field.isActive ? 'Shown in Form' : 'Hidden from Form'}

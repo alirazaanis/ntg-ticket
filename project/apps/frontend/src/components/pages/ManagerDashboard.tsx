@@ -31,6 +31,7 @@ import {
 import { useTicketReport } from '../../hooks/useReports';
 import { Ticket } from '../../types/unified';
 import { useTranslations } from 'next-intl';
+import { getEarthyColor } from '../../lib/colorConfig';
 
 export function ManagerDashboard() {
   const t = useTranslations('dashboard');
@@ -63,31 +64,31 @@ export function ManagerDashboard() {
       title: 'Total',
       value: totalTicketsCount || 0,
       icon: IconTicket,
-      color: 'red',
+      color: getEarthyColor('light'),
     },
     {
       title: 'Open',
       value: openTickets.length,
       icon: IconClock,
-      color: 'orange',
+      color: getEarthyColor('light'),
     },
     {
       title: t('resolvedTickets'),
       value: resolvedTickets.length,
       icon: IconCheck,
-      color: 'green',
+      color: getEarthyColor('light'),
     },
     {
       title: t('overdueTickets'),
       value: overdueTickets.length,
       icon: IconAlertCircle,
-      color: 'red',
+      color: getEarthyColor('light'),
     },
     {
       title: 'SLA Breached',
       value: slaBreachedTickets?.length || 0,
       icon: IconAlertTriangle,
-      color: 'red',
+      color: getEarthyColor('light'),
     },
   ];
 
@@ -160,8 +161,8 @@ export function ManagerDashboard() {
                     </Text>
                     <Progress
                       value={reportData?.slaMetrics?.responseTime || 0}
-                      color='green'
                       size='lg'
+                      style={{ '--progress-color': getEarthyColor('light') }}
                     />
                     <Text size='sm' mt={4}>
                       {reportData?.slaMetrics?.responseTime !== undefined
@@ -178,8 +179,8 @@ export function ManagerDashboard() {
                     </Text>
                     <Progress
                       value={reportData?.slaMetrics?.resolutionTime || 0}
-                      color='orange'
                       size='lg'
+                      style={{ '--progress-color': getEarthyColor('dark') }}
                     />
                     <Text size='sm' mt={4}>
                       {reportData?.slaMetrics?.resolutionTime !== undefined
@@ -196,8 +197,8 @@ export function ManagerDashboard() {
                     </Text>
                     <Progress
                       value={reportData?.slaMetrics?.customerSatisfaction || 92}
-                      color='red'
                       size='lg'
+                      style={{ '--progress-color': getEarthyColor('saturated') }}
                     />
                     <Text size='sm' mt={4}>
                       {(
@@ -225,8 +226,8 @@ export function ManagerDashboard() {
                 data={ticketTrendData}
                 dataKey='month'
                 series={[
-                  { name: 'tickets', color: 'red.6' },
-                  { name: 'resolved', color: 'green.6' },
+                  { name: 'tickets', color: 'dynamic.6' },
+                  { name: 'resolved', color: 'dynamic.4' },
                 ]}
                 curveType='linear'
                 unit=' tickets'
@@ -254,7 +255,7 @@ export function ManagerDashboard() {
                       {ticket.status} •{' '}
                       {new Date(ticket.updatedAt).toLocaleDateString()}
                     </Text>
-                    <Badge color='red' size='sm' mt={4}>
+                    <Badge size='sm' mt={4} style={{ backgroundColor: getEarthyColor('muted'), color: 'white' }}>
                       {ticket.ticketNumber}
                     </Badge>
                   </Timeline.Item>

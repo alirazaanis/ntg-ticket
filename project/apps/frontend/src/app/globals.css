@@ -7,10 +7,47 @@
 
 :root {
   --mantine-color-scheme: light;
+  
+  /* Dynamic theme colors - will be updated by JavaScript */
+  --dynamic-primary: #8B5CF6;
+  --dynamic-primary-light: #a78bfa;
+  --dynamic-primary-lighter: #c4b5fd;
+  --dynamic-primary-lightest: #ddd6fe;
+  --dynamic-primary-dark: #7c3aed;
+  --dynamic-primary-darker: #6d28d9;
+  --dynamic-primary-darkest: #5b21b6;
+  
+  /* Background colors */
+  --dynamic-background: #ffffff;
+  --dynamic-surface: #f8f9fa;
+  --dynamic-surface-variant: #f1f3f4;
+  
+  /* Text colors */
+  --dynamic-text: #212529;
+  --dynamic-text-secondary: #6c757d;
+  --dynamic-text-muted: #adb5bd;
+  
+  /* Border colors */
+  --dynamic-border: #dee2e6;
+  --dynamic-border-light: #e9ecef;
 }
 
 [data-mantine-color-scheme='dark'] {
   --mantine-color-scheme: dark;
+  
+  /* Dark mode dynamic theme colors */
+  --dynamic-background: #1a1a1a;
+  --dynamic-surface: #2d2d2d;
+  --dynamic-surface-variant: #3a3a3a;
+  
+  /* Text colors for dark mode */
+  --dynamic-text: #ffffff;
+  --dynamic-text-secondary: #b3b3b3;
+  --dynamic-text-muted: #808080;
+  
+  /* Border colors for dark mode */
+  --dynamic-border: #404040;
+  --dynamic-border-light: #4a4a4a;
 }
 
 /* Dark mode specific styles */
@@ -647,8 +684,8 @@
 .text-gradient {
   background: linear-gradient(
     45deg,
-    var(--mantine-color-red-6),
-    var(--mantine-color-red-4)
+    var(--dynamic-primary),
+    var(--dynamic-primary-light)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -736,7 +773,7 @@
 
 /* Focus styles */
 .focus-visible {
-  outline: 2px solid var(--mantine-color-red-6);
+  outline: 2px solid var(--dynamic-primary);
   outline-offset: 2px;
 }
 
@@ -959,6 +996,15 @@
   .status-reopened {
     border: 1px solid currentColor;
   }
+}
+
+/* Dark mode table contrast fixes */
+[data-mantine-color-scheme='dark'] div[style*="var(--mantine-color-gray-0)"] {
+  background-color: var(--mantine-color-gray-7) !important;
+}
+
+[data-mantine-color-scheme='dark'] div[style*="var(--mantine-color-gray-2)"] {
+  border-bottom-color: var(--mantine-color-gray-6) !important;
 }
 
 /* Reduced motion support */

@@ -17,9 +17,11 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { LanguageSwitcher } from '../language/LanguageSwitcher';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 export function LandingPage() {
   const t = useTranslations('HomePage');
+  const { primary, primaryDark } = useDynamicTheme();
 
   return (
     <Box
@@ -27,7 +29,7 @@ export function LandingPage() {
       style={{
         minHeight: '100vh',
         background:
-          'linear-gradient(135deg, #1a0f0f 0%, #2e1a1a 50%, #3e1616 100%)',
+          'linear-gradient(135deg, #1a0f1a 0%, #2e1a2e 50%, #3e163e 100%)',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -41,9 +43,9 @@ export function LandingPage() {
           right: 0,
           bottom: 0,
           background: `
-            radial-gradient(circle at 20% 80%, rgba(197, 39, 32, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(197, 39, 32, 0.08) 0%, transparent 50%)
+            radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)
           `,
         }}
       />
@@ -67,7 +69,7 @@ export function LandingPage() {
                 fw={900}
                 style={{
                   background:
-                    'linear-gradient(135deg, #ffffff 0%, #ffa8a8 100%)',
+                    'linear-gradient(135deg, #ffffff 0%, #c4b5fd 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -100,7 +102,7 @@ export function LandingPage() {
                   rightSection={<IconRocket size={20} />}
                   style={{
                     background:
-                      'linear-gradient(135deg, #C52720 0%, #991b1b 100%)',
+                      `linear-gradient(135deg, ${primary} 0%, ${primaryDark} 100%)`,
                     border: 'none',
                     fontWeight: 600,
                     padding: '16px 32px',
@@ -116,7 +118,7 @@ export function LandingPage() {
                   radius='xl'
                   rightSection={<RTLArrowRight size={20} />}
                   style={{
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    border: `2px solid ${primary}`,
                     color: 'white',
                     background: 'rgba(255, 255, 255, 0.1)',
                     backdropFilter: 'blur(10px)',

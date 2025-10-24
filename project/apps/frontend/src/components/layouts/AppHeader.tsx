@@ -40,6 +40,7 @@ import { notifications } from '@mantine/notifications';
 import { RoleSelectionModal } from '../modals/RoleSelectionModal';
 import { useState } from 'react';
 import { getRoleColor, getRoleLabel } from '../../lib/roleConfig';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 interface AppHeaderProps {
   onHelpClick?: () => void;
@@ -64,6 +65,7 @@ export function AppHeader({
   const markAsReadMutation = useMarkNotificationAsRead();
   const queryClient = useQueryClient();
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const { primary } = useDynamicTheme();
 
   // Debug log
   // Debug logging removed for production
@@ -202,7 +204,7 @@ export function AppHeader({
               style={{ objectFit: 'contain' }}
             />
             {!isMobile && (
-              <Text fw={700} size='lg' c='red'>
+              <Text fw={700} size='lg' style={{ color: primary }}>
                 {siteName}
               </Text>
             )}
@@ -214,16 +216,15 @@ export function AppHeader({
           {/* Notifications - Always visible (most important) */}
           <Menu shadow='md' width={400}>
             <Menu.Target>
-              <ActionIcon variant='subtle' color='red' size='lg' pos='relative'>
+              <ActionIcon variant='subtle' style={{ color: primary }} size='lg' pos='relative'>
                 <IconBell size={20} />
                 {unreadCount > 0 && (
                   <Badge
                     size='xs'
-                    color='red'
+                    style={{ backgroundColor: primary, color: 'white', minWidth: 18, height: 18 }}
                     pos='absolute'
                     top={-2}
                     right={-2}
-                    style={{ minWidth: 18, height: 18 }}
                   >
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Badge>
@@ -284,7 +285,7 @@ export function AppHeader({
                           {notification.title}
                         </Text>
                         {!notification.isRead && (
-                          <Badge size='xs' color='red' variant='filled'>
+                          <Badge size='xs' style={{ backgroundColor: primary, color: 'white' }} variant='filled'>
                             New
                           </Badge>
                         )}
@@ -338,7 +339,7 @@ export function AppHeader({
                 <Group justify='space-between'>
                   <Text size='sm'>{t('viewAllNotifications')}</Text>
                   {unreadCount > 0 && (
-                    <Badge size='xs' color='red' variant='filled'>
+                    <Badge size='xs' style={{ backgroundColor: primary, color: 'white' }} variant='filled'>
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </Badge>
                   )}
@@ -351,13 +352,13 @@ export function AppHeader({
           <Menu shadow='md' width={isMobile ? 200 : 250}>
             <Menu.Target>
               {isMobile ? (
-                <ActionIcon variant='subtle' color='red' size='lg'>
+                <ActionIcon variant='subtle' style={{ color: primary }} size='lg'>
                   <Avatar size='sm' src={user?.avatar} />
                 </ActionIcon>
               ) : (
                 <Button
                   variant='subtle'
-                  color='red'
+                  style={{ color: primary }}
                   leftSection={<Avatar size='sm' src={user?.avatar} />}
                 >
                   <Group gap='xs'>
@@ -553,7 +554,7 @@ export function AppHeader({
               {/* Help & Support */}
               <ActionIcon
                 variant='subtle'
-                color='red'
+                style={{ color: primary }}
                 size='lg'
                 onClick={onHelpClick}
                 title='Help & Support'

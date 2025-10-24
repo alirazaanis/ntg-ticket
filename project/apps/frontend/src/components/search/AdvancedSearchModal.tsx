@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Modal,
@@ -117,34 +117,50 @@ export function AdvancedSearchModal({
     },
   });
 
+  // Memoize the form setter to avoid infinite re-renders
+  const setFormValues = useCallback((values: AdvancedSearchCriteria) => {
+    form.setValues(values);
+  }, [form]);
+
+  // Track previous initialCriteria to avoid unnecessary updates
+  const prevInitialCriteriaRef = useRef<AdvancedSearchCriteria>(initialCriteria);
+
   // Update form values when modal opens with new initialCriteria
   useEffect(() => {
     if (opened) {
-      form.setValues({
-        query: initialCriteria.query || '',
-        status: initialCriteria.status || [],
-        priority: initialCriteria.priority || [],
-        category: initialCriteria.category || [],
-        subcategory: initialCriteria.subcategory || [],
-        impact: initialCriteria.impact || [],
-        urgency: initialCriteria.urgency || [],
-        slaLevel: initialCriteria.slaLevel || [],
-        requester: initialCriteria.requester || [],
-        assignedTo: initialCriteria.assignedTo || [],
-        createdFrom: initialCriteria.createdFrom,
-        createdTo: initialCriteria.createdTo,
-        dueFrom: initialCriteria.dueFrom,
-        dueTo: initialCriteria.dueTo,
-        updatedFrom: initialCriteria.updatedFrom,
-        updatedTo: initialCriteria.updatedTo,
-        minResolutionTime: initialCriteria.minResolutionTime,
-        maxResolutionTime: initialCriteria.maxResolutionTime,
-        minSlaBreachTime: initialCriteria.minSlaBreachTime,
-        maxSlaBreachTime: initialCriteria.maxSlaBreachTime,
-        customFields: initialCriteria.customFields || {},
-      });
+      // Only update if initialCriteria has actually changed
+      const hasChanged = JSON.stringify(prevInitialCriteriaRef.current) !== JSON.stringify(initialCriteria);
+      
+      if (hasChanged) {
+        const newValues = {
+          query: initialCriteria.query || '',
+          status: initialCriteria.status || [],
+          priority: initialCriteria.priority || [],
+          category: initialCriteria.category || [],
+          subcategory: initialCriteria.subcategory || [],
+          impact: initialCriteria.impact || [],
+          urgency: initialCriteria.urgency || [],
+          slaLevel: initialCriteria.slaLevel || [],
+          requester: initialCriteria.requester || [],
+          assignedTo: initialCriteria.assignedTo || [],
+          createdFrom: initialCriteria.createdFrom,
+          createdTo: initialCriteria.createdTo,
+          dueFrom: initialCriteria.dueFrom,
+          dueTo: initialCriteria.dueTo,
+          updatedFrom: initialCriteria.updatedFrom,
+          updatedTo: initialCriteria.updatedTo,
+          minResolutionTime: initialCriteria.minResolutionTime,
+          maxResolutionTime: initialCriteria.maxResolutionTime,
+          minSlaBreachTime: initialCriteria.minSlaBreachTime,
+          maxSlaBreachTime: initialCriteria.maxSlaBreachTime,
+          customFields: initialCriteria.customFields || {},
+        };
+        
+        setFormValues(newValues);
+        prevInitialCriteriaRef.current = initialCriteria;
+      }
     }
-  }, [opened, initialCriteria,form]);
+  }, [opened, initialCriteria, setFormValues]);
 
   // Update active filters when form values change
   const activeFilters = useMemo(() => {

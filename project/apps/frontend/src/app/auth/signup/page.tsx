@@ -31,10 +31,12 @@ import { usePasswordValidation } from '../../../hooks/usePasswordValidation';
 import { userApi } from '../../../lib/apiClient';
 import { UserRole } from '@/types/unified';
 import { AuthLayout } from '../../../components/layouts/AuthLayout';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function SignUpPage() {
   const t = useTranslations('common');
   const tAuth = useTranslations('auth');
+  const { primary, primaryDark } = useDynamicTheme();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -216,13 +218,9 @@ export default function SignUpPage() {
                 dir='auto'
                 styles={theme => ({
                   input: {
-                    border: formData.name.trim()
-                      ? `2px solid ${theme.colors.green[5]}`
-                      : `2px solid ${theme.colors.gray[3]}`,
+                    border: `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: formData.name.trim()
-                        ? theme.colors.green[5]
-                        : theme.colors.red[5],
+                      borderColor: primary,
                     },
                   },
                 })}
@@ -247,13 +245,9 @@ export default function SignUpPage() {
                 }
                 styles={theme => ({
                   input: {
-                    border: emailValid
-                      ? `2px solid ${theme.colors.green[5]}`
-                      : `2px solid ${theme.colors.gray[3]}`,
+                    border: `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: emailValid
-                        ? theme.colors.green[5]
-                        : theme.colors.red[5],
+                      borderColor: primary,
                     },
                   },
                 })}
@@ -270,7 +264,7 @@ export default function SignUpPage() {
               style={theme => ({
                 background:
                   formData.name.trim() && emailValid
-                    ? 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)'
+                    ? `linear-gradient(135deg, ${primary} 0%, ${primaryDark} 100%)`
                     : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
@@ -290,10 +284,10 @@ export default function SignUpPage() {
                   component={Link}
                   href='/auth/signin'
                   fw={600}
-                  style={theme => ({
-                    color: theme.colors.red[5],
+                  style={{
+                    color: primary,
                     textDecoration: 'none',
-                  })}
+                  }}
                 >
                   {tAuth('signIn')}
                 </Anchor>
@@ -357,13 +351,9 @@ export default function SignUpPage() {
                 }
                 styles={theme => ({
                   input: {
-                    border: passwordValid
-                      ? `2px solid ${theme.colors.green[5]}`
-                      : `2px solid ${theme.colors.gray[3]}`,
+                    border: `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor: passwordValid
-                        ? theme.colors.green[5]
-                        : theme.colors.red[5],
+                      borderColor: primary,
                     },
                   },
                 })}
@@ -392,17 +382,9 @@ export default function SignUpPage() {
                 }
                 styles={theme => ({
                   input: {
-                    border:
-                      formData.confirmPassword &&
-                      formData.password === formData.confirmPassword
-                        ? `2px solid ${theme.colors.green[5]}`
-                        : `2px solid ${theme.colors.gray[3]}`,
+                    border: `2px solid ${theme.colors.gray[3]}`,
                     '&:focus': {
-                      borderColor:
-                        formData.confirmPassword &&
-                        formData.password === formData.confirmPassword
-                          ? theme.colors.green[5]
-                          : theme.colors.red[5],
+                      borderColor: primary,
                     },
                   },
                 })}
@@ -422,7 +404,7 @@ export default function SignUpPage() {
                 background:
                   passwordValid &&
                   formData.password === formData.confirmPassword
-                    ? 'linear-gradient(135deg, #C52720 0%, #991b1b 100%)'
+                    ? `linear-gradient(135deg, ${primary} 0%, ${primaryDark} 100%)`
                     : theme.colors.gray[3],
                 border: 'none',
                 fontWeight: 600,
@@ -498,7 +480,7 @@ export default function SignUpPage() {
                 input: {
                   border: `2px solid ${theme.colors.gray[3]}`,
                   '&:focus': {
-                    borderColor: theme.colors.red[5],
+                    borderColor: primary,
                   },
                 },
               })}
@@ -512,7 +494,7 @@ export default function SignUpPage() {
               radius='md'
               rightSection={<RTLArrowRight size={18} />}
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: `linear-gradient(135deg, ${primary} 0%, ${primaryDark} 100%)`,
                 border: 'none',
                 fontWeight: 600,
               }}
@@ -522,10 +504,10 @@ export default function SignUpPage() {
 
             <Box
               style={theme => ({
-                background: `linear-gradient(135deg, ${theme.colors.red[0]} 0%, ${theme.colors.red[1]} 100%)`,
+                background: `linear-gradient(135deg, ${theme.colors.gray[0]} 0%, ${theme.colors.gray[1]} 100%)`,
                 borderRadius: '12px',
                 padding: '16px',
-                border: `1px solid ${theme.colors.red[2]}`,
+                border: `1px solid ${theme.colors.gray[2]}`,
               })}
             >
               <Group gap='sm'>
@@ -548,7 +530,7 @@ export default function SignUpPage() {
                 size={60}
                 radius='xl'
                 variant='gradient'
-                gradient={{ from: 'green', to: 'teal' }}
+                gradient={{ from: primary, to: primaryDark }}
                 mb='md'
               >
                 <IconCheck size={30} />

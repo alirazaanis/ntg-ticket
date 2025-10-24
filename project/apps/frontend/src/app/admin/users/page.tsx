@@ -41,6 +41,7 @@ import { UserRole } from '../../../types/unified';
 import { notifications } from '@mantine/notifications';
 
 import { getRoleColor } from '../../../lib/roleConfig';
+import { getEarthyColor } from '../../../lib/colorConfig';
 
 export default function UsersPage() {
   const t = useTranslations('common');
@@ -242,7 +243,7 @@ export default function UsersPage() {
                     </Table.Td>
                     <Table.Td>
                       <Badge
-                        color={user.isActive ? 'green' : 'red'}
+                        color={user.isActive ? getEarthyColor('saturated') : getEarthyColor('dark')}
                         variant='light'
                       >
                         {user.isActive ? 'Active' : 'Inactive'}

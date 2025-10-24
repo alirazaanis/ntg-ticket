@@ -56,6 +56,8 @@ import {
 } from '@/lib/constants';
 import { useActiveCategories } from '../../hooks/useCategories';
 import { exportReportWithDashboardToPDF } from '../../lib/pdfExport';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
+import { getEarthyColor } from '../../lib/colorConfig';
 
 interface MetricCardProps {
   title: string;
@@ -106,6 +108,7 @@ export default function ReportsPage() {
   const t = useTranslations('reports');
   const { user } = useAuthStore();
   const isSmall = useMediaQuery('(max-width: 48em)');
+  const { getEarthyColorByIndex } = useDynamicTheme();
 
   const [filters, setFilters] = useState<ReportFilters>({});
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -498,13 +501,13 @@ export default function ReportsPage() {
       notifications.show({
         title: 'Success',
         message: 'PDF report with dashboard overview exported successfully',
-        color: 'green',
+        color: getEarthyColor('light'),
       });
     } catch (error) {
       notifications.show({
         title: 'Error',
         message: `Failed to export PDF report: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        color: 'red',
+        color: getEarthyColorByIndex(0),
       });
     }
   };
@@ -601,7 +604,7 @@ export default function ReportsPage() {
       notifications.show({
         title: 'Error',
         message: `Failed to export report: ${errorMessage}`,
-        color: 'red',
+        color: getEarthyColorByIndex(0),
       });
     }
   };
@@ -821,7 +824,7 @@ export default function ReportsPage() {
       notifications.show({
         title: 'Error',
         message: `Failed to export administrative report: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        color: 'red',
+        color: getEarthyColorByIndex(0),
       });
     }
   };
@@ -852,14 +855,14 @@ export default function ReportsPage() {
               title: 'Total Tickets',
               value: totalTickets,
               icon: IconTicket,
-              color: 'red',
+              color: getEarthyColor('light'),
               tooltip: 'Total number of tickets you have created',
             },
             {
               title: 'Open Tickets',
               value: openTickets.length,
               icon: IconClock,
-              color: 'orange',
+              color: getEarthyColor('light'),
               tooltip:
                 'Tickets that are currently open, in progress, or newly created',
             },
@@ -867,14 +870,14 @@ export default function ReportsPage() {
               title: 'Resolved Tickets',
               value: resolvedTickets.length,
               icon: IconCheck,
-              color: 'green',
+              color: getEarthyColor('light'),
               tooltip: 'Tickets that have been resolved but not yet closed',
             },
             {
               title: 'Closed Tickets',
               value: closedTickets.length,
               icon: IconX,
-              color: 'gray',
+              color: getEarthyColor('light'),
               tooltip: 'Tickets that have been permanently closed',
             },
           ]
@@ -884,7 +887,7 @@ export default function ReportsPage() {
               title: 'Total',
               value: totalTickets,
               icon: IconTicket,
-              color: 'red',
+              color: getEarthyColor('light'),
               tooltip:
                 user?.activeRole === 'SUPPORT_STAFF'
                   ? 'Total tickets assigned to you'
@@ -894,7 +897,7 @@ export default function ReportsPage() {
               title: 'Open',
               value: openTickets.length,
               icon: IconClock,
-              color: 'orange',
+              color: getEarthyColor('light'),
               tooltip:
                 'Tickets that are currently open, in progress, or newly created',
             },
@@ -902,14 +905,14 @@ export default function ReportsPage() {
               title: 'Resolved',
               value: resolvedTickets.length,
               icon: IconCheck,
-              color: 'green',
+              color: getEarthyColor('light'),
               tooltip: 'Tickets that have been resolved but not yet closed',
             },
             {
               title: 'Overdue',
               value: overdueTickets.length,
               icon: IconAlertCircle,
-              color: 'red',
+              color: getEarthyColor('light'),
               tooltip:
                 'Tickets that have passed their due date and are not yet resolved',
             },
@@ -917,7 +920,7 @@ export default function ReportsPage() {
               title: 'SLA Breached',
               value: slaBreachedTickets.length,
               icon: IconAlertCircle,
-              color: 'red',
+              color: getEarthyColor('light'),
               tooltip:
                 'Tickets that exceeded their due date before being resolved',
             },
@@ -926,35 +929,35 @@ export default function ReportsPage() {
               title: 'Critical Priority',
               value: priorityBreakdown.CRITICAL,
               icon: IconStarFilled,
-              color: 'red',
+              color: getEarthyColor('light'),
               tooltip: 'Tickets with critical priority level',
             },
             {
               title: 'High Priority',
               value: priorityBreakdown.HIGH,
               icon: IconStar,
-              color: 'orange',
+              color: getEarthyColor('light'),
               tooltip: 'Tickets with high priority level',
             },
             {
               title: 'Major Impact',
               value: impactBreakdown.MAJOR,
               icon: IconTrendingUp,
-              color: 'red',
+              color: getEarthyColor('light'),
               tooltip: 'Tickets with major business impact',
             },
             {
               title: 'High Urgency',
               value: urgencyBreakdown.HIGH,
               icon: IconTrendingUp,
-              color: 'orange',
+              color: getEarthyColor('light'), // Cycle back to start
               tooltip: 'Tickets with high urgency level',
             },
             {
               title: 'Top Category',
               value: categoryBreakdown[0]?.[1] || 0,
               icon: IconChartBar,
-              color: 'blue',
+              color: getEarthyColor('light'), // Cycle back to start
               tooltip: 'Count of tickets in the most common category',
             },
           ];
@@ -1136,7 +1139,7 @@ export default function ReportsPage() {
                     </Text>
                     <Progress
                       value={slaReport?.slaMetrics?.responseTime || 0}
-                      color='green'
+                      style={{ '--progress-color': getEarthyColor('light') }}
                       size='lg'
                     />
                     <Text size='sm' mt={4}>
@@ -1154,7 +1157,7 @@ export default function ReportsPage() {
                     </Text>
                     <Progress
                       value={slaReport?.slaMetrics?.resolutionTime || 0}
-                      color='orange'
+                      style={{ '--progress-color': getEarthyColor('light') }}
                       size='lg'
                     />
                     <Text size='sm' mt={4}>
@@ -1172,7 +1175,7 @@ export default function ReportsPage() {
                     </Text>
                     <Progress
                       value={slaReport?.slaMetrics?.customerSatisfaction || 92}
-                      color='red'
+                      style={{ '--progress-color': getEarthyColor('light') }}
                       size='lg'
                     />
                     <Text size='sm' mt={4}>
@@ -1219,7 +1222,7 @@ export default function ReportsPage() {
                           >
                             <Group justify='space-between' align='center'>
                               <Text size='sm'>{category}</Text>
-                              <Badge variant='light' color='blue'>
+                              <Badge variant='light' color='dynamic'>
                                 {count}
                               </Badge>
                             </Group>
@@ -1252,7 +1255,7 @@ export default function ReportsPage() {
                           >
                             <Group justify='space-between' align='center'>
                               <Text size='sm'>{impact}</Text>
-                              <Badge variant='light' color='red'>
+                              <Badge variant='light' style={{ backgroundColor: getEarthyColorByIndex(0), color: 'white' }}>
                                 {count}
                               </Badge>
                             </Group>
@@ -1286,7 +1289,7 @@ export default function ReportsPage() {
                           >
                             <Group justify='space-between' align='center'>
                               <Text size='sm'>{priority}</Text>
-                              <Badge variant='light' color='purple'>
+                              <Badge variant='light' color='dynamic'>
                                 {count}
                               </Badge>
                             </Group>
@@ -1324,7 +1327,7 @@ export default function ReportsPage() {
                           >
                             <Group justify='space-between' align='center'>
                               <Text size='sm'>{status.replace('_', ' ')}</Text>
-                              <Badge variant='light' color='green'>
+                              <Badge variant='light' color='dynamic'>
                                 {count}
                               </Badge>
                             </Group>
@@ -1358,7 +1361,7 @@ export default function ReportsPage() {
                           >
                             <Group justify='space-between' align='center'>
                               <Text size='sm'>{urgency}</Text>
-                              <Badge variant='light' color='orange'>
+                              <Badge variant='light' style={{ backgroundColor: getEarthyColorByIndex(1), color: 'white' }}>
                                 {count}
                               </Badge>
                             </Group>
@@ -1498,47 +1501,48 @@ export default function ReportsPage() {
                         <Table.Tr key={staff.name}>
                           <Table.Td>
                             <Group gap='sm'>
-                              <Avatar size='sm' color='blue'>
+                              <Avatar size='sm' color='dynamic'>
                                 {staff.name.charAt(0).toUpperCase()}
                               </Avatar>
                               <Text fw={500}>{staff.name}</Text>
                             </Group>
                           </Table.Td>
                           <Table.Td>
-                            <Badge variant='light' color='blue'>
+                            <Badge variant='light' color='dynamic'>
                               {staff.assignedTickets}
                             </Badge>
                           </Table.Td>
                           <Table.Td>
-                            <Badge variant='light' color='green'>
+                            <Badge variant='light' color='dynamic'>
                               {staff.resolvedTickets}
                             </Badge>
                           </Table.Td>
                           <Table.Td>
-                            <Badge variant='light' color='orange'>
+                            <Badge variant='light' style={{ backgroundColor: getEarthyColorByIndex(1), color: 'white' }}>
                               {staff.openTickets}
                             </Badge>
                           </Table.Td>
                           <Table.Td>
-                            <Badge variant='light' color='red'>
+                            <Badge variant='light' style={{ backgroundColor: getEarthyColorByIndex(0), color: 'white' }}>
                               {staff.overdueTickets}
                             </Badge>
                           </Table.Td>
                           <Table.Td>
-                            <Badge variant='light' color='red'>
+                            <Badge variant='light' style={{ backgroundColor: getEarthyColorByIndex(0), color: 'white' }}>
                               {staff.slaBreachedTickets}
                             </Badge>
                           </Table.Td>
                           <Table.Td>
                             <Badge
                               variant='light'
-                              color={
-                                slaCompliance >= 90
-                                  ? 'green'
+                              style={{
+                                backgroundColor: slaCompliance >= 90
+                                  ? getEarthyColor('light')
                                   : slaCompliance >= 70
-                                    ? 'yellow'
-                                    : 'red'
-                              }
+                                    ? getEarthyColor('saturated')
+                                    : getEarthyColor('dark'),
+                                color: 'white'
+                              }}
                             >
                               {slaCompliance}%
                             </Badge>
@@ -1697,21 +1701,21 @@ export default function ReportsPage() {
                 title: 'Total Users',
                 value: filteredUsers.length,
                 icon: IconUsers,
-                color: 'blue',
+                color: getEarthyColor('light'),
                 tooltip: 'Total number of registered users in the system',
               },
               {
                 title: 'Active Users',
                 value: filteredUsers.filter(user => user.isActive).length,
                 icon: IconCheck,
-                color: 'green',
+                color: getEarthyColor('light'),
                 tooltip: 'Users with active accounts',
               },
               {
                 title: 'Inactive Users',
                 value: filteredUsers.filter(user => !user.isActive).length,
                 icon: IconAlertCircle,
-                color: 'orange',
+                color: getEarthyColor('light'),
                 tooltip: 'Users with inactive accounts',
               },
               {
@@ -1720,7 +1724,7 @@ export default function ReportsPage() {
                   user => user.activeRole === 'SUPPORT_STAFF'
                 ).length,
                 icon: IconUsers,
-                color: 'cyan',
+                color: getEarthyColor('light'),
                 tooltip: 'Number of support staff members',
               },
               {
@@ -1729,7 +1733,7 @@ export default function ReportsPage() {
                   user => user.activeRole === 'SUPPORT_MANAGER'
                 ).length,
                 icon: IconUsers,
-                color: 'purple',
+                color: getEarthyColor('light'),
                 tooltip: 'Number of support managers',
               },
               {
@@ -1743,28 +1747,28 @@ export default function ReportsPage() {
                   );
                 }).length,
                 icon: IconTrendingUp,
-                color: 'teal',
+                color: getEarthyColor('light'),
                 tooltip: 'Users registered in the current month',
               },
               {
                 title: 'Suspended Users',
                 value: filteredUsers.filter(user => !user.isActive).length,
                 icon: IconAlertTriangle,
-                color: 'red',
+                color: getEarthyColor('light'),
                 tooltip: 'Users with inactive/suspended accounts',
               },
               {
                 title: 'Failed Logins',
                 value: 0, // This would need to be implemented in the backend
                 icon: IconAlertCircle,
-                color: 'red',
+                color: getEarthyColor('light'),
                 tooltip: 'Failed login attempts in the last 30 days',
               },
               {
                 title: 'Total Tickets',
                 value: filteredTicketsForAdmin.length,
                 icon: IconTicket,
-                color: 'blue',
+                color: getEarthyColor('light'), // Cycle back
                 tooltip: 'Total number of tickets in the system',
               },
               {
@@ -1773,35 +1777,35 @@ export default function ReportsPage() {
                   ['NEW', 'OPEN', 'IN_PROGRESS'].includes(ticket.status)
                 ).length,
                 icon: IconClock,
-                color: 'orange',
+                color: getEarthyColor('light'), // Cycle back
                 tooltip: 'Currently open tickets across all users',
               },
               {
                 title: 'Failed Logins',
                 value: 0, // This would need to be implemented in the backend
                 icon: IconShield,
-                color: 'red',
+                color: getEarthyColor('light'), // Cycle back
                 tooltip: 'Failed login attempts in the last 30 days',
               },
               {
                 title: 'Password Resets',
                 value: 0, // This would need to be implemented in the backend
                 icon: IconKey,
-                color: 'blue',
+                color: getEarthyColor('light'), // Cycle back
                 tooltip: 'Password reset requests in the last 30 days',
               },
               {
                 title: 'Audit Entries',
                 value: 0, // This would need to be implemented in the backend
                 icon: IconHistory,
-                color: 'purple',
+                color: getEarthyColor('light'), // Cycle back
                 tooltip: 'System audit log entries in the last 30 days',
               },
               {
                 title: 'Active Sessions',
                 value: 0, // This would need to be implemented in the backend
                 icon: IconActivity,
-                color: 'green',
+                color: getEarthyColor('light'), // Cycle back
                 tooltip: 'Currently active user sessions',
               },
             ].map(stat => (
@@ -1870,7 +1874,7 @@ export default function ReportsPage() {
                     >
                       <Group justify='space-between' align='center'>
                         <Text size='sm'>{role.replace('_', ' ')}</Text>
-                        <Badge variant='light' color='blue'>
+                        <Badge variant='light' color={getEarthyColor('light')}>
                           {count}
                         </Badge>
                       </Group>
@@ -1926,7 +1930,7 @@ export default function ReportsPage() {
                     >
                       <Group justify='space-between' align='center'>
                         <Text size='sm'>{monthYear}</Text>
-                        <Badge variant='light' color='green'>
+                        <Badge variant='light' color='dynamic'>
                           {count}
                         </Badge>
                       </Group>
@@ -1972,7 +1976,10 @@ export default function ReportsPage() {
                         <Text size='sm'>{status}</Text>
                         <Badge
                           variant='light'
-                          color={status === 'Active' ? 'green' : 'red'}
+                          style={{
+                            backgroundColor: status === 'Active' ? getEarthyColor('light') : getEarthyColor('dark'),
+                            color: 'white'
+                          }}
                         >
                           {count}
                         </Badge>
@@ -2027,7 +2034,7 @@ export default function ReportsPage() {
                     >
                       <Group justify='space-between' align='center'>
                         <Text size='sm'>{priority}</Text>
-                        <Badge variant='light' color='orange'>
+                        <Badge variant='light' style={{ backgroundColor: getEarthyColorByIndex(1), color: 'white' }}>
                           {count}
                         </Badge>
                       </Group>
@@ -2077,7 +2084,7 @@ export default function ReportsPage() {
                     >
                       <Group justify='space-between' align='center'>
                         <Text size='sm'>{category}</Text>
-                        <Badge variant='light' color='purple'>
+                        <Badge variant='light' color={getEarthyColor('cool')}>
                           {count}
                         </Badge>
                       </Group>
@@ -2127,7 +2134,7 @@ export default function ReportsPage() {
                         <Table.Td>Failed Login Attempts</Table.Td>
                         <Table.Td>0</Table.Td>
                         <Table.Td>
-                          <Badge color='green' variant='light'>
+                          <Badge style={{ backgroundColor: getEarthyColor('light'), color: 'white' }} variant='light'>
                             Normal
                           </Badge>
                         </Table.Td>
@@ -2136,7 +2143,7 @@ export default function ReportsPage() {
                         <Table.Td>Successful Logins</Table.Td>
                         <Table.Td>{filteredUsers.length}</Table.Td>
                         <Table.Td>
-                          <Badge color='blue' variant='light'>
+                          <Badge color='dynamic' variant='light'>
                             Active
                           </Badge>
                         </Table.Td>
@@ -2145,7 +2152,7 @@ export default function ReportsPage() {
                         <Table.Td>Password Resets</Table.Td>
                         <Table.Td>0</Table.Td>
                         <Table.Td>
-                          <Badge color='orange' variant='light'>
+                          <Badge style={{ backgroundColor: getEarthyColorByIndex(1), color: 'white' }} variant='light'>
                             Pending
                           </Badge>
                         </Table.Td>
@@ -2154,7 +2161,7 @@ export default function ReportsPage() {
                         <Table.Td>Active Sessions</Table.Td>
                         <Table.Td>0</Table.Td>
                         <Table.Td>
-                          <Badge color='green' variant='light'>
+                          <Badge style={{ backgroundColor: getEarthyColor('light'), color: 'white' }} variant='light'>
                             Online
                           </Badge>
                         </Table.Td>

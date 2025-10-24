@@ -40,6 +40,7 @@ import { Ticket } from '../../types/unified';
 import { ComponentType } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { useTranslations } from 'next-intl';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 interface AppNavbarProps {
   onMobileClose?: () => void;
@@ -50,6 +51,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   const tDashboard = useTranslations('dashboard');
   const tTickets = useTranslations('tickets');
   const tAdmin = useTranslations('admin');
+  const { primary } = useDynamicTheme();
   const router = useRouter();
   const pathname = usePathname();
   const { user, hasRole, hasAnyRole } = useAuthStore();
@@ -248,7 +250,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
   // Helper function to render navigation items
   const renderNavItems = (
     items: typeof essentialItems,
-    color: string = 'red'
+    color: string = primary
   ) => {
     return items.map(item => {
       if (!item.show) return null;
@@ -309,7 +311,7 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
               </Button>
               <Collapse in={ticketsExpanded}>
                 <Stack gap='xs' pl='md'>
-                  {renderNavItems(ticketItems, 'orange')}
+                  {renderNavItems(ticketItems, primary)}
                 </Stack>
               </Collapse>
             </>
@@ -337,8 +339,8 @@ export function AppNavbar({ onMobileClose }: AppNavbarProps) {
               </Button>
               <Collapse in={adminExpanded}>
                 <Stack gap='xs' pl='md'>
-                  {renderNavItems(adminItems, 'red')}
-                  {renderNavItems(additionalAdminItems, 'red')}
+                  {renderNavItems(adminItems, primary)}
+                  {renderNavItems(additionalAdminItems, primary)}
                 </Stack>
               </Collapse>
             </>
