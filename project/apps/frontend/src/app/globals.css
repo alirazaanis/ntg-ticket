@@ -9,13 +9,13 @@
   --mantine-color-scheme: light;
   
   /* Dynamic theme colors - will be updated by JavaScript */
-  --dynamic-primary: #8B5CF6;
-  --dynamic-primary-light: #a78bfa;
-  --dynamic-primary-lighter: #c4b5fd;
-  --dynamic-primary-lightest: #ddd6fe;
-  --dynamic-primary-dark: #7c3aed;
-  --dynamic-primary-darker: #6d28d9;
-  --dynamic-primary-darkest: #5b21b6;
+  --dynamic-primary: #f0940a;
+  --dynamic-primary-light: #f3a847;
+  --dynamic-primary-lighter: #f6b85a;
+  --dynamic-primary-lightest: #f9c86d;
+  --dynamic-primary-dark: #d67e08;
+  --dynamic-primary-darker: #bc6a07;
+  --dynamic-primary-darkest: #a25606;
   
   /* Background colors */
   --dynamic-background: #ffffff;

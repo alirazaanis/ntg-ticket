@@ -10,7 +10,7 @@ import { UserRole } from '../../types/unified';
 import { authApi } from '../../lib/apiClient';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { notifications } from '@mantine/notifications';
-import { getEarthyColor } from '../../lib/colorConfig';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 interface RoleSwitcherProps {
   userRoles: UserRole[];
@@ -23,6 +23,7 @@ export function RoleSwitcher({
   activeRole,
   isMobile = false,
 }: RoleSwitcherProps) {
+  const { primaryDarkest, primaryLight, primaryDark } = useDynamicTheme();
   const t = useTranslations('auth');
   const { updateUser } = useAuthStore();
   const queryClient = useQueryClient();
@@ -32,15 +33,15 @@ export function RoleSwitcher({
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case UserRole.ADMIN:
-        return getEarthyColor('darkest');
+        return primaryDarkest;
       case UserRole.SUPPORT_MANAGER:
-        return getEarthyColor('warm');
+        return primaryDark;
       case UserRole.SUPPORT_STAFF:
-        return getEarthyColor('muted');
+        return primaryDark;
       case UserRole.END_USER:
-        return getEarthyColor('light');
+        return primaryLight;
       default:
-        return getEarthyColor('neutral');
+        return primaryLight;
     }
   };
 

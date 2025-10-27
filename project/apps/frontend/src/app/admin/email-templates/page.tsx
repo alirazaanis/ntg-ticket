@@ -46,7 +46,7 @@ import {
   EMAIL_TEMPLATE_TYPES,
   EMAIL_TEMPLATE_VARIABLES,
 } from '@/lib/constants';
-import { getEarthyColor } from '../../../lib/colorConfig';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 interface EmailTemplateFormData {
   name: string;
@@ -63,6 +63,7 @@ const TEMPLATE_TYPES = EMAIL_TEMPLATE_TYPES;
 const AVAILABLE_VARIABLES = EMAIL_TEMPLATE_VARIABLES;
 
 export default function EmailTemplatesPage() {
+  const { primaryDark, primaryLighter, textMuted } = useDynamicTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<{
     id: string;
@@ -374,14 +375,14 @@ export default function EmailTemplatesPage() {
                         <Group>
                           <Text fw={500}>{template.name}</Text>
                           {template.isDefault && (
-                            <Badge color={getEarthyColor('dark')} variant='light' size='xs'>
+                            <Badge color={primaryDark} variant='light' size='xs'>
                               Default
                             </Badge>
                           )}
                         </Group>
                       </Table.Td>
                       <Table.Td>
-                        <Badge color='purple' variant='light' size='sm'>
+                        <Badge color={primaryDark} variant='light' size='sm'>
                           {template.type}
                         </Badge>
                       </Table.Td>
@@ -392,7 +393,7 @@ export default function EmailTemplatesPage() {
                       </Table.Td>
                       <Table.Td>
                         <Badge
-                          color={template.isActive ? getEarthyColor('saturated') : getEarthyColor('muted')}
+                          color={template.isActive ? primaryLighter : textMuted}
                           variant='light'
                           size='sm'
                         >

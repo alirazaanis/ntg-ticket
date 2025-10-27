@@ -128,6 +128,20 @@ export class AdminController {
     };
   }
 
+  @Get('public-theme-settings')
+  @ApiOperation({ summary: 'Get public theme settings' })
+  @ApiResponse({
+    status: 200,
+    description: 'Public theme settings retrieved successfully',
+  })
+  async getPublicThemeSettings() {
+    const themeSettings = await this.adminService.getThemeSettings();
+    return {
+      data: themeSettings,
+      message: 'Public theme settings retrieved successfully',
+    };
+  }
+
   @Get('field-config')
   @ApiOperation({ summary: 'Get field configuration options (Admin only)' })
   @ApiResponse({
@@ -176,5 +190,59 @@ export class AdminController {
       data: updatedConfig,
       message: 'Field configuration updated successfully',
     };
+  }
+
+  @Get('theme-settings')
+  @ApiOperation({ summary: 'Get theme settings (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Theme settings retrieved successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async getThemeSettings(@Request() req) {
+    // Check if user is admin
+    if (req.user.activeRole !== 'ADMIN') {
+      throw new Error('Forbidden - Admin access required');
+    }
+
+    const themeSettings = await this.adminService.getThemeSettings();
+    return {
+      data: themeSettings,
+      message: 'Theme settings retrieved successfully',
+    };
+  }
+
+  @Patch('theme-settings')
+  @ApiOperation({ summary: 'Update theme settings (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Theme settings updated successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async updateThemeSettings(
+    @Request() req,
+    @Body() themeData: {
+      primaryColor?: string | null;
+      logoUrl?: string | null;
+      faviconUrl?: string | null;
+      logoData?: string | null;
+      faviconData?: string | null;
+    }
+  ) {
+    // Check if user is admin
+    if (req.user.activeRole !== 'ADMIN') {
+      throw new Error('Forbidden - Admin access required');
+    }
+
+    console.log('Backend received theme data:', themeData);
+
+    const result = await this.adminService.updateThemeSettings(themeData);
+    return result;
   }
 }

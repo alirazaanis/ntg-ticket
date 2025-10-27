@@ -83,40 +83,41 @@ import { useAuthStore } from '../../../stores/useAuthStore';
 import { notifications } from '@mantine/notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { ROLE_GROUPS } from '../../../lib/constants';
-import { getEarthyColor } from '../../../lib/colorConfig';
-
-const statusColors: Record<TicketStatus, string> = {
-  NEW: getEarthyColor('light'),
-  OPEN: getEarthyColor('lighter'),
-  IN_PROGRESS: getEarthyColor('saturated'),
-  ON_HOLD: getEarthyColor('warm'),
-  RESOLVED: getEarthyColor('cool'),
-  CLOSED: getEarthyColor('dark'),
-  REOPENED: getEarthyColor('darker'),
-};
-
-const priorityColors: Record<TicketPriority, string> = {
-  LOW: getEarthyColor('lightest'),
-  MEDIUM: getEarthyColor('light'),
-  HIGH: getEarthyColor('dark'),
-  CRITICAL: getEarthyColor('darkest'),
-};
-
-const impactColors: Record<TicketImpact, string> = {
-  MINOR: getEarthyColor('lightest'),
-  MODERATE: getEarthyColor('light'),
-  MAJOR: getEarthyColor('dark'),
-  CRITICAL: getEarthyColor('darkest'),
-};
-
-const urgencyColors: Record<TicketUrgency, string> = {
-  LOW: getEarthyColor('lightest'),
-  NORMAL: getEarthyColor('light'),
-  HIGH: getEarthyColor('dark'),
-  IMMEDIATE: getEarthyColor('darkest'),
-};
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function TicketDetailPage() {
+  const { primaryLight, primaryLighter, primaryDark, primaryDarker, primaryLightest, primaryDarkest } = useDynamicTheme();
+
+  const statusColors: Record<TicketStatus, string> = {
+    NEW: primaryLight,
+    OPEN: primaryLighter,
+    IN_PROGRESS: primaryLighter,
+    ON_HOLD: primaryLight,
+    RESOLVED: primaryLighter,
+    CLOSED: primaryDark,
+    REOPENED: primaryDarker,
+  };
+
+  const priorityColors: Record<TicketPriority, string> = {
+    LOW: primaryLightest,
+    MEDIUM: primaryLight,
+    HIGH: primaryDark,
+    CRITICAL: primaryDarkest,
+  };
+
+  const impactColors: Record<TicketImpact, string> = {
+    MINOR: primaryLightest,
+    MODERATE: primaryLight,
+    MAJOR: primaryDark,
+    CRITICAL: primaryDarkest,
+  };
+
+  const urgencyColors: Record<TicketUrgency, string> = {
+    LOW: primaryLightest,
+    NORMAL: primaryLight,
+    HIGH: primaryDark,
+    IMMEDIATE: primaryDarkest,
+  };
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthStore();
@@ -475,7 +476,7 @@ export default function TicketDetailPage() {
                             </div>
                           </Group>
                           {comment.isInternal && (
-                            <Badge size='xs' style={{ backgroundColor: getEarthyColor('warm'), color: 'white' }}>
+                            <Badge size='xs' style={{ backgroundColor: primaryLight, color: 'white' }}>
                               Internal
                             </Badge>
                           )}
@@ -523,7 +524,7 @@ export default function TicketDetailPage() {
                             </div>
                           </Group>
                           {comment.isInternal && (
-                            <Badge size='xs' style={{ backgroundColor: getEarthyColor('warm'), color: 'white' }}>
+                            <Badge size='xs' style={{ backgroundColor: primaryLight, color: 'white' }}>
                               Internal
                             </Badge>
                           )}
@@ -661,7 +662,7 @@ export default function TicketDetailPage() {
                                 ).toLocaleString()}
                               </Text>
                               <Group gap='xs' mb={4}>
-                                <Badge size='sm' variant='outline' style={{ borderColor: getEarthyColor('darker'), color: getEarthyColor('darker') }}>
+                                <Badge size='sm' variant='outline' style={{ borderColor: primaryDarker, color: primaryDarker }}>
                                   {historyItem.fieldName === 'assignedToId' 
                                     ? getUserName(historyItem.oldValue) 
                                     : (historyItem.oldValue || 'Empty')}
@@ -669,7 +670,7 @@ export default function TicketDetailPage() {
                                 <Text size='sm' c='dimmed'>
                                   →
                                 </Text>
-                                <Badge size='sm' variant='filled' style={{ backgroundColor: getEarthyColor('lighter'), color: 'white' }}>
+                                <Badge size='sm' variant='filled' style={{ backgroundColor: primaryLighter, color: 'white' }}>
                                   {historyItem.fieldName === 'assignedToId' 
                                     ? getUserName(historyItem.newValue) 
                                     : (historyItem.newValue || 'Empty')}

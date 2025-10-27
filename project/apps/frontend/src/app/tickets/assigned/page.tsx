@@ -46,26 +46,27 @@ import { AdvancedSearchModal } from '../../../components/search/AdvancedSearchMo
 import { SimpleFiltersModal } from '../../../components/forms/SimpleFiltersModal';
 import { useSearch } from '../../../hooks/useSearch';
 import { PAGINATION_CONFIG } from '../../../lib/constants';
-import { getEarthyColor } from '../../../lib/colorConfig';
-
-const statusColors: Record<TicketStatus, string> = {
-  NEW: getEarthyColor('light'),
-  OPEN: getEarthyColor('lighter'),
-  IN_PROGRESS: getEarthyColor('saturated'),
-  ON_HOLD: getEarthyColor('warm'),
-  RESOLVED: getEarthyColor('cool'),
-  CLOSED: getEarthyColor('dark'),
-  REOPENED: getEarthyColor('darker'),
-};
-
-const priorityColors: Record<TicketPriority, string> = {
-  LOW: getEarthyColor('lightest'),
-  MEDIUM: getEarthyColor('light'),
-  HIGH: getEarthyColor('dark'),
-  CRITICAL: getEarthyColor('darkest'),
-};
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 function AssignedTicketsPageContent() {
+  const { primaryLight, primaryLighter, primaryDark, primaryDarker, primaryLightest, primaryDarkest } = useDynamicTheme();
+
+  const statusColors: Record<TicketStatus, string> = {
+    NEW: primaryLight,
+    OPEN: primaryLighter,
+    IN_PROGRESS: primaryLighter,
+    ON_HOLD: primaryLight,
+    RESOLVED: primaryLighter,
+    CLOSED: primaryDark,
+    REOPENED: primaryDarker,
+  };
+
+  const priorityColors: Record<TicketPriority, string> = {
+    LOW: primaryLightest,
+    MEDIUM: primaryLight,
+    HIGH: primaryDark,
+    CRITICAL: primaryDarkest,
+  };
   const router = useRouter();
   const { user } = useAuthStore();
   const [currentPage, setCurrentPage] = useState(1);

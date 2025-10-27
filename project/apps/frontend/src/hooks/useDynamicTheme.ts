@@ -1,22 +1,46 @@
 import { useMemo } from 'react';
 import { useTheme } from './useTheme';
-import { generateThemeColors, getPrimaryToneSequence, PRIMARY_COLOR } from '../lib/colorConfig';
+import { generateThemeColors, PRIMARY_COLOR, setPrimaryColor } from '../lib/colorConfig';
+import { useThemeSettings, usePublicThemeSettings } from './useThemeSettings';
 
 /**
  * Hook that provides dynamic theme colors based on the current theme mode
+ * Now supports admin-customizable primary colors
  */
 export function useDynamicTheme() {
   const { isDark, resolvedTheme } = useTheme();
+  const { data: adminThemeSettings } = useThemeSettings();
+  const { data: publicThemeSettings } = usePublicThemeSettings();
   
-  // Generate theme colors based on current mode
+  // Use public theme settings first (works for all users), then admin settings, then fall back to config
+  const primaryColor = useMemo(() => {
+    const customColor = publicThemeSettings?.primaryColor || adminThemeSettings?.primaryColor;
+    if (customColor) {
+      // Use the custom color directly, with validation
+      const adjustedColor = setPrimaryColor(customColor);
+      return adjustedColor;
+    }
+    return PRIMARY_COLOR;
+  }, [adminThemeSettings?.primaryColor, publicThemeSettings?.primaryColor]);
+  
+  // Generate theme colors based on current mode and primary color
   const themeColors = useMemo(() => {
-    return generateThemeColors(PRIMARY_COLOR, isDark);
-  }, [isDark]);
+    return generateThemeColors(primaryColor, isDark);
+  }, [primaryColor, isDark]);
   
-  // Get primary tones for icons and progress bars
+  // Get primary tones for icons and progress bars based on current theme
   const primaryTones = useMemo(() => {
-    return getPrimaryToneSequence();
-  }, []);
+    return [
+      themeColors.primaryLight,
+      themeColors.primaryDark,
+      themeColors.primaryLighter,
+      themeColors.primaryDarker,
+      themeColors.primaryLightest,
+      themeColors.primaryDarkest,
+      themeColors.primary,
+      themeColors.primaryLight,
+    ];
+  }, [themeColors]);
   
   // Get a specific primary tone by index (for consistent icon coloring)
   const getPrimaryToneByIndex = (index: number): string => {
@@ -65,5 +89,8 @@ export function useDynamicTheme() {
     // Theme state
     isDark,
     resolvedTheme,
+    
+    // Theme settings (prioritize public settings for global persistence)
+    themeSettings: publicThemeSettings || adminThemeSettings,
   };
 }

@@ -20,6 +20,7 @@ import {
   IconSettings,
   IconUser,
   IconHelp,
+  IconPalette,
   // IconCheck, // Removed unused import
 } from '@tabler/icons-react';
 import { RTLChevronDown } from '../ui/RTLIcon';
@@ -65,7 +66,7 @@ export function AppHeader({
   const markAsReadMutation = useMarkNotificationAsRead();
   const queryClient = useQueryClient();
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const { primary } = useDynamicTheme();
+  const { primary, themeSettings} = useDynamicTheme();
 
   // Debug log
   // Debug logging removed for production
@@ -86,9 +87,6 @@ export function AppHeader({
     });
   };
 
-  const getRoleBadgeColor = (role: UserRole) => {
-    return getRoleColor(role);
-  };
 
   const getRoleLabelText = (role: UserRole) => {
     switch (role) {
@@ -197,11 +195,15 @@ export function AppHeader({
           >
             {/* Logo */}
             <Image
-              src='/logo.svg'
+              src={
+                themeSettings?.logoData 
+                  ? `data:image/png;base64,${themeSettings.logoData}`
+                  : themeSettings?.logoUrl || '/logo.svg'
+              }
               alt='NTG Ticket Logo'
               w={32}
               h={32}
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: 'contain', backgroundColor: 'transparent' }}
             />
             {!isMobile && (
               <Text fw={700} size='lg' style={{ color: primary }}>
@@ -368,7 +370,7 @@ export function AppHeader({
                       </Text>
                       <Badge
                         size='xs'
-                        color={getRoleBadgeColor(
+                        color={getRoleColor(
                           user?.activeRole || UserRole.END_USER
                         )}
                       >
@@ -391,7 +393,7 @@ export function AppHeader({
                   </Text>
                   <Badge
                     size='xs'
-                    color={getRoleBadgeColor(
+                    color={getRoleColor(
                       user?.activeRole || UserRole.END_USER
                     )}
                   >
@@ -497,6 +499,39 @@ export function AppHeader({
               >
                 <Text size='sm'>{t('settings')}</Text>
               </Menu.Item>
+
+              {/* Theme Settings - Admin Only */}
+              {user?.activeRole === UserRole.ADMIN && (
+                <Menu.Item
+                  leftSection={<IconPalette size={14} />}
+                  onClick={() => router.push('/admin/theme-settings')}
+                  style={{
+                    transition: 'background-color 0.2s ease',
+                    marginBottom: '4px',
+                  }}
+                  onMouseEnter={e => {
+                    // Use theme-aware hover: light for light mode, dark for dark mode
+                    const isDarkMode =
+                      document.documentElement.getAttribute(
+                        'data-mantine-color-scheme'
+                      ) === 'dark';
+                    if (isDarkMode) {
+                      e.currentTarget.style.backgroundColor =
+                        'var(--mantine-color-red-2)';
+                      e.currentTarget.style.color = 'var(--mantine-color-red-8)';
+                    } else {
+                      e.currentTarget.style.backgroundColor =
+                        'var(--mantine-color-red-0)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'inherit';
+                  }}
+                >
+                  <Text size='sm'>Theme Settings</Text>
+                </Menu.Item>
+              )}
               {isMobile && (
                 <>
                   <Menu.Divider />

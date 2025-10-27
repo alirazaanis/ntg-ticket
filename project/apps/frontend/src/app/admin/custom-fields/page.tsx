@@ -45,9 +45,10 @@ import {
   CreateCustomFieldInput,
   CustomFieldType,
 } from '../../../types/unified';
-import { getEarthyColor } from '../../../lib/colorConfig';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function CustomFieldsPage() {
+  const { primaryLight, primaryLighter, primaryDark, primaryDarker } = useDynamicTheme();
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedField, setSelectedField] = useState<CustomField | null>(null);
@@ -181,19 +182,19 @@ export default function CustomFieldsPage() {
   const getFieldTypeColor = (type: string) => {
     switch (type) {
       case 'TEXT':
-        return getEarthyColor('light');
+        return primaryLight;
       case 'NUMBER':
-        return getEarthyColor('saturated');
+        return primaryLighter;
       case 'SELECT':
-        return getEarthyColor('warm');
+        return primaryLight;
       case 'MULTI_SELECT':
-        return getEarthyColor('cool');
+        return primaryLighter;
       case 'DATE':
-        return getEarthyColor('muted');
+        return primaryDarker;
       case 'BOOLEAN':
-        return getEarthyColor('darker');
+        return primaryDarker;
       default:
-        return getEarthyColor('dark');
+        return primaryDark;
     }
   };
 
@@ -222,7 +223,7 @@ export default function CustomFieldsPage() {
           </Button>
         </Group>
 
-        <Alert color={getEarthyColor('light')} mb='md'>
+        <Alert color={primaryLight} mb='md'>
           <Text size='sm'>
             <strong>How it works:</strong> All custom fields you create will appear in the ticket creation form for all users. 
             Changes here are immediately reflected in the ticket creation form - no refresh needed!
@@ -285,7 +286,7 @@ export default function CustomFieldsPage() {
                 </Table.Td>
                 <Table.Td>
                   <Badge
-                    color={field.isRequired ? getEarthyColor('dark') : getEarthyColor('muted')}
+                    color={field.isRequired ? primaryDark : primaryDarker}
                     variant='light'
                   >
                     {field.isRequired ? 'Required' : 'Optional'}
@@ -293,7 +294,7 @@ export default function CustomFieldsPage() {
                 </Table.Td>
                 <Table.Td>
                   <Badge
-                    color={field.isActive ? getEarthyColor('saturated') : getEarthyColor('dark')}
+                    color={field.isActive ? primaryLighter : primaryDark}
                     variant='light'
                   >
                     {field.isActive ? 'Shown in Form' : 'Hidden from Form'}

@@ -36,12 +36,28 @@ import { useUpdateUser } from '../../hooks/useUsers';
 import { usePasswordValidation } from '../../hooks/usePasswordValidation';
 // import { UserRole } from '../../types/unified'; // Removed unused import
 
-import { getRoleColor } from '../../lib/roleConfig';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 export default function ProfilePage() {
+  const { primaryLight, primaryDark, primaryDarkest } = useDynamicTheme();
   const t = useTranslations('profile');
   const { user } = useAuthStore();
   const updateUserMutation = useUpdateUser();
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'ADMIN':
+        return primaryDarkest;
+      case 'SUPPORT_MANAGER':
+        return primaryDark;
+      case 'SUPPORT_STAFF':
+        return primaryDark;
+      case 'END_USER':
+        return primaryLight;
+      default:
+        return primaryLight;
+    }
+  };
   const { validatePassword } = usePasswordValidation();
   const [activeTab, setActiveTab] = useState<string | null>('profile');
   const [saved, setSaved] = useState(false);

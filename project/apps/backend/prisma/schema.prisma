@@ -366,6 +366,20 @@ model SystemSettings {
   @@map("system_settings")
 }
 
+model ThemeSettings {
+  id          String   @id @default(uuid())
+  primaryColor String?  // Custom primary color
+  logoUrl     String?  // Custom logo URL
+  faviconUrl  String?  // Custom favicon URL
+  logoData    String?  // Base64 encoded logo data
+  faviconData String?  // Base64 encoded favicon data
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("theme_settings")
+}
+
 model Integration {
   id           String   @id @default(uuid())
   name         String

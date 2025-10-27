@@ -34,9 +34,10 @@ import {
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { useRouter } from 'next/navigation';
-import { getEarthyColor } from '../../../lib/colorConfig';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function SLAManagementPage() {
+  const { primaryDarkest, primaryLight, primaryLighter, textMuted, primaryDark } = useDynamicTheme();
   const router = useRouter();
   const [selectedSLA, setSelectedSLA] = useState<{
     id: string;
@@ -208,15 +209,15 @@ export default function SLAManagementPage() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return getEarthyColor('darkest');
+        return primaryDarkest;
       case 'HIGH':
-        return getEarthyColor('warm');
+        return primaryDark;
       case 'MEDIUM':
-        return getEarthyColor('light');
+        return primaryLight;
       case 'LOW':
-        return getEarthyColor('saturated');
+        return primaryLighter;
       default:
-        return getEarthyColor('muted');
+        return textMuted;
     }
   };
 
@@ -294,7 +295,7 @@ export default function SLAManagementPage() {
                       </Table.Td>
                       <Table.Td>
                         <Badge
-                          color={sla.isActive ? getEarthyColor('saturated') : getEarthyColor('dark')}
+                          color={sla.isActive ? primaryLighter : primaryDark}
                           variant='light'
                         >
                           {sla.isActive ? 'Active' : 'Inactive'}

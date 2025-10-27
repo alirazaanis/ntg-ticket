@@ -29,10 +29,11 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { useUsers } from '../../hooks/useUsers';
-import { getEarthyColor } from '../../lib/colorConfig';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 export function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
+  const { primaryLight } = useDynamicTheme();
 
   // Fetch user data
   const {
@@ -75,7 +76,7 @@ export function AdminDashboard() {
       title: 'Total Users',
       value: totalUsers,
       icon: IconUsers,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '+5%',
       trendUp: true,
     },
@@ -83,7 +84,7 @@ export function AdminDashboard() {
       title: 'Active Users',
       value: activeUsers,
       icon: IconUserCheck,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '+12%',
       trendUp: true,
     },
@@ -91,7 +92,7 @@ export function AdminDashboard() {
       title: 'New Users',
       value: newUsers,
       icon: IconUserPlus,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '+8%',
       trendUp: true,
     },
@@ -99,7 +100,7 @@ export function AdminDashboard() {
       title: 'Inactive Users',
       value: inactiveUsers,
       icon: IconUserX,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '-3%',
       trendUp: false,
     },
@@ -110,7 +111,7 @@ export function AdminDashboard() {
       title: 'Failed Logins',
       value: failedLogins,
       icon: IconShield,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '-2',
       trendUp: true,
     },
@@ -118,7 +119,7 @@ export function AdminDashboard() {
       title: 'Password Resets',
       value: passwordResets,
       icon: IconKey,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '+3',
       trendUp: false,
     },
@@ -126,7 +127,7 @@ export function AdminDashboard() {
       title: 'Audit Entries',
       value: auditEntries,
       icon: IconHistory,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '+45',
       trendUp: true,
     },
@@ -134,7 +135,7 @@ export function AdminDashboard() {
       title: 'Active Sessions',
       value: activeSessions,
       icon: IconActivity,
-      color: getEarthyColor('light'),
+      color: primaryLight,
       trend: '+2',
       trendUp: true,
     },

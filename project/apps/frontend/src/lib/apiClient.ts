@@ -828,4 +828,36 @@ export const integrationsApi = {
     ),
 };
 
+// ===== THEME SETTINGS API =====
+export const themeSettingsApi = {
+  getThemeSettings: () =>
+    apiClient.get<ApiResponse<{
+      id: string;
+      primaryColor: string;
+      logoUrl?: string;
+      isActive: boolean;
+    }>>('/admin/theme-settings'),
+
+  getPublicThemeSettings: () =>
+    apiClient.get<ApiResponse<{
+      id: string;
+      primaryColor: string;
+      logoUrl?: string;
+      isActive: boolean;
+    }>>('/admin/public-theme-settings'),
+
+  updateThemeSettings: (data: {
+    primaryColor?: string | null;
+    logoUrl?: string | null;
+    logoData?: string | null;
+  }) =>
+    apiClient.patch<ApiResponse<{
+      id: string;
+      primaryColor: string;
+      logoUrl?: string;
+      logoData?: string;
+      isActive: boolean;
+    }>>('/admin/theme-settings', data),
+};
+
 export default apiClient;

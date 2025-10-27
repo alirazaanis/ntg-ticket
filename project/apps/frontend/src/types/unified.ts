@@ -269,7 +269,6 @@ export interface SystemSettings {
   language: string;
   theme: string;
   logoUrl?: string;
-  faviconUrl?: string;
   maintenanceMode: boolean;
   registrationEnabled: boolean;
   emailNotifications: boolean;

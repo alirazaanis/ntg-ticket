@@ -30,11 +30,12 @@ import { useAuthStore } from '../../stores/useAuthStore';
 import { Ticket } from '../../types/unified';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { getEarthyColor } from '../../lib/colorConfig';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 export function SupportStaffDashboard() {
   const t = useTranslations('dashboard');
   const router = useRouter();
+  const { primaryLight, primaryDark, primaryLighter, primaryDarker } = useDynamicTheme();
 
   const { user } = useAuthStore();
   const { data: tickets, isLoading: ticketsLoading } = useTickets();
@@ -70,31 +71,31 @@ export function SupportStaffDashboard() {
       title: 'Total',
       value: assignedTickets.length,
       icon: IconTicket,
-      color: getEarthyColor('light'),
+      color: primaryLight,
     },
     {
       title: 'Open',
       value: openTickets.length,
       icon: IconClock,
-      color: getEarthyColor('light'),
+      color: primaryLight,
     },
     {
       title: 'Resolved',
       value: resolvedTickets.length,
       icon: IconCheck,
-      color: getEarthyColor('light'),
+      color: primaryLight,
     },
     {
       title: 'Overdue',
       value: overdueTickets.length,
       icon: IconAlertCircle,
-      color: getEarthyColor('light'),
+      color: primaryLight,
     },
     {
       title: 'SLA Breached',
       value: slaBreachedTickets.length,
       icon: IconAlertCircle,
-      color: getEarthyColor('light'),
+      color: primaryLight,
     },
   ];
 
@@ -174,7 +175,7 @@ export function SupportStaffDashboard() {
                 <Progress
                   value={reportData?.slaMetrics?.responseTime || 0}
                   size='lg'
-                      style={{ '--progress-color': getEarthyColor('light') }}
+                      style={{ '--progress-color': primaryLight }}
                 />
                 <Text size='sm' mt={4}>
                   {reportData?.slaMetrics?.responseTime !== undefined
@@ -192,7 +193,7 @@ export function SupportStaffDashboard() {
                 <Progress
                   value={reportData?.slaMetrics?.resolutionTime || 0}
                   size='lg'
-                      style={{ '--progress-color': getEarthyColor('dark') }}
+                      style={{ '--progress-color': primaryDark }}
                 />
                 <Text size='sm' mt={4}>
                   {reportData?.slaMetrics?.resolutionTime !== undefined
@@ -210,7 +211,7 @@ export function SupportStaffDashboard() {
                 <Progress
                   value={reportData?.slaMetrics?.customerSatisfaction || 92}
                   size='lg'
-                      style={{ '--progress-color': getEarthyColor('saturated') }}
+                      style={{ '--progress-color': primaryLighter }}
                 />
                 <Text size='sm' mt={4}>
                   {(
@@ -240,7 +241,7 @@ export function SupportStaffDashboard() {
                   {ticket.status} •{' '}
                   {new Date(ticket.updatedAt).toLocaleDateString()}
                 </Text>
-                <Badge size='sm' mt={4} style={{ backgroundColor: getEarthyColor('muted'), color: 'white' }}>
+                <Badge size='sm' mt={4} style={{ backgroundColor: primaryDarker, color: 'white' }}>
                   {ticket.ticketNumber}
                 </Badge>
               </Timeline.Item>

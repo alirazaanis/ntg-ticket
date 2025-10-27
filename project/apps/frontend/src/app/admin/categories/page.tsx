@@ -39,9 +39,10 @@ import {
   useDeleteCategory,
 } from '../../../hooks/useCategories';
 import { Category, TicketCategory } from '../../../types/unified';
-import { getEarthyColor } from '../../../lib/colorConfig';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function CategoriesPage() {
+  const { primaryLight, primaryLighter, primaryDark } = useDynamicTheme();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
@@ -224,7 +225,7 @@ export default function CategoriesPage() {
                       {category.customName || category.name.charAt(0) + category.name.slice(1).toLowerCase()}
                     </Text>
                     {category.customName && (
-                      <Badge size='xs' color={getEarthyColor('light')} variant='light'>
+                      <Badge size='xs' color={primaryLight} variant='light'>
                         Custom
                       </Badge>
                     )}
@@ -237,7 +238,7 @@ export default function CategoriesPage() {
                 </Table.Td>
                 <Table.Td>
                   <Badge
-                    color={category.isActive ? getEarthyColor('saturated') : getEarthyColor('dark')}
+                    color={category.isActive ? primaryLighter : primaryDark}
                     variant='light'
                   >
                     {category.isActive ? 'Active' : 'Inactive'}

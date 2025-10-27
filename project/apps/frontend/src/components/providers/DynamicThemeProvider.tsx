@@ -30,6 +30,7 @@ export function DynamicThemeProvider({ children }: { children: React.ReactNode }
     // Update CSS custom properties
     const root = document.documentElement;
     
+    
     // Primary colors
     root.style.setProperty('--dynamic-primary', primary);
     root.style.setProperty('--dynamic-primary-light', primaryLight);

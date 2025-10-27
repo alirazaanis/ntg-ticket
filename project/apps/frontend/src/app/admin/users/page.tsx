@@ -40,14 +40,29 @@ import { useAuthStore } from '../../../stores/useAuthStore';
 import { UserRole } from '../../../types/unified';
 import { notifications } from '@mantine/notifications';
 
-import { getRoleColor } from '../../../lib/roleConfig';
-import { getEarthyColor } from '../../../lib/colorConfig';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function UsersPage() {
+  const { primaryLight, primaryLighter, primaryDark, primaryDarkest } = useDynamicTheme();
   const t = useTranslations('common');
   const tUsers = useTranslations('users');
   const router = useRouter();
   const { user } = useAuthStore();
+
+  const getRoleColor = (role: UserRole) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return primaryDarkest;
+      case UserRole.SUPPORT_MANAGER:
+        return primaryDark;
+      case UserRole.SUPPORT_STAFF:
+        return primaryDark;
+      case UserRole.END_USER:
+        return primaryLight;
+      default:
+        return primaryLight;
+    }
+  };
 
   // Check if user has admin role
   useEffect(() => {
@@ -243,7 +258,7 @@ export default function UsersPage() {
                     </Table.Td>
                     <Table.Td>
                       <Badge
-                        color={user.isActive ? getEarthyColor('saturated') : getEarthyColor('dark')}
+                        color={user.isActive ? primaryLighter : primaryDark}
                         variant='light'
                       >
                         {user.isActive ? 'Active' : 'Inactive'}

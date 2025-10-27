@@ -127,6 +127,8 @@ export class AdminService {
 
   async getPublicConfiguration() {
     const config = this.systemConfigService.getConfig();
+    const themeSettings = await this.getThemeSettings();
+    
     // Return only public settings that don't require admin access
     return {
       siteName: config.siteName,
@@ -134,6 +136,13 @@ export class AdminService {
       timezone: config.timezone,
       language: config.language,
       dateFormat: config.dateFormat,
+      theme: {
+        primaryColor: themeSettings?.primaryColor,
+        logoUrl: themeSettings?.logoUrl,
+        faviconUrl: themeSettings?.faviconUrl,
+        logoData: themeSettings?.logoData,
+        faviconData: themeSettings?.faviconData,
+      },
     };
   }
 
@@ -583,4 +592,165 @@ export class AdminService {
       throw error;
     }
   }
+
+  async getThemeSettings() {
+    try {
+      const themeSettings = await (this.prisma as any).themeSettings.findFirst({
+        where: { isActive: true },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      return themeSettings || {
+        id: null,
+        primaryColor: null,
+        logoUrl: null,
+        faviconUrl: null,
+        isActive: true,
+      };
+    } catch (error) {
+      this.logger.error('Error getting theme settings:', error);
+      throw error;
+    }
+  }
+
+  async updateThemeSettings(themeData: {
+    primaryColor?: string;
+    logoUrl?: string;
+    faviconUrl?: string;
+    logoData?: string;
+    faviconData?: string;
+  }) {
+    try {
+      // Validate base64 data size
+      if (themeData.logoData && themeData.logoData.length > 500000) { // ~375KB base64 = ~500KB original
+        throw new Error('Logo data too large. Please use a smaller image.');
+      }
+      
+      if (themeData.faviconData && themeData.faviconData.length > 100000) { // ~75KB base64 = ~100KB original
+        throw new Error('Favicon data too large. Please use a smaller image.');
+      }
+
+      // Get current theme settings to preserve existing data
+      const currentSettings = await (this.prisma as any).themeSettings.findFirst({
+        where: { isActive: true },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      // Deactivate all existing theme settings
+      await (this.prisma as any).themeSettings.updateMany({
+        where: { isActive: true },
+        data: { isActive: false },
+      });
+
+      // Merge new data with existing data, preserving existing values when new ones are not provided
+      const mergedData: any = {
+        isActive: true,
+      };
+
+      // Only set fields that are explicitly provided in the request
+      if (themeData.primaryColor !== undefined) {
+        mergedData.primaryColor = themeData.primaryColor;
+      } else if (currentSettings?.primaryColor !== undefined) {
+        mergedData.primaryColor = currentSettings.primaryColor;
+      }
+
+      // Handle logo data and URL - if logoData is provided, clear logoUrl
+      if (themeData.logoData !== undefined) {
+        if (themeData.logoData === '') {
+          // Empty string means clear the logo data
+          mergedData.logoData = null;
+        } else {
+          mergedData.logoData = themeData.logoData;
+        }
+        mergedData.logoUrl = null; // Clear URL when file data is provided
+      } else if (currentSettings?.logoData !== undefined) {
+        mergedData.logoData = currentSettings.logoData;
+      }
+
+      if (themeData.logoUrl !== undefined) {
+        if (themeData.logoUrl === '') {
+          // Empty string means clear the logo URL
+          mergedData.logoUrl = null;
+        } else {
+          mergedData.logoUrl = themeData.logoUrl;
+        }
+      } else if (currentSettings?.logoUrl !== undefined && themeData.logoData === undefined) {
+        // Only preserve logoUrl if no new logoData is being provided
+        mergedData.logoUrl = currentSettings.logoUrl;
+      }
+
+      // Handle favicon data and URL - if faviconData is provided, clear faviconUrl
+      if (themeData.faviconData !== undefined) {
+        if (themeData.faviconData === '') {
+          // Empty string means clear the favicon data
+          mergedData.faviconData = null;
+        } else {
+          mergedData.faviconData = themeData.faviconData;
+        }
+        mergedData.faviconUrl = null; // Clear URL when file data is provided
+      } else if (currentSettings?.faviconData !== undefined) {
+        mergedData.faviconData = currentSettings.faviconData;
+      }
+
+      if (themeData.faviconUrl !== undefined) {
+        if (themeData.faviconUrl === '') {
+          // Empty string means clear the favicon URL
+          mergedData.faviconUrl = null;
+        } else {
+          mergedData.faviconUrl = themeData.faviconUrl;
+        }
+      } else if (currentSettings?.faviconUrl !== undefined && themeData.faviconData === undefined) {
+        // Only preserve faviconUrl if no new faviconData is being provided
+        mergedData.faviconUrl = currentSettings.faviconUrl;
+      }
+
+      console.log('Merging theme data:', {
+        incoming: themeData,
+        current: currentSettings,
+        merged: mergedData
+      });
+
+      // Additional logging for debugging
+      console.log('Logo data preservation check:', {
+        incomingLogoData: themeData.logoData,
+        incomingLogoDataType: typeof themeData.logoData,
+        incomingLogoDataUndefined: themeData.logoData === undefined,
+        currentLogoData: currentSettings?.logoData,
+        finalLogoData: mergedData.logoData,
+        logoDataPreserved: mergedData.logoData === currentSettings?.logoData
+      });
+
+      console.log('URL clearing check:', {
+        logoDataProvided: themeData.logoData !== undefined,
+        faviconDataProvided: themeData.faviconData !== undefined,
+        logoUrlCleared: themeData.logoData !== undefined,
+        faviconUrlCleared: themeData.faviconData !== undefined,
+        finalLogoUrl: mergedData.logoUrl,
+        finalFaviconUrl: mergedData.faviconUrl
+      });
+
+      // Additional logging for reset operations
+      console.log('Reset operation check:', {
+        isReset: themeData.logoData === '' && themeData.faviconData === '' && themeData.logoUrl === '' && themeData.faviconUrl === '',
+        logoDataEmpty: themeData.logoData === '',
+        faviconDataEmpty: themeData.faviconData === '',
+        logoUrlEmpty: themeData.logoUrl === '',
+        faviconUrlEmpty: themeData.faviconUrl === ''
+      });
+
+      // Create new theme settings with merged data
+      const newThemeSettings = await (this.prisma as any).themeSettings.create({
+        data: mergedData,
+      });
+
+      return {
+        message: 'Theme settings updated successfully',
+        data: newThemeSettings,
+      };
+    } catch (error) {
+      this.logger.error('Error updating theme settings:', error);
+      throw error;
+    }
+  }
+
 }

@@ -34,12 +34,28 @@ import { useUser, useDeleteUser } from '../../../hooks/useUsers';
 import { UserRole } from '../../../types/unified';
 import { formatDistanceToNow } from 'date-fns';
 
-import { getRoleColor } from '../../../lib/roleConfig';
+import { useDynamicTheme } from '../../../hooks/useDynamicTheme';
 
 export default function UserDetailPage() {
+  const { primaryLight, primaryDark, primaryDarkest } = useDynamicTheme();
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
+
+  const getRoleColor = (role: UserRole) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return primaryDarkest;
+      case UserRole.SUPPORT_MANAGER:
+        return primaryDark;
+      case UserRole.SUPPORT_STAFF:
+        return primaryDark;
+      case UserRole.END_USER:
+        return primaryLight;
+      default:
+        return primaryLight;
+    }
+  };
   const [activeTab, setActiveTab] = useState<string | null>('overview');
 
   const {

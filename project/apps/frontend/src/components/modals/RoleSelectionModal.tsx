@@ -24,7 +24,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { UserRole } from '../../types/unified';
-import { roleConfig } from '../../lib/roleConfig';
+import { useDynamicTheme } from '../../hooks/useDynamicTheme';
 
 interface RoleSelectionModalProps {
   opened: boolean;
@@ -36,47 +36,6 @@ interface RoleSelectionModalProps {
   error: string | null;
 }
 
-const modalRoleConfig = {
-  [UserRole.END_USER]: {
-    icon: IconUser,
-    color: roleConfig[UserRole.END_USER].color,
-    title: 'End User',
-    description: 'Submit and track your support tickets',
-    permissions: ['Create tickets', 'View own tickets', 'Add comments'],
-  },
-  [UserRole.SUPPORT_STAFF]: {
-    icon: IconUsers,
-    color: roleConfig[UserRole.SUPPORT_STAFF].color,
-    title: 'Support Staff',
-    description: 'Handle assigned tickets and provide support',
-    permissions: ['View assigned tickets', 'Resolve tickets', 'Add comments'],
-  },
-  [UserRole.SUPPORT_MANAGER]: {
-    icon: IconShield,
-    color: roleConfig[UserRole.SUPPORT_MANAGER].color,
-    title: 'Support Manager',
-    description: 'Manage team and oversee ticket operations',
-    permissions: [
-      'Assign tickets',
-      'View all tickets',
-      'Manage team',
-      'Generate reports',
-    ],
-  },
-  [UserRole.ADMIN]: {
-    icon: IconSettings,
-    color: roleConfig[UserRole.ADMIN].color,
-    title: 'Administrator',
-    description: 'Full system access and user management',
-    permissions: [
-      'Manage users',
-      'System settings',
-      'View all data',
-      'Admin functions',
-    ],
-  },
-};
-
 export function RoleSelectionModal({
   opened,
   onClose,
@@ -86,7 +45,49 @@ export function RoleSelectionModal({
   // loading, // Removed unused parameter
   error,
 }: RoleSelectionModalProps) {
+  const { primaryLight, primaryDark, primaryDarkest } = useDynamicTheme();
   const t = useTranslations('auth');
+
+  const modalRoleConfig = {
+    [UserRole.END_USER]: {
+      icon: IconUser,
+      color: primaryLight,
+      title: 'End User',
+      description: 'Submit and track your support tickets',
+      permissions: ['Create tickets', 'View own tickets', 'Add comments'],
+    },
+    [UserRole.SUPPORT_STAFF]: {
+      icon: IconUsers,
+      color: primaryDark,
+      title: 'Support Staff',
+      description: 'Handle assigned tickets and provide support',
+      permissions: ['View assigned tickets', 'Resolve tickets', 'Add comments'],
+    },
+    [UserRole.SUPPORT_MANAGER]: {
+      icon: IconShield,
+      color: primaryDark,
+      title: 'Support Manager',
+      description: 'Manage team and oversee ticket operations',
+      permissions: [
+        'Assign tickets',
+        'View all tickets',
+        'Manage team',
+        'Generate reports',
+      ],
+    },
+    [UserRole.ADMIN]: {
+      icon: IconSettings,
+      color: primaryDarkest,
+      title: 'Administrator',
+      description: 'Full system access and user management',
+      permissions: [
+        'Manage users',
+        'System settings',
+        'View all data',
+        'Admin functions',
+      ],
+    },
+  };
 
   const handleRoleClick = (role: UserRole) => {
     onRoleSelect(role);

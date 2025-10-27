@@ -25,6 +25,7 @@ import {
   IconShield,
   IconMail,
   IconAlertCircle,
+  IconPalette,
 } from '@tabler/icons-react';
 import { UserForm, UserFormData } from '../forms/UserForm';
 import { CustomFieldForm } from '../forms/CustomFieldForm';
@@ -368,6 +369,12 @@ export function AdminPanel() {
               {t('systemSettings')}
             </Tabs.Tab>
             <Tabs.Tab
+              value='theme-settings'
+              leftSection={<IconPalette size={16} />}
+            >
+              Theme Settings
+            </Tabs.Tab>
+            <Tabs.Tab
               value='analytics'
               leftSection={<IconChartBar size={16} />}
             >
@@ -629,6 +636,34 @@ export function AdminPanel() {
                   </Grid.Col>
                 </Grid>
               )}
+            </Stack>
+          </Tabs.Panel>
+
+          <Tabs.Panel value='theme-settings' pt='md'>
+            <Stack gap='md'>
+              <Title order={3}>Theme Settings</Title>
+              <Text size='sm' color='dimmed'>
+                Customize the appearance of your ticket system
+              </Text>
+              
+              <Card>
+                <Stack gap='md'>
+                  <Group>
+                    <IconPalette size={20} />
+                    <Title order={4}>Customize Theme</Title>
+                  </Group>
+                  <Text size='sm' color='dimmed'>
+                    Set custom colors and logos for your ticket system
+                  </Text>
+                  <Button
+                    component='a'
+                    href='/admin/theme-settings'
+                    leftSection={<IconPalette size={16} />}
+                  >
+                    Open Theme Settings
+                  </Button>
+                </Stack>
+              </Card>
             </Stack>
           </Tabs.Panel>
 
